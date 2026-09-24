@@ -1,0 +1,31 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { SellerHeader } from "@/components/SellerHeader";
+import { ListingGrid } from "@/components/ListingGrid";
+import { getSellerSummary, searchListings } from "@/lib/queries";
+
+const UUID = /^[0-9a-f-]{36}$/i;
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const seller = UUID.test(id) ? await getSellerSummary(id) : null;
+  return { title: seller ? `${seller.displayName} — satıcı profili` : "Satıcı bulunamadı" };
+}
+
+export default async function SellerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!UUID.test(id)) notFound();
+  const seller = await getSellerSummary(id);
+  if (!seller) notFound();
+  const { items } = await searchListings({ sellerId: id, pageSize: 48 });
+
+  return (
+    <div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6">
+      <Breadcrumbs items={["Satıcı", seller.displayName]} />
+      <SellerHeader seller={seller} active="profil" />
+      <h2 className="mb-5 text-lg font-semibold">Aktif ilanları</h2>
+      <ListingGrid items={items} columns={3} empty={`${seller.displayName} şu an aktif bir ilan yayınlamıyor.`} />
+    </div>
+  );
+}
