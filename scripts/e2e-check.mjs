@@ -9,6 +9,10 @@
 import { chromium } from "playwright";
 import { mkdir } from "node:fs/promises";
 import { createClient } from "@supabase/supabase-js";
+import { assertDevDatabase } from "./lib/dev-guard.mjs";
+
+// Writes to the database: development project only (P1-13).
+assertDevDatabase("e2e");
 
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const PASSWORD = process.env.SEED_PASSWORD;

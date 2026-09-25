@@ -1,3 +1,16 @@
+import { assertPublicEnv } from "./envCheck.ts";
+
+// Fail fast in production on a missing or invalid public environment (P1-12).
+// Each variable is referenced by name so Next.js inlines it into client bundles.
+assertPublicEnv(
+  {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  },
+  process.env.NODE_ENV === "production",
+);
+
 export const SITE = {
   name: "Kıbrıs İkinci El",
   tagline: "İyi eşyalara ikinci bir hikâye",

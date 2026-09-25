@@ -11,6 +11,10 @@
 
 import { fetchLatestMessages, fetchOlderMessages } from "../src/lib/chat.ts";
 import { createClient } from "@supabase/supabase-js";
+import { assertDevDatabase } from "./lib/dev-guard.mjs";
+
+// Writes to the database: development project only (P1-13).
+assertDevDatabase("integration");
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -130,8 +134,13 @@ try {
   const { count: m } = await admin.supabase.from("messages").select("id", { count: "exact", head: true }).ilike("body", `${MARK}%`);
   if (l) left.push(`${l} ilan`);
   if (m) left.push(`${m} mesaj`);
+  // Only this script's notifications: other runs (e2e) may have left their own.
   for (const owner of [seller, buyer]) {
-    const { count } = await owner.supabase.from("notifications").select("id", { count: "exact", head: true }).gte("created_at", STARTED);
+    const { count } = await owner.supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", STARTED)
+      .or(`link.like./ilan/${MARK}-chat-%,link.eq./mesajlar?c=${conversationId}`);
     if (count) left.push(`${count} bildirim`);
   }
   results.push(left.length ? ["✗", `Test verisi temizlenemedi: ${left.join(", ")}`] : ["✓", "Test verisi temizlendi (kalıntı yok)"]);

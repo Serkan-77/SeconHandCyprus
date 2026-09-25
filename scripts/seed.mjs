@@ -8,6 +8,10 @@
 
 import { readFile } from "node:fs/promises";
 import { createClient } from "@supabase/supabase-js";
+import { assertDevDatabase } from "./lib/dev-guard.mjs";
+
+// Writes to the database: development project only (P1-13).
+assertDevDatabase("seed");
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY;

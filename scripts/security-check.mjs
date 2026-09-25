@@ -23,6 +23,10 @@
 
 import { randomInt, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { assertDevDatabase } from "./lib/dev-guard.mjs";
+
+// Writes to the database: development project only (P1-13).
+assertDevDatabase("security");
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
