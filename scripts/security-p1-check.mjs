@@ -11,6 +11,7 @@
 
 import { assertDevDatabase } from "./lib/dev-guard.mjs";
 import { env, makeKit } from "./lib/test-kit.mjs";
+import { deleteOwnAccount } from "../src/lib/accountDeletion.ts";
 
 // Writes to the database: development project only (P1-13).
 assertDevDatabase("security-p1");
@@ -333,6 +334,56 @@ try {
     const { data: sanctions } = await service.from("sanctions").select("user_id, subject_name").eq("subject_user_id", scammer.id);
     if ((sanctions ?? []).length < 2 || sanctions.some((s) => s.user_id !== null)) throw new Error(`yaptırım: ${JSON.stringify(sanctions)}`);
     return `${aboutHim.length} şikayet, ${sanctions.length} yaptırım korundu`;
+  });
+
+  // ==================================================================== Batch 6
+  // ------------------------------------------------------------ P1-09 account deletion
+  const leaver = await tempUser("leaver");
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  let leaverChat = null;
+  await check("P1-09: hesap silme fotoğrafları/avatarı Storage'dan siler, kişisel satırları kaldırır", async () => {
+    for (const [bucket, name] of [["listing-images", "p1-a.png"], ["listing-images", "p1-b.png"], ["avatars", "p1-avatar.png"]]) {
+      must(await leaver.supabase.storage.from(bucket).upload(`${leaver.id}/${name}`, png, { contentType: "image/png" }), `yükle ${bucket}`);
+    }
+    const listing = await newListing(leaver, `${MARK} leaver listing`);
+    must(await leaver.supabase.from("listing_images").insert({ listing_id: listing.id, path: `${leaver.id}/p1-a.png`, position: 0 }), "fotoğraf satırı");
+    leaverChat = must(
+      await leaver.supabase.from("conversations").insert({ listing_id: lamp.id, buyer_id: leaver.id, seller_id: seller.id }).select("id").single(),
+      "konuşma",
+    );
+    conversationIds.add(leaverChat.id);
+    conversationLinks.add(`/mesajlar?c=${leaverChat.id}`);
+    must(await leaver.supabase.from("messages").insert({ conversation_id: leaverChat.id, sender_id: leaver.id, body: `${MARK} kapora ister misin?` }), "mesaj");
+    must(await seller.supabase.from("messages").insert({ conversation_id: leaverChat.id, sender_id: seller.id, body: `${MARK} hayır, elden teslim` }), "cevap");
+    must(await leaver.supabase.from("support_tickets").insert({ user_id: leaver.id, email: leaver.email, topic: MARK, message: `${MARK} hesabımı silmek istiyorum` }), "destek");
+
+    // The same code path as the settings page ("Hesabımı sil").
+    const result = await deleteOwnAccount(leaver.supabase, leaver.id);
+    if (result.error) throw new Error(`silme: ${result.error}`);
+    const left = [];
+    for (const bucket of ["listing-images", "avatars"]) {
+      const { data } = await service.storage.from(bucket).list(leaver.id, { limit: 100 });
+      if (data?.length) left.push(`${bucket}: ${data.length} dosya`);
+    }
+    const { data: user } = await service.auth.admin.getUserById(leaver.id);
+    if (user?.user) left.push("auth kullanıcısı duruyor");
+    for (const [table, col] of [["profiles", "id"], ["profile_private", "id"], ["listings", "seller_id"], ["notifications", "user_id"]]) {
+      const { count } = await service.from(table).select("*", { count: "exact", head: true }).eq(col, leaver.id);
+      if (count) left.push(`${table}: ${count}`);
+    }
+    const { data: tickets } = await service.from("support_tickets").select("email").eq("topic", MARK).like("message", `${MARK} hesabımı%`);
+    if (!tickets?.length || tickets.some((t) => t.email === leaver.email)) left.push(`destek e-postası: ${JSON.stringify(tickets)}`);
+    if (left.length) throw new Error(left.join(", "));
+  });
+  await check("P1-09: karşı tarafın konuşması ve mesajları kalır; silinen hesaba mesaj gönderilemez", async () => {
+    if (!leaverChat) throw new Error("önceki adım çalışmadı");
+    const { data: msgs } = await seller.supabase.from("messages").select("sender_id, body").eq("conversation_id", leaverChat.id).order("created_at");
+    if (msgs?.length !== 2 || msgs[0].sender_id !== null) throw new Error(`mesajlar: ${JSON.stringify(msgs)}`);
+    const note = await expectRefused(
+      seller.supabase.from("messages").insert({ conversation_id: leaverChat.id, sender_id: seller.id, body: `${MARK} orada mısın?` }).select("id"),
+      "silinmiş kullanıcıya mesaj",
+    );
+    return `2 mesaj korundu, ${note}`;
   });
 } catch (e) {
   kit.results.push(["✗", `Kurulum adımı başarısız, kalan kontroller çalışmadı: ${e.message}`]);

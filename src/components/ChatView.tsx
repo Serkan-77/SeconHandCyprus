@@ -25,7 +25,8 @@ import {
   unblockUser,
 } from "@/lib/actions/messages";
 
-export type ChatMessage = { id: string; body: string; sender_id: string; created_at: string; read_at: string | null };
+/** sender_id is null once the sender deleted their account (P1-09). */
+export type ChatMessage = { id: string; body: string; sender_id: string | null; created_at: string; read_at: string | null };
 
 export type ChatConversation = {
   id: string;
@@ -90,6 +91,8 @@ export function ChatView({
   const [meeting, setMeeting] = useState<MeetingState>(active?.meeting ?? { mine: false, theirs: false });
   const meetingStep = meetingStage(meeting);
   const { canConfirm, canRate } = meetingActions(meeting);
+  // The other side deleted their account: the history stays readable, nothing else.
+  const otherGone = Boolean(active && !active.other.id);
   const [sendError, setSendError] = useState("");
   const [modalError, setModalError] = useState("");
   const [reportSent, setReportSent] = useState(false);
@@ -166,7 +169,7 @@ export function ChatView({
   }, [conversations, filter]);
 
   function send(text: string) {
-    if (!active || !text.trim()) return;
+    if (!active || !text.trim() || otherGone) return;
     if (blocked) {
       setSendError(`${active.other.name} kullanıcısını engellediğin için mesajlaşamıyorsun.`);
       return;
@@ -279,22 +282,31 @@ export function ChatView({
               <Link href="/mesajlar" aria-label="Konuşmalara dön" className="grid h-10 w-10 place-items-center rounded-full lg:hidden">
                 <Icon name="back" className="h-4 w-4" />
               </Link>
-              <Link href={`/satici/${active.other.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                <Avatar initials={initials(active.other.name)} src={active.other.avatarUrl} />
-                <span className="min-w-0">
+              {otherGone ? (
+                <span className="flex min-w-0 flex-1 items-center gap-3">
+                  <Avatar initials={initials(active.other.name)} src={null} />
                   <span className="block truncate text-sm font-semibold">{active.other.name}</span>
-                  <span className="text-[10px] text-muted">
-                    {blocked ? "Engellendi" : active.role === "buyer" ? "Satıcı" : "Alıcı"}
-                  </span>
                 </span>
-              </Link>
-              <button
-                onClick={() => setModal(blocked ? "unblock" : "options")}
-                aria-label="Sohbet seçenekleri"
-                className="grid h-10 w-10 place-items-center rounded-full"
-              >
-                <Icon name="more" className="h-4 w-4" />
-              </button>
+              ) : (
+                <>
+                  <Link href={`/satici/${active.other.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                    <Avatar initials={initials(active.other.name)} src={active.other.avatarUrl} />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{active.other.name}</span>
+                      <span className="text-[10px] text-muted">
+                        {blocked ? "Engellendi" : active.role === "buyer" ? "Satıcı" : "Alıcı"}
+                      </span>
+                    </span>
+                  </Link>
+                  <button
+                    onClick={() => setModal(blocked ? "unblock" : "options")}
+                    aria-label="Sohbet seçenekleri"
+                    className="grid h-10 w-10 place-items-center rounded-full"
+                  >
+                    <Icon name="more" className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-3 border-b border-border bg-bg px-4 py-3 sm:px-6">
@@ -364,7 +376,7 @@ export function ChatView({
                 </p>
               ) : null}
               <div ref={bottomRef} className="mt-auto flex flex-wrap items-center gap-2.5">
-                {quickReplies[active.role].map((q) => (
+                {otherGone ? null : quickReplies[active.role].map((q) => (
                   <button
                     key={q}
                     onClick={() => send(q)}
@@ -374,7 +386,7 @@ export function ChatView({
                     {q}
                   </button>
                 ))}
-                {messages.length > 0 ? (
+                {messages.length > 0 && !otherGone ? (
                   <span className="flex flex-wrap items-center gap-2.5 text-[10px]" aria-live="polite">
                     {meetingStep !== "none" ? <span className="text-muted">{MEETING_TEXT[meetingStep]}</span> : null}
                     {canConfirm ? (
@@ -401,25 +413,31 @@ export function ChatView({
                 </button>
               </div>
             ) : null}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                send(inputRef.current?.value ?? "");
-              }}
-              className="flex gap-2.5 border-t border-border p-4 sm:p-5"
-            >
-              <input
-                ref={inputRef}
-                placeholder={blocked ? "Bu kullanıcıyı engelledin" : "Mesajını yaz…"}
-                aria-label="Mesaj"
-                autoComplete="off"
-                maxLength={2000}
-                className="min-w-0 flex-1 rounded-field border border-border bg-bg px-3.5 py-3 text-base text-text outline-none"
-              />
-              <Button type="submit" full={false} disabled={pending} icon={<Icon name="send" className="h-4 w-4" />}>
-                <span className="hidden sm:inline">Gönder</span>
-              </Button>
-            </form>
+            {otherGone ? (
+              <p className="border-t border-border p-4 text-center text-xs text-muted sm:p-5">
+                Bu kullanıcı hesabını sildi. Konuşma geçmişi duruyor ama yeni mesaj gönderemezsin.
+              </p>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  send(inputRef.current?.value ?? "");
+                }}
+                className="flex gap-2.5 border-t border-border p-4 sm:p-5"
+              >
+                <input
+                  ref={inputRef}
+                  placeholder={blocked ? "Bu kullanıcıyı engelledin" : "Mesajını yaz…"}
+                  aria-label="Mesaj"
+                  autoComplete="off"
+                  maxLength={2000}
+                  className="min-w-0 flex-1 rounded-field border border-border bg-bg px-3.5 py-3 text-base text-text outline-none"
+                />
+                <Button type="submit" full={false} disabled={pending} icon={<Icon name="send" className="h-4 w-4" />}>
+                  <span className="hidden sm:inline">Gönder</span>
+                </Button>
+              </form>
+            )}
           </section>
         ) : (
           <section className="hidden flex-col items-center justify-center gap-4 bg-surface p-10 text-center lg:flex">

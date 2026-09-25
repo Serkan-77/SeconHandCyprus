@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const CHAT_PAGE_SIZE = 50;
 
-export type ChatMessageRow = { id: string; body: string; sender_id: string; created_at: string; read_at: string | null };
+export type ChatMessageRow = { id: string; body: string; sender_id: string | null; created_at: string; read_at: string | null };
 
 const COLUMNS = "id, body, sender_id, created_at, read_at";
 

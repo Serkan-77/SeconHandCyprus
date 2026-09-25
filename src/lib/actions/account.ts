@@ -7,7 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { REGION_COOKIE, regionNames } from "@/lib/regions";
 import { safeInternalPath } from "@/lib/safeRedirect";
 import { firstError, phoneSchema, profileSchema, supportSchema } from "@/lib/validation";
-import { accountDeletionMessage, rateLimitMessage } from "@/lib/dbErrors";
+import { rateLimitMessage } from "@/lib/dbErrors";
+import { deleteOwnAccount } from "@/lib/accountDeletion";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -116,8 +117,9 @@ export async function deleteNotification(id: string) {
 export async function deleteAccount(): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
-  const { error } = await supabase.rpc("delete_my_account");
-  if (error) return { error: accountDeletionMessage(error) ?? "Hesap silinemedi. Destek ekibiyle iletişime geç." };
+  // Photos and avatar in Storage first, then the account's rows (P1-09).
+  const result = await deleteOwnAccount(supabase, user.id);
+  if (result.error) return { error: result.error };
   await supabase.auth.signOut();
   redirect("/");
 }
