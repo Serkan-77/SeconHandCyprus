@@ -10,7 +10,7 @@ const nav: { href: string; icon: IconName; label: string }[] = [
   { href: "/yonetim/ilanlar", icon: "bag", label: "İlan moderasyonu" },
   { href: "/yonetim/kullanicilar", icon: "users", label: "Kullanıcılar" },
   { href: "/yonetim/sikayetler", icon: "flag", label: "Şikayetler" },
-  { href: "/yonetim/dogrulama", icon: "shield", label: "Doğrulama" },
+  { href: "/yonetim/dogrulama", icon: "shield", label: "Telefon incelemesi" },
   { href: "/yonetim/destek", icon: "mail", label: "Destek talepleri" },
   { href: "/yonetim/kategoriler", icon: "grid", label: "Kategoriler" },
   { href: "/yonetim/duyurular", icon: "bell", label: "Duyurular" },

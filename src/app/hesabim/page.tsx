@@ -96,7 +96,7 @@ export default async function AccountHomePage() {
           <div className="min-w-[200px] flex-1">
             <b className="text-[13px]">Güven, küçük adımlarla büyür.</b>
             <p className="mt-1 text-[11px] text-muted">
-              {!emailVerified ? "E-postanı doğrula" : "Telefonunu doğrula"}, doğrulama rozetini tamamla.
+              {!emailVerified ? "E-postanı doğrula" : "Telefon numaran için inceleme iste"}, profil güvenini tamamla.
             </p>
           </div>
           <LinkButton href="/hesabim/dogrulama" variant="outline" full={false}>

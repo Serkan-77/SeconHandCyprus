@@ -246,6 +246,14 @@ for (const [i, p] of people.entries()) {
   );
   ids[p.key] = user.id;
   const createdAt = ago(p.role === "admin" ? 400 : between(20, 900));
+  // The number goes in first: changing it clears phone_verified (migration 0007).
+  must(
+    await supabase
+      .from("profile_private")
+      .update({ phone: p.phone ?? null, whatsapp_enabled: Boolean(p.whatsapp) })
+      .eq("id", user.id),
+    `contact ${email}`,
+  );
   must(
     await supabase
       .from("profiles")
@@ -254,18 +262,12 @@ for (const [i, p] of people.entries()) {
         region: p.region,
         bio: p.bio,
         role: p.role ?? "user",
-        phone_verified: Boolean(p.verified),
+        // A reviewed number needs a number: no phone, no review.
+        phone_verified: Boolean(p.verified && p.phone),
         created_at: createdAt,
       })
       .eq("id", user.id),
     `profile ${email}`,
-  );
-  must(
-    await supabase
-      .from("profile_private")
-      .update({ phone: p.phone ?? null, whatsapp_enabled: Boolean(p.whatsapp) })
-      .eq("id", user.id),
-    `contact ${email}`,
   );
   process.stdout.write(`  ${i + 1}/${people.length} ${p.name}\r`);
 }

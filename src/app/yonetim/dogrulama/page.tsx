@@ -6,7 +6,7 @@ import { one } from "@/lib/queries";
 import { formatDate } from "@/lib/format";
 import { VerificationActions } from "./VerificationActions";
 
-export const metadata = { title: "Yönetim · Doğrulama", robots: { index: false } };
+export const metadata = { title: "Yönetim · Telefon incelemesi", robots: { index: false } };
 
 export default async function AdminVerificationPage() {
   return (
@@ -27,14 +27,17 @@ async function Verifications() {
   return (
     <>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Doğrulama incelemesi</h1>
-        <p className="mt-1.5 text-xs text-muted">{requests?.length ?? 0} kullanıcının doğrulama talebi bekliyor.</p>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Manuel telefon incelemesi</h1>
+        <p className="mt-1.5 text-xs text-muted">
+          {requests?.length ?? 0} kullanıcının inceleme talebi bekliyor. Onay SMS doğrulaması değildir ve profillerde
+          rozet olarak gösterilmez.
+        </p>
       </div>
 
       {!requests || requests.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted">
           <Icon name="check" className="h-8 w-8 text-accent" />
-          Bekleyen doğrulama talebi yok.
+          Bekleyen inceleme talebi yok.
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -54,7 +57,7 @@ async function Verifications() {
                     <b className="text-sm">Silinmiş kullanıcı</b>
                   )}
                   <p className="mt-0.5 text-xs text-muted">
-                    {v.kind === "phone" ? "Telefon doğrulama" : "E-posta doğrulama"} · {v.detail}
+                    {v.kind === "phone" ? "Telefon incelemesi" : "E-posta incelemesi"} · {v.detail}
                   </p>
                   <span className="text-[10px] text-muted">{formatDate(v.created_at)}</span>
                 </div>

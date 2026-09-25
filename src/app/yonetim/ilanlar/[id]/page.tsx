@@ -93,7 +93,7 @@ async function Review({ id }: { id: string }) {
                 <p className="mt-1 text-xs text-muted">{ratingLabel(seller.ratingAvg, seller.ratingCount)}</p>
                 <p className="mt-1 text-xs text-muted">
                   Hesap durumu: {seller.status === "active" ? "Aktif" : seller.status}
-                  {seller.phoneVerified ? " · Telefon doğrulandı" : ""}
+                  {seller.phoneVerified ? " · Telefon elle incelendi" : ""}
                 </p>
               </>
             ) : (

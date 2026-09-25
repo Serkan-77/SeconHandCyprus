@@ -7,7 +7,7 @@ import { meetingFor } from "@/lib/meeting";
 
 export const metadata = { title: "Mesajlar" };
 
-type ProfileRow = { id: string; display_name: string; avatar_url: string | null; phone_verified: boolean };
+type ProfileRow = { id: string; display_name: string; avatar_url: string | null };
 
 export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const viewer = await getViewer();
@@ -21,8 +21,8 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
     .select(
       `id, listing_id, buyer_id, seller_id, buyer_confirmed_at, seller_confirmed_at, last_message_at,
        listing:listings(title, slug, status, images:listing_images(path, position)),
-       buyer:profiles!conversations_buyer_id_fkey(id, display_name, avatar_url, phone_verified),
-       seller:profiles!conversations_seller_id_fkey(id, display_name, avatar_url, phone_verified)`,
+       buyer:profiles!conversations_buyer_id_fkey(id, display_name, avatar_url),
+       seller:profiles!conversations_seller_id_fkey(id, display_name, avatar_url)`,
     )
     .or(`buyer_id.eq.${me},seller_id.eq.${me}`)
     .order("last_message_at", { ascending: false });
@@ -57,7 +57,6 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
         id: other?.id ?? "",
         name: other?.display_name ?? "Silinmiş kullanıcı",
         avatarUrl: other?.avatar_url ? publicImageUrl(other.avatar_url, "avatars") : null,
-        verified: other?.phone_verified ?? false,
       },
       listing: {
         title: listing?.title ?? "Kaldırılmış ilan",

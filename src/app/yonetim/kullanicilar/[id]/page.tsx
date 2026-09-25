@@ -91,7 +91,7 @@ async function UserDetail({ id }: { id: string }) {
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Badge kind={status.kind}>{status.label}</Badge>
               {user.statusUntil ? <span className="text-[11px] text-muted">bitiş {formatDate(user.statusUntil)}</span> : null}
-              {user.phoneVerified ? <Badge kind="accent">Telefon doğrulandı</Badge> : null}
+              {user.phoneVerified ? <Badge kind="neutral">Telefon elle incelendi</Badge> : null}
               {user.role === "admin" ? <Badge kind="neutral">Yönetici</Badge> : null}
             </div>
             {user.role !== "admin" ? <SanctionButton userId={user.id} status={user.status} /> : null}

@@ -54,6 +54,13 @@ async function login(page, user) {
   await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/giris"), { timeout: 20000 }), page.getByRole("button", { name: "Giriş yap" }).click()]);
 }
 
+// P0-07: no public verification badge while there is no SMS/OTP.
+async function expectNoVerifiedBadge(page) {
+  for (const text of ["Doğrulandı", "Doğrulanmış iletişim bilgileri"]) {
+    if (await page.getByText(text, { exact: true }).count()) throw new Error(`herkese açık "${text}" rozeti görünüyor`);
+  }
+}
+
 function expectText(page, text) {
   return page.getByText(text, { exact: false }).first().waitFor({ timeout: 15000 });
 }
@@ -102,6 +109,7 @@ await step("İlan detayı", async () => {
   listingPath = new URL(guest.url()).pathname;
   await expectText(guest, "Biraz da hikâyesi");
   await expectText(guest, "Satıcıya mesaj gönder");
+  await expectNoVerifiedBadge(guest);
   await shot(guest, "03-ilan-detay");
 });
 
@@ -110,8 +118,10 @@ await step("Satıcı profili ve yorumlar", async () => {
   await guest.waitForURL(/\/satici\//);
   sellerPath = new URL(guest.url()).pathname;
   await expectText(guest, "Aktif ilanları");
+  await expectNoVerifiedBadge(guest);
   await guest.goto(`${BASE}${sellerPath}/yorumlar`);
   await expectText(guest, "Değerlendirmeler");
+  await expectNoVerifiedBadge(guest);
   await shot(guest, "04-satici-yorumlar");
 });
 
@@ -200,6 +210,7 @@ await step("Mesajlar ve mesaj gönderme", async () => {
   await buyer.getByLabel("Mesaj", { exact: true }).fill(text);
   await buyer.getByRole("button", { name: /Gönder/ }).click();
   await expectText(buyer, text);
+  await expectNoVerifiedBadge(buyer);
   await buyer.reload();
   await expectText(buyer, text);
   await shot(buyer, "06-mesajlar");
@@ -413,7 +424,7 @@ await step("Yönetim alt sayfaları", async () => {
   for (const [path, text] of [
     ["/yonetim/kullanicilar", "Kullanıcı yönetimi"],
     ["/yonetim/sikayetler", "Şikayet kuyruğu"],
-    ["/yonetim/dogrulama", "Doğrulama incelemesi"],
+    ["/yonetim/dogrulama", "Manuel telefon incelemesi"],
     ["/yonetim/destek", "Destek talepleri"],
     ["/yonetim/kategoriler", "Kategori yönetimi"],
     ["/yonetim/duyurular", "Duyuru oluştur"],

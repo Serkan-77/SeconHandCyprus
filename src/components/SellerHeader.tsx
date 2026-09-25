@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
-import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { initials, memberSince, ratingLabel } from "@/lib/format";
 import type { SellerSummary } from "@/lib/queries";
@@ -14,11 +12,6 @@ export function SellerHeader({ seller, active }: { seller: SellerSummary; active
         <div className="min-w-0 flex-1">
           <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
             {seller.displayName}
-            {seller.phoneVerified ? (
-              <Badge kind="accent" icon={<Icon name="check" className="h-3 w-3" />}>
-                Doğrulandı
-              </Badge>
-            ) : null}
           </h1>
           <p className="mt-1.5 text-[13px] text-muted">
             {[ratingLabel(seller.ratingAvg, seller.ratingCount), seller.region, memberSince(seller.createdAt)]

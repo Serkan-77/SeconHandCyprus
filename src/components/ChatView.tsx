@@ -28,7 +28,7 @@ export type ChatMessage = { id: string; body: string; sender_id: string; created
 export type ChatConversation = {
   id: string;
   role: "buyer" | "seller";
-  other: { id: string; name: string; avatarUrl: string | null; verified: boolean };
+  other: { id: string; name: string; avatarUrl: string | null };
   listing: { title: string; slug: string | null; image: string };
   lastMessage: string;
   lastAt: string;
@@ -251,13 +251,7 @@ export function ChatView({
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold">{active.other.name}</span>
                   <span className="text-[10px] text-muted">
-                    {blocked
-                      ? "Engellendi"
-                      : active.other.verified
-                        ? "Doğrulanmış iletişim bilgileri"
-                        : active.role === "buyer"
-                          ? "Satıcı"
-                          : "Alıcı"}
+                    {blocked ? "Engellendi" : active.role === "buyer" ? "Satıcı" : "Alıcı"}
                   </span>
                 </span>
               </Link>

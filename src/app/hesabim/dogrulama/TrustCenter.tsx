@@ -54,10 +54,10 @@ export function TrustCenter({
     {
       icon: "phone",
       title: "Telefon numarası",
-      sub: phoneVerified ? phone : phoneRequested ? "İnceleniyor" : phoneRequest?.status === "rejected" ? "Son talep reddedildi" : "Doğrulanmadı",
-      action: phoneVerified ? <Done /> : phoneRequested ? <Done label="Talep alındı" /> : (
+      sub: phoneVerified ? phone : phoneRequested ? "İnceleniyor" : phoneRequest?.status === "rejected" ? "Son talep reddedildi" : "İncelenmedi",
+      action: phoneVerified ? <Done label="İncelendi" /> : phoneRequested ? <Done label="Talep alındı" /> : (
         <Button variant="outline" full={false} onClick={() => setModal("phone")}>
-          Doğrula
+          İnceleme iste
         </Button>
       ),
     },
@@ -80,7 +80,8 @@ export function TrustCenter({
       <div>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Doğrulama merkezi</h1>
         <p className="mt-2 text-[13px] text-muted">
-          Doğrulama rozeti yalnızca telefon ve e-posta doğrulamasını gösterir; kimlik ya da ürün garantisi değildir.
+          Bu adımlar profilinde rozet olarak gösterilmez. Telefon numaran SMS ile doğrulanmaz; ekibimiz tarafından
+          elle incelenir. Numaranı değiştirirsen inceleme sıfırlanır.
         </p>
       </div>
 
@@ -136,10 +137,10 @@ export function TrustCenter({
         )}
       </Modal>
 
-      <Modal title="Telefonunu doğrula" open={modal === "phone"} onClose={() => setModal(null)}>
+      <Modal title="Telefon incelemesi" open={modal === "phone"} onClose={() => setModal(null)}>
         {phoneState?.ok ? (
           <p className="text-sm text-muted">
-            Talebin alındı. Ekibimiz numaranı kontrol ettikten sonra doğrulama rozetin profiline eklenecek.
+            Talebin alındı. Ekibimiz numaranı elle inceleyecek; sonucu bildirim olarak göreceksin.
           </p>
         ) : (
           <form action={phoneAction} className="flex flex-col gap-5">
@@ -153,7 +154,7 @@ export function TrustCenter({
             />
             {phoneState?.error ? <FormError>{phoneState.error}</FormError> : null}
             <Button type="submit" disabled={phonePending}>
-              {phonePending ? "Gönderiliyor…" : "Doğrulama talebi gönder"}
+              {phonePending ? "Gönderiliyor…" : "İnceleme talebi gönder"}
             </Button>
           </form>
         )}

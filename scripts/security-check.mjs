@@ -14,7 +14,10 @@
 //   admin), conversations from two demo buyers on it, a few messages and at
 //   most one rating, plus the notifications those create. Deleting the
 //   listing cascades to conversations and messages; ratings cannot be deleted
-//   by users, so they are removed with SUPABASE_SECRET_KEY.
+//   by users, so they are removed with SUPABASE_SECRET_KEY;
+// - the demo seller's phone number is changed and restored through an
+//   admin-approved review request; review requests are removed with the
+//   secret key, which also puts the number back if a check stops half-way.
 // Every attack is followed by a re-read; a value that did change (before the
 // fix is applied) is put back so cleanup can find the rows.
 
@@ -133,6 +136,8 @@ const notificationLinks = {
   [secondBuyer.id]: new Set([`/satici/${secondBuyer.id}/yorumlar`]),
 };
 const conversationIds = new Set();
+const verificationIds = new Set();
+let phoneRestore = null; // ece's number and review flag before the P0-07 checks
 
 /** Tries to rate; a rating that does get in is left for cleanup and fails the check. */
 async function expectRatingDenied(rater, conversationId, rateeId, score = 5) {
@@ -470,6 +475,89 @@ try {
   await check("Puan: kendine puan reddedilir", () => expectRatingDenied(buyer, conversation.id, buyer.id));
   await check("Puan: konuşma dışındaki kişiye puan reddedilir", () => expectRatingDenied(seller, conversation.id, outsider));
   await check("Puan: 1-5 dışındaki puan reddedilir", () => expectRatingDenied(seller, conversation.id, buyer.id, 6));
+
+  // -------------------------------------------------------------- P0-07 phone review
+  // ece is seeded with a manually reviewed number. It is changed, then put back
+  // through a review request the admin approves (the real restore path).
+  const originalPhone = must(
+    await seller.supabase.from("profile_private").select("phone").eq("id", seller.id).single(),
+    "telefon okunamadı",
+  ).phone;
+  phoneRestore = { phone: originalPhone, verified: (await readRow(seller.supabase, "profiles", seller.id)).phone_verified };
+  const isVerified = async () => (await readRow(seller.supabase, "profiles", seller.id)).phone_verified;
+
+  await check("Telefon: ön koşul — ece'nin numarası incelenmiş", async () => {
+    if (!originalPhone || !phoneRestore.verified) throw new Error(`telefon=${originalPhone} phone_verified=${phoneRestore.verified}`);
+  });
+  await check("Telefon: aynı numara tekrar yazılınca inceleme korunur (P0-07)", async () => {
+    must(await seller.supabase.from("profile_private").update({ phone: originalPhone }).eq("id", seller.id), "telefon");
+    if (!(await isVerified())) throw new Error("phone_verified sıfırlandı");
+  });
+  await check("Telefon: numara değişince phone_verified sıfırlanır (P0-07)", async () => {
+    must(await seller.supabase.from("profile_private").update({ phone: "+905000000000" }).eq("id", seller.id), "telefon");
+    if (await isVerified()) throw new Error("phone_verified true kaldı");
+  });
+  // Restores ece through the real path: a review request the admin approves.
+  const approveOriginal = async () => {
+    const request = must(
+      await seller.supabase.from("verification_requests").insert({ user_id: seller.id, kind: "phone", detail: originalPhone }).select("id").single(),
+      "inceleme talebi",
+    );
+    verificationIds.add(request.id);
+    notificationLinks[seller.id].add("/hesabim/dogrulama");
+    must(await admin.supabase.from("verification_requests").update({ status: "approved" }).eq("id", request.id), "admin onayı");
+    const phone = must(await seller.supabase.from("profile_private").select("phone").eq("id", seller.id).single(), "telefon").phone;
+    if (phone !== originalPhone) throw new Error(`telefon: ${phone}`);
+    if (!(await isVerified())) throw new Error("phone_verified true olmadı");
+  };
+  await check("Telefon: admin onayı numarayı yazar ve phone_verified=true kalır (onay akışı çalışır)", approveOriginal);
+  await check("Telefon: numara silinince (null) phone_verified sıfırlanır (P0-07)", async () => {
+    must(await seller.supabase.from("profile_private").update({ phone: null }).eq("id", seller.id), "telefon");
+    if (await isVerified()) throw new Error("phone_verified true kaldı");
+  });
+  await check("Telefon: ikinci admin onayı numarayı ve incelemeyi yeniden geri getirir", approveOriginal);
+  await check("reset_phone_verification RPC olarak çağrılamaz (anon / authenticated)", async () => {
+    const codes = [];
+    for (const caller of [anon, buyer.supabase]) {
+      const { error } = await caller.rpc("reset_phone_verification");
+      if (!error) throw new Error("çağrı başarılı oldu");
+      codes.push(error.code);
+    }
+    if (!(await isVerified())) throw new Error("ece'nin incelemesi değişti");
+    return `reddedildi: ${codes.join(", ")}`;
+  });
+
+  await check("Profil: kullanıcı phone_verified=true yapamaz", () =>
+    expectUnchanged(buyer.supabase, "profiles", buyer.id, { phone_verified: true }),
+  );
+  await check("Profil: kullanıcı role / status / status_until değiştiremez", async () => {
+    const notes = [];
+    for (const patch of [{ role: "admin" }, { status: "suspended" }, { status_until: FUTURE }]) {
+      notes.push(await expectUnchanged(buyer.supabase, "profiles", buyer.id, patch));
+    }
+    return notes.join(", ");
+  });
+  await check("İnceleme talebi: kullanıcı kendi talebini onaylı açamaz / onaylayamaz", async () => {
+    const { data: forged, error } = await buyer.supabase
+      .from("verification_requests")
+      .insert({ user_id: buyer.id, kind: "phone", detail: "+905000000001", status: "approved" })
+      .select("id");
+    forged?.forEach((r) => verificationIds.add(r.id));
+    if (!error && forged?.length) throw new Error("onaylı talep oluşturuldu");
+    const pending = must(
+      await buyer.supabase
+        .from("verification_requests")
+        .insert({ user_id: buyer.id, kind: "phone", detail: "+905000000001" })
+        .select("id")
+        .single(),
+      "bekleyen talep",
+    );
+    verificationIds.add(pending.id);
+    await buyer.supabase.from("verification_requests").update({ status: "approved" }).eq("id", pending.id);
+    const row = must(await buyer.supabase.from("verification_requests").select("status").eq("id", pending.id).single(), "talep");
+    if (row.status !== "pending") throw new Error(`durum: ${row.status}`);
+    return `onaylı ekleme reddedildi: ${error?.code}, onaylama 0 satır`;
+  });
 } catch (e) {
   results.push(["✗", `Kurulum adımı başarısız, kalan kontroller çalışmadı: ${e.message}`]);
 } finally {
@@ -477,6 +565,17 @@ try {
   // Ratings outlive their conversation (conversation_id is set null), and users
   // have no DELETE policy on ratings, so they go first, with the secret key.
   if (secret) await client(secret).from("ratings").delete().eq("comment", RATING_MARK);
+  // Review requests cannot be deleted by users either. If a check failed half-way,
+  // ece's number and flag are put back with the secret key.
+  if (secret && verificationIds.size) await client(secret).from("verification_requests").delete().in("id", [...verificationIds]);
+  if (phoneRestore) {
+    const { data: now } = await admin.supabase.from("profile_private").select("phone").eq("id", seller.id).single();
+    const { data: flag } = await admin.supabase.from("profiles").select("phone_verified").eq("id", seller.id).single();
+    if (secret && (now?.phone !== phoneRestore.phone || flag?.phone_verified !== phoneRestore.verified)) {
+      await client(secret).from("profile_private").update({ phone: phoneRestore.phone }).eq("id", seller.id);
+      await client(secret).from("profiles").update({ phone_verified: phoneRestore.verified }).eq("id", seller.id);
+    }
+  }
   for (const id of listingIds) await seller.supabase.from("listings").delete().eq("id", id);
   // Conversations cascade from the listing; the secret key only helps if a pre-fix attack moved one elsewhere.
   if (conversationIds.size && secret) await client(secret).from("conversations").delete().in("id", [...conversationIds]);
@@ -490,6 +589,15 @@ try {
   if (conversationIds.size) {
     const { data: conv } = await admin.supabase.from("conversations").select("id").in("id", [...conversationIds]);
     if (conv?.length) leftovers.push(`${conv.length} konuşma`);
+  }
+  if (verificationIds.size) {
+    const { data: requests } = await admin.supabase.from("verification_requests").select("id").in("id", [...verificationIds]);
+    if (requests?.length) leftovers.push(`${requests.length} inceleme talebi`);
+  }
+  if (phoneRestore) {
+    const { data: now } = await admin.supabase.from("profile_private").select("phone").eq("id", seller.id).single();
+    const { data: flag } = await admin.supabase.from("profiles").select("phone_verified").eq("id", seller.id).single();
+    if (now?.phone !== phoneRestore.phone || flag?.phone_verified !== phoneRestore.verified) leftovers.push("ece telefonu/incelemesi geri yüklenmedi");
   }
   const { data: ratings } = await anon.from("ratings").select("id").eq("comment", RATING_MARK);
   if (ratings?.length) leftovers.push(`${ratings.length} puan${secret ? "" : " (SUPABASE_SECRET_KEY yok)"}`);
