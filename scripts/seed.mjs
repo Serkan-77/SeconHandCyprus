@@ -400,7 +400,12 @@ const comments = [
 ];
 const ratings = [];
 for (const c of conversations.filter((c) => c.finished)) {
-  await supabase.from("conversations").update({ meeting_confirmed_at: ago(rand() * 3) }).eq("id", c.id);
+  // Both sides confirmed the meeting (needs migration 0006).
+  const met = ago(rand() * 3);
+  await supabase
+    .from("conversations")
+    .update({ buyer_confirmed_at: met, seller_confirmed_at: met, meeting_confirmed_at: met })
+    .eq("id", c.id);
   ratings.push({ rater_id: c.buyer_id, ratee_id: c.seller_id, conversation_id: c.id, listing_id: c.listing_id, score: pick([5, 5, 5, 4, 4, 3]), comment: pick(comments), created_at: ago(rand() * 3) });
 }
 // Historic ratings (from sales outside the current conversations) so seller pages have depth.

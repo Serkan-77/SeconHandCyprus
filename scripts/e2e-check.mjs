@@ -14,6 +14,7 @@ const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const PASSWORD = process.env.SEED_PASSWORD;
 const DOMAIN = "demo.kibrisikinciel.test";
 const OUT = process.env.E2E_OUT ?? "e2e-screens";
+const STARTED_AT = new Date(Date.now() - 60 * 1000).toISOString();
 if (!PASSWORD) throw new Error("SEED_PASSWORD gerekli (.env.local)");
 
 await mkdir(OUT, { recursive: true });
@@ -331,6 +332,78 @@ await step("JSON-LD XSS regresyonu: başlık, açıklama ve satıcı adı (P0-01
   }
 });
 
+// Two-sided meeting confirmation. ece (the `buyer` page) is the seller of the
+// test listing here; mert opens the conversation as the buyer.
+const E2E_RATING = "E2E değerlendirme";
+let meetingConversationId = null;
+let meetingSellerId = null;
+await step("Buluşma onayı iki taraflı; puan ancak iki onaydan sonra (P0-04)", async () => {
+  if (!newListingPath) throw new Error("test ilanının adresi bulunamadı");
+  const mert = await newPage();
+  await login(mert, "mert");
+  const rateButton = (page) => page.getByRole("button", { name: "Değerlendirme bırak" });
+  const confirm = async (page) => {
+    await page.getByRole("button", { name: "Buluşmayı onayla" }).first().click();
+    await page.getByRole("dialog").getByRole("button", { name: "Buluşmayı onayla" }).click();
+  };
+
+  // 1. The buyer opens a conversation and writes.
+  await mert.goto(`${BASE}${newListingPath}`);
+  await mert.getByRole("button", { name: "Satıcıya mesaj gönder" }).click();
+  await mert.waitForURL(/\/mesajlar\?c=/, { timeout: 20000 });
+  meetingConversationId = new URL(mert.url()).searchParams.get("c");
+  await mert.getByLabel("Mesaj", { exact: true }).fill("E2E buluşma testi");
+  await mert.getByRole("button", { name: /Gönder/ }).click();
+  await expectText(mert, "E2E buluşma testi");
+
+  // 2. No rating before any confirmation.
+  await mert.getByRole("button", { name: "Buluşmayı onayla" }).first().waitFor({ timeout: 15000 });
+  if (await rateButton(mert).count()) throw new Error("onay yokken değerlendirme butonu görünüyor");
+
+  // 3-4. The buyer confirms; still no rating.
+  await confirm(mert);
+  await expectText(mert, "Sen buluşmayı onayladın. Karşı tarafın onayı bekleniyor.");
+  if (await rateButton(mert).count()) throw new Error("tek onayla değerlendirme butonu görünüyor");
+
+  // 5. The seller sees it and confirms too; the rating form opens for them.
+  await buyer.goto(`${BASE}/mesajlar?c=${meetingConversationId}`);
+  await expectText(buyer, "Karşı taraf buluşmayı onayladı.");
+  await confirm(buyer);
+  await buyer.getByRole("button", { name: "Değerlendirmeyi gönder" }).waitFor({ timeout: 15000 });
+  await buyer.keyboard.press("Escape");
+
+  // 6. Both sides see the two-sided confirmation.
+  await expectText(buyer, "Buluşma iki taraf tarafından onaylandı.");
+  await mert.reload();
+  await expectText(mert, "Buluşma iki taraf tarafından onaylandı.");
+
+  // 7. The buyer rates the seller.
+  await rateButton(mert).click();
+  await mert.getByLabel("Yorum (opsiyonel)").fill(E2E_RATING);
+  await mert.getByRole("button", { name: "Değerlendirmeyi gönder" }).click();
+  await expectText(mert, "Değerlendirmen gönderildi");
+
+  // 8. No second rating: the button is gone and the database refuses a direct insert.
+  await mert.reload();
+  await expectText(mert, "Buluşma iki taraf tarafından onaylandı.");
+  if (await rateButton(mert).count()) throw new Error("ikinci değerlendirme butonu görünüyor");
+  const api = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
+    auth: { persistSession: false },
+  });
+  const { data: auth } = await api.auth.signInWithPassword({ email: `mert@${DOMAIN}`, password: PASSWORD });
+  const { data: conv } = await api.from("conversations").select("seller_id").eq("id", meetingConversationId).single();
+  meetingSellerId = conv?.seller_id ?? null;
+  const { error } = await api.from("ratings").insert({
+    rater_id: auth.user.id,
+    ratee_id: meetingSellerId,
+    conversation_id: meetingConversationId,
+    score: 1,
+    comment: E2E_RATING,
+  });
+  await api.auth.signOut();
+  if (error?.code !== "23505") throw new Error(`ikinci puan reddedilmedi: ${error?.code ?? "kaydedildi"}`);
+});
+
 await step("Satıcıya onay bildirimi gitti", async () => {
   await buyer.goto(`${BASE}/hesabim/bildirimler`);
   await expectText(buyer, `${newListingTitle} artık aramalarda görünüyor`);
@@ -383,6 +456,12 @@ if (process.env.SUPABASE_SECRET_KEY) {
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
   await db.from("messages").delete().like("body", "Test mesajı %");
   await db.from("listings").delete().like("title", "E2E test %");
+  // Ratings outlive their conversation, and the meeting step leaves two notifications.
+  await db.from("ratings").delete().eq("comment", E2E_RATING);
+  if (meetingConversationId) await db.from("notifications").delete().eq("link", `/mesajlar?c=${meetingConversationId}`);
+  if (meetingSellerId) {
+    await db.from("notifications").delete().eq("link", `/satici/${meetingSellerId}/yorumlar`).gte("created_at", STARTED_AT);
+  }
 }
 
 console.log("\n" + results.map(([s, n]) => `${s} ${n}`).join("\n"));

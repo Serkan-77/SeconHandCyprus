@@ -3,6 +3,7 @@ import { ChatView, type ChatConversation, type ChatMessage } from "@/components/
 import { createClient } from "@/lib/supabase/server";
 import { publicImageUrl } from "@/lib/supabase/env";
 import { getViewer, one } from "@/lib/queries";
+import { meetingFor } from "@/lib/meeting";
 
 export const metadata = { title: "Mesajlar" };
 
@@ -18,7 +19,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   const { data: rows } = await supabase
     .from("conversations")
     .select(
-      `id, listing_id, buyer_id, seller_id, meeting_confirmed_at, last_message_at,
+      `id, listing_id, buyer_id, seller_id, buyer_confirmed_at, seller_confirmed_at, last_message_at,
        listing:listings(title, slug, status, images:listing_images(path, position)),
        buyer:profiles!conversations_buyer_id_fkey(id, display_name, avatar_url, phone_verified),
        seller:profiles!conversations_seller_id_fkey(id, display_name, avatar_url, phone_verified)`,
@@ -67,7 +68,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
       lastAt: last?.created_at ?? r.last_message_at,
       unread: (unreadRows ?? []).filter((m) => m.conversation_id === r.id).length,
       blockedByMe: other ? blockedIds.has(other.id) : false,
-      meetingConfirmed: Boolean(r.meeting_confirmed_at),
+      meeting: meetingFor(r, me),
     };
   });
 

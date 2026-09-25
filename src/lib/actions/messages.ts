@@ -70,15 +70,28 @@ export async function unblockUser(userId: string): Promise<Result> {
   return { ok: true };
 }
 
-export async function confirmMeeting(conversationId: string): Promise<Result> {
+/**
+ * Confirms the meeting for the signed-in side only. The database stamps the
+ * time and fills meeting_confirmed_at once both sides have confirmed.
+ */
+export async function confirmMeeting(conversationId: string): Promise<Result & { bothConfirmed?: boolean }> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
-  const { error } = await supabase
+  const { data: conv } = await supabase
     .from("conversations")
-    .update({ meeting_confirmed_at: new Date().toISOString() })
-    .eq("id", conversationId);
+    .select("buyer_id, seller_id")
+    .eq("id", conversationId)
+    .single();
+  if (!conv) return { error: "Konuşma bulunamadı." };
+  const column = conv.buyer_id === user.id ? "buyer_confirmed_at" : "seller_confirmed_at";
+  const { data, error } = await supabase
+    .from("conversations")
+    .update({ [column]: new Date().toISOString() })
+    .eq("id", conversationId)
+    .select("meeting_confirmed_at")
+    .single();
   if (error) return { error: "Buluşma onaylanamadı." };
-  return { ok: true };
+  return { ok: true, bothConfirmed: Boolean(data?.meeting_confirmed_at) };
 }
 
 export async function rateUser(conversationId: string, rateeId: string, score: number, comment: string): Promise<Result> {
@@ -97,7 +110,9 @@ export async function rateUser(conversationId: string, rateeId: string, score: n
     return {
       error: error.message.includes("duplicate")
         ? "Bu buluşma için zaten değerlendirme yaptın."
-        : "Değerlendirme gönderilemedi.",
+        : error.message.includes("row-level security")
+          ? "Değerlendirme için iki tarafın da buluşmayı onaylaması gerekiyor."
+          : "Değerlendirme gönderilemedi.",
     };
   }
   refresh();

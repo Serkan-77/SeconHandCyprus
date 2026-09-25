@@ -12,6 +12,7 @@ import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { chatTime, clockTime, initials } from "@/lib/format";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { MEETING_TEXT, meetingActions, meetingStage, type MeetingState } from "@/lib/meeting";
 import {
   blockUser,
   confirmMeeting,
@@ -33,7 +34,8 @@ export type ChatConversation = {
   lastAt: string;
   unread: number;
   blockedByMe: boolean;
-  meetingConfirmed: boolean;
+  /** Each side confirms the meeting separately; ratings open once both have. */
+  meeting: MeetingState;
 };
 
 type ModalKind = "options" | "report" | "unblock" | "meeting" | "rating" | null;
@@ -76,7 +78,9 @@ export function ChatView({
   const [ratingDone, setRatingDone] = useState(hasRated);
   const [ratingSent, setRatingSent] = useState(false);
   const [blocked, setBlocked] = useState(active?.blockedByMe ?? false);
-  const [meetingConfirmed, setMeetingConfirmed] = useState(active?.meetingConfirmed ?? false);
+  const [meeting, setMeeting] = useState<MeetingState>(active?.meeting ?? { mine: false, theirs: false });
+  const meetingStep = meetingStage(meeting);
+  const { canConfirm, canRate } = meetingActions(meeting);
   const [sendError, setSendError] = useState("");
   const [modalError, setModalError] = useState("");
   const [reportSent, setReportSent] = useState(false);
@@ -332,13 +336,20 @@ export function ChatView({
                     {q}
                   </button>
                 ))}
-                {messages.length > 0 && !ratingDone ? (
-                  <button
-                    onClick={() => setModal(meetingConfirmed ? "rating" : "meeting")}
-                    className="text-[10px] font-medium text-accent"
-                  >
-                    {meetingConfirmed ? "Değerlendirme bırak" : "Buluşmayı tamamladık"}
-                  </button>
+                {messages.length > 0 ? (
+                  <span className="flex flex-wrap items-center gap-2.5 text-[10px]" aria-live="polite">
+                    {meetingStep !== "none" ? <span className="text-muted">{MEETING_TEXT[meetingStep]}</span> : null}
+                    {canConfirm ? (
+                      <button onClick={() => setModal("meeting")} className="font-medium text-accent">
+                        Buluşmayı onayla
+                      </button>
+                    ) : null}
+                    {canRate && !ratingDone ? (
+                      <button onClick={() => setModal("rating")} className="font-medium text-accent">
+                        Değerlendirme bırak
+                      </button>
+                    ) : null}
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -469,8 +480,8 @@ export function ChatView({
 
           <Modal title="Buluşmayı onayla" open={modal === "meeting"} onClose={closeModal}>
             <p className="text-sm text-muted">
-              {active.other.name} ile buluşmayı tamamladığını onaylıyor musun? Onayladıktan sonra kısa bir değerlendirme
-              bırakabilirsin.
+              {active.other.name} ile buluşmayı tamamladığını onaylıyor musun? İkiniz de onayladığınızda kısa bir
+              değerlendirme bırakabilirsin.
             </p>
             {modalError ? <FormError className="mt-4">{modalError}</FormError> : null}
             <Button
@@ -480,10 +491,13 @@ export function ChatView({
                 startTransition(async () => {
                   const result = await confirmMeeting(active.id);
                   if (result.error) setModalError(result.error);
-                  else {
-                    setMeetingConfirmed(true);
+                  else if (result.bothConfirmed) {
+                    setMeeting({ mine: true, theirs: true });
                     setModalError("");
                     setModal("rating");
+                  } else {
+                    setMeeting((m) => ({ ...m, mine: true }));
+                    closeModal();
                   }
                 })
               }

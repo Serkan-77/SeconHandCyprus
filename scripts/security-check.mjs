@@ -11,8 +11,10 @@
 // - notify() is called for a random user id that does not exist, so if it is
 //   still executable the insert fails on the foreign key and reaches no inbox;
 // - two test listings owned by the demo seller (one approved by the demo
-//   admin), a conversation from the demo buyer on it and one message, plus the
-//   notifications those create. Deleting the listing cascades to the rest.
+//   admin), conversations from two demo buyers on it, a few messages and at
+//   most one rating, plus the notifications those create. Deleting the
+//   listing cascades to conversations and messages; ratings cannot be deleted
+//   by users, so they are removed with SUPABASE_SECRET_KEY.
 // Every attack is followed by a re-read; a value that did change (before the
 // fix is applied) is put back so cleanup can find the rows.
 
@@ -32,7 +34,15 @@ const DOMAIN = "demo.kibrisikinciel.test";
 const PERMISSION_DENIED = "42501";
 const TEST_TITLE = "Security check";
 const FUTURE = "2099-01-01T00:00:00+00:00";
+const PAST = "2000-01-01T00:00:00+00:00";
+const RATING_MARK = "security-check";
+const STARTED = new Date(Date.now() - 60 * 1000).toISOString();
 const results = [];
+
+/** A timestamp the server set just now (allows for clock skew), not a forged one. */
+function isServerNow(value) {
+  return Boolean(value) && Math.abs(Date.parse(value) - Date.now()) < 10 * 60 * 1000;
+}
 
 function client(apiKey = key) {
   return createClient(url, apiKey, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -73,6 +83,8 @@ async function readRow(supabase, table, id) {
  */
 async function expectUnchanged(supabase, table, id, patch) {
   const before = await readRow(supabase, table, id);
+  const missing = Object.keys(patch).filter((col) => !(col in before));
+  if (missing.length) throw new Error(`kolon yok: ${missing.join(", ")} (migration uygulanmamış olabilir)`);
   const { error } = await supabase.from(table).update(patch).eq("id", id);
   const after = await readRow(supabase, table, id);
   const changed = Object.keys(patch).filter((col) => String(after[col]) !== String(before[col]));
@@ -103,6 +115,7 @@ const anon = client();
 const seller = await signIn("ece");
 const buyer = await signIn("mert");
 const admin = await signIn("admin");
+const secondBuyer = await signIn("selin");
 const outsider = admin.id; // any other real profile, used as a forged participant
 
 const categories = must(await anon.from("categories").select("id").order("sort_order").limit(2), "kategoriler");
@@ -113,8 +126,23 @@ const foreignListing = must(
 );
 
 const listingIds = new Set();
-const notificationLinks = { [seller.id]: new Set(), [buyer.id]: new Set() };
-let conversationId = null;
+// Rating notifications link to the ratee's reviews page; only rows created during this run are removed.
+const notificationLinks = {
+  [seller.id]: new Set([`/satici/${seller.id}/yorumlar`]),
+  [buyer.id]: new Set([`/satici/${buyer.id}/yorumlar`]),
+  [secondBuyer.id]: new Set([`/satici/${secondBuyer.id}/yorumlar`]),
+};
+const conversationIds = new Set();
+
+/** Tries to rate; a rating that does get in is left for cleanup and fails the check. */
+async function expectRatingDenied(rater, conversationId, rateeId, score = 5) {
+  const { data, error } = await rater.supabase
+    .from("ratings")
+    .insert({ rater_id: rater.id, ratee_id: rateeId, conversation_id: conversationId, score, comment: RATING_MARK })
+    .select("id");
+  if (!error && data?.length) throw new Error("puan kaydedildi");
+  return `reddedildi: ${error?.code ?? "0 satır"}`;
+}
 
 function baseListing(title) {
   return {
@@ -220,17 +248,69 @@ try {
     must(await admin.supabase.from("listings").update({ featured: false }).eq("id", listing.id), "admin featured geri");
   });
 
-  // -------------------------------------------------------------- P0-03 conversations
+  // -------------------------------------------------------------- P0-04 conversation INSERT
+  await check("Konuşma INSERT: sahte seller_id ile konuşma açılamaz (P0-04)", async () => {
+    const { data, error } = await secondBuyer.supabase
+      .from("conversations")
+      .insert({ listing_id: listing.id, buyer_id: secondBuyer.id, seller_id: outsider })
+      .select("id");
+    if (!error && data?.length) {
+      data.forEach((c) => conversationIds.add(c.id));
+      throw new Error("konuşma sahte satıcıyla oluşturuldu");
+    }
+    return `reddedildi: ${error?.code}`;
+  });
+
+  // The main conversation is opened with forged system columns; the database must ignore them.
   const conversation = must(
     await buyer.supabase
       .from("conversations")
-      .insert({ listing_id: listing.id, buyer_id: buyer.id, seller_id: seller.id })
+      .insert({
+        listing_id: listing.id,
+        buyer_id: buyer.id,
+        seller_id: seller.id,
+        created_at: FUTURE,
+        last_message_at: FUTURE,
+        meeting_confirmed_at: FUTURE,
+      })
       .select("*")
       .single(),
     "konuşma açılamadı",
   );
-  conversationId = conversation.id;
+  conversationIds.add(conversation.id);
   notificationLinks[buyer.id].add(`/mesajlar?c=${conversation.id}`);
+  for (const [col, ok] of [
+    ["created_at", () => isServerNow(conversation.created_at)],
+    ["last_message_at", () => isServerNow(conversation.last_message_at)],
+    ["meeting_confirmed_at", () => conversation.meeting_confirmed_at === null],
+  ]) {
+    await check(`Konuşma INSERT: istemcinin gönderdiği ${col} yok sayılır (P0-04)`, () => {
+      if (!ok()) throw new Error(`kaydedilen değer: ${conversation[col]}`);
+    });
+  }
+
+  // A second buyer forges both confirmations up front.
+  let secondConversation = null;
+  await check("Konuşma INSERT: istemcinin gönderdiği buyer/seller_confirmed_at yok sayılır (P0-04)", async () => {
+    secondConversation = must(
+      await secondBuyer.supabase
+        .from("conversations")
+        .insert({
+          listing_id: listing.id,
+          buyer_id: secondBuyer.id,
+          seller_id: seller.id,
+          buyer_confirmed_at: PAST,
+          seller_confirmed_at: PAST,
+        })
+        .select("*")
+        .single(),
+      "konuşma açılamadı",
+    );
+    conversationIds.add(secondConversation.id);
+    if (secondConversation.buyer_confirmed_at !== null || secondConversation.seller_confirmed_at !== null) {
+      throw new Error(`kaydedilen: ${secondConversation.buyer_confirmed_at} / ${secondConversation.seller_confirmed_at}`);
+    }
+  });
 
   // Sending also exercises on_message_created, which updates last_message_at as the owner.
   const original = "security-check original";
@@ -260,13 +340,33 @@ try {
   await check("Konuşma: katılımcı last_message_at değiştiremez (P0-03)", () =>
     expectUnchanged(buyer.supabase, "conversations", conversation.id, { last_message_at: FUTURE }),
   );
-  await check("Konuşma: buluşma onayı (confirmMeeting) hâlâ çalışır", async () => {
-    must(
-      await buyer.supabase.from("conversations").update({ meeting_confirmed_at: new Date().toISOString() }).eq("id", conversation.id),
-      "buluşma onayı",
+
+  // -------------------------------------------------------------- P0-04 message INSERT
+  await check("Mesaj INSERT: istemcinin gönderdiği created_at ve read_at yok sayılır (P0-04)", async () => {
+    const forged = must(
+      await seller.supabase
+        .from("messages")
+        .insert({
+          conversation_id: conversation.id,
+          sender_id: seller.id,
+          body: "security-check forged",
+          created_at: FUTURE,
+          read_at: PAST,
+        })
+        .select("*")
+        .single(),
+      "mesaj gönderilemedi",
     );
-    const row = await readRow(buyer.supabase, "conversations", conversation.id);
-    if (!row.meeting_confirmed_at) throw new Error("meeting_confirmed_at boş kaldı");
+    if (!isServerNow(forged.created_at)) throw new Error(`created_at: ${forged.created_at}`);
+    if (forged.read_at !== null) throw new Error(`read_at: ${forged.read_at}`);
+  });
+  await check("Mesaj INSERT: sahte sender_id reddedilir", async () => {
+    const { data, error } = await seller.supabase
+      .from("messages")
+      .insert({ conversation_id: conversation.id, sender_id: buyer.id, body: "security-check spoofed" })
+      .select("id");
+    if (!error && data?.length) throw new Error("başkası adına mesaj kaydedildi");
+    return `reddedildi: ${error?.code}`;
   });
 
   // -------------------------------------------------------------- P0-05 messages
@@ -291,35 +391,116 @@ try {
       if (row.body !== original) throw new Error(`body değişti: ${row.body}`);
     });
   }
+
+  // -------------------------------------------------------------- P0-04 confirmation + ratings
+  // Main conversation: buyer = mert, seller = ece. Nobody has confirmed yet.
+  await check("Puan: hiç onay yokken reddedilir (P0-04)", () => expectRatingDenied(buyer, conversation.id, seller.id));
+  await check("Onay: alıcı satıcının onayını veremez (P0-04)", () =>
+    expectUnchanged(buyer.supabase, "conversations", conversation.id, { seller_confirmed_at: new Date().toISOString() }),
+  );
+  await check("Onay: satıcı alıcının onayını veremez (P0-04)", () =>
+    expectUnchanged(seller.supabase, "conversations", conversation.id, { buyer_confirmed_at: new Date().toISOString() }),
+  );
+  await check("Onay: alıcı kendi onayını verir, zaman damgası sunucudan gelir (P0-04)", async () => {
+    must(await buyer.supabase.from("conversations").update({ buyer_confirmed_at: PAST }).eq("id", conversation.id), "alıcı onayı");
+    const row = await readRow(buyer.supabase, "conversations", conversation.id);
+    if (!isServerNow(row.buyer_confirmed_at)) throw new Error(`buyer_confirmed_at: ${row.buyer_confirmed_at}`);
+  });
+  await check("Onay: tek taraf onayladığında meeting_confirmed_at boş kalır (P0-04)", async () => {
+    const row = await readRow(buyer.supabase, "conversations", conversation.id);
+    if (row.meeting_confirmed_at !== null) throw new Error(`meeting_confirmed_at: ${row.meeting_confirmed_at}`);
+  });
+  await check("Onay: alıcı kendi onayının tarihini değiştiremez / geri çekemez (P0-04)", async () => {
+    const notes = [];
+    for (const value of [FUTURE, null]) {
+      notes.push(await expectUnchanged(buyer.supabase, "conversations", conversation.id, { buyer_confirmed_at: value }));
+    }
+    return notes.join(", ");
+  });
+  await check("Puan: sadece alıcı onayladıyken reddedilir (P0-04)", () => expectRatingDenied(buyer, conversation.id, seller.id));
+  await check("Onay: meeting_confirmed_at doğrudan değiştirilemez (P0-04)", () =>
+    expectUnchanged(buyer.supabase, "conversations", conversation.id, { meeting_confirmed_at: new Date().toISOString() }),
+  );
+
+  // Second conversation: only the seller confirms.
+  await check("Puan: sadece satıcı onayladıyken reddedilir (P0-04)", async () => {
+    if (!secondConversation) throw new Error("ikinci konuşma oluşturulamadı");
+    must(
+      await seller.supabase.from("conversations").update({ seller_confirmed_at: PAST }).eq("id", secondConversation.id),
+      "satıcı onayı",
+    );
+    const notes = [
+      await expectRatingDenied(secondBuyer, secondConversation.id, seller.id),
+      await expectRatingDenied(seller, secondConversation.id, secondBuyer.id),
+    ];
+    return notes.join(", ");
+  });
+
+  await check("Onay: satıcı kendi onayını verir; iki onay sonrası meeting_confirmed_at dolar (P0-04)", async () => {
+    must(await seller.supabase.from("conversations").update({ seller_confirmed_at: PAST }).eq("id", conversation.id), "satıcı onayı");
+    const row = await readRow(seller.supabase, "conversations", conversation.id);
+    if (!isServerNow(row.seller_confirmed_at)) throw new Error(`seller_confirmed_at: ${row.seller_confirmed_at}`);
+    if (!isServerNow(row.meeting_confirmed_at)) throw new Error(`meeting_confirmed_at: ${row.meeting_confirmed_at}`);
+  });
+  await check("Onay: iki taraflı onaydan sonra meeting_confirmed_at doğrudan değiştirilemez (P0-04)", () =>
+    expectUnchanged(seller.supabase, "conversations", conversation.id, { meeting_confirmed_at: null }),
+  );
+
+  await check("Puan: iki taraf onaylayınca verilebilir; listing_id ve tarih sunucudan (P0-04)", async () => {
+    const rating = must(
+      await buyer.supabase
+        .from("ratings")
+        .insert({
+          rater_id: buyer.id,
+          ratee_id: seller.id,
+          conversation_id: conversation.id,
+          listing_id: foreignListing.id,
+          score: 5,
+          comment: RATING_MARK,
+          created_at: FUTURE,
+        })
+        .select("*")
+        .single(),
+      "puan verilemedi",
+    );
+    if (rating.listing_id !== listing.id) throw new Error(`listing_id: ${rating.listing_id}`);
+    if (!isServerNow(rating.created_at)) throw new Error(`created_at: ${rating.created_at}`);
+  });
+  await check("Puan: aynı konuşma için ikinci puan reddedilir", () => expectRatingDenied(buyer, conversation.id, seller.id));
+  await check("Puan: kendine puan reddedilir", () => expectRatingDenied(buyer, conversation.id, buyer.id));
+  await check("Puan: konuşma dışındaki kişiye puan reddedilir", () => expectRatingDenied(seller, conversation.id, outsider));
+  await check("Puan: 1-5 dışındaki puan reddedilir", () => expectRatingDenied(seller, conversation.id, buyer.id, 6));
 } catch (e) {
   results.push(["✗", `Kurulum adımı başarısız, kalan kontroller çalışmadı: ${e.message}`]);
 } finally {
   // ------------------------------------------------------------ cleanup
+  // Ratings outlive their conversation (conversation_id is set null), and users
+  // have no DELETE policy on ratings, so they go first, with the secret key.
+  if (secret) await client(secret).from("ratings").delete().eq("comment", RATING_MARK);
   for (const id of listingIds) await seller.supabase.from("listings").delete().eq("id", id);
-  if (conversationId) {
-    // Cascades from the listing; the secret key only helps if a pre-fix attack moved it elsewhere.
-    const { data: left } = await buyer.supabase.from("conversations").select("id").eq("id", conversationId);
-    if (left?.length && secret) await client(secret).from("conversations").delete().eq("id", conversationId);
-  }
-  for (const [owner, links] of [[seller, notificationLinks[seller.id]], [buyer, notificationLinks[buyer.id]]]) {
-    if (links.size) await owner.supabase.from("notifications").delete().in("link", [...links]);
+  // Conversations cascade from the listing; the secret key only helps if a pre-fix attack moved one elsewhere.
+  if (conversationIds.size && secret) await client(secret).from("conversations").delete().in("id", [...conversationIds]);
+  for (const [owner, links] of [seller, buyer, secondBuyer].map((u) => [u, notificationLinks[u.id]])) {
+    if (links.size) await owner.supabase.from("notifications").delete().in("link", [...links]).gte("created_at", STARTED);
   }
 
   const leftovers = [];
   const { data: ownListings } = await seller.supabase.from("listings").select("id").ilike("title", `${TEST_TITLE}%`);
   if (ownListings?.length) leftovers.push(`${ownListings.length} ilan`);
-  if (conversationId) {
-    const { data: conv } = await buyer.supabase.from("conversations").select("id").eq("id", conversationId);
-    if (conv?.length) leftovers.push("konuşma");
+  if (conversationIds.size) {
+    const { data: conv } = await admin.supabase.from("conversations").select("id").in("id", [...conversationIds]);
+    if (conv?.length) leftovers.push(`${conv.length} konuşma`);
   }
-  for (const [owner, links] of [[seller, notificationLinks[seller.id]], [buyer, notificationLinks[buyer.id]]]) {
+  const { data: ratings } = await anon.from("ratings").select("id").eq("comment", RATING_MARK);
+  if (ratings?.length) leftovers.push(`${ratings.length} puan${secret ? "" : " (SUPABASE_SECRET_KEY yok)"}`);
+  for (const [owner, links] of [seller, buyer, secondBuyer].map((u) => [u, notificationLinks[u.id]])) {
     if (!links.size) continue;
-    const { data: notes } = await owner.supabase.from("notifications").select("id").in("link", [...links]);
+    const { data: notes } = await owner.supabase.from("notifications").select("id").in("link", [...links]).gte("created_at", STARTED);
     if (notes?.length) leftovers.push(`${notes.length} bildirim`);
   }
   results.push(leftovers.length ? ["✗", `Test verisi temizlenemedi: ${leftovers.join(", ")}`] : ["✓", "Test verisi temizlendi (kalıntı yok)"]);
 
-  await Promise.all([seller, buyer, admin].map((u) => u.supabase.auth.signOut()));
+  await Promise.all([seller, buyer, admin, secondBuyer].map((u) => u.supabase.auth.signOut()));
 }
 
 console.log("\nGüvenlik kontrolleri:");
