@@ -216,9 +216,14 @@ await step("Ayarlar ve doğrulama sayfaları", async () => {
   await expectText(buyer, "Profil güveni");
 });
 
+// The test listing carries a script-breaking payload in its title and
+// description so the JSON-LD regression step below can check real pages.
+const XSS = "</script><script>alert(1)</script>";
+let newListingKey = "";
 let newListingTitle = "";
 await step("İlan verme sihirbazı (fotoğraf yükleme dahil)", async () => {
-  newListingTitle = `E2E test lambası ${Date.now() % 100000}`;
+  newListingKey = `E2E test lambası ${Date.now() % 100000}`;
+  newListingTitle = `${newListingKey} ${XSS}`;
   await buyer.goto(`${BASE}/ilan-ver/fotograflar`);
   await buyer.locator('input[type="file"]').setInputFiles("public/images/demo-chair.jpg");
   await buyer.getByText("1 / 10 fotoğraf eklendi").waitFor({ timeout: 30000 });
@@ -226,7 +231,7 @@ await step("İlan verme sihirbazı (fotoğraf yükleme dahil)", async () => {
   await buyer.waitForURL(/detaylar/);
   await buyer.getByLabel("Başlık").fill(newListingTitle);
   await buyer.locator("main form select").first().selectOption("ev-aletleri");
-  await buyer.getByLabel("Açıklama").fill("Otomatik test ile oluşturuldu.");
+  await buyer.getByLabel("Açıklama").fill(`Otomatik test ile oluşturuldu. ${XSS}`);
   await buyer.getByRole("button", { name: "Devam et" }).click();
   await buyer.waitForURL(/fiyat-konum/);
   await buyer.getByLabel("Fiyat").fill("750");
@@ -260,9 +265,70 @@ await step("İlan onaylama", async () => {
   await expectText(admin, "yayına alındı");
 });
 
+let newListingPath = "";
 await step("Onaylanan ilan herkese açık", async () => {
-  await guest.goto(`${BASE}/ilanlar?q=${encodeURIComponent(newListingTitle)}`);
-  await guest.locator("article", { hasText: newListingTitle }).waitFor({ timeout: 15000 });
+  // Search strips "(" and ")", so look the listing up by its plain prefix.
+  await guest.goto(`${BASE}/ilanlar?q=${encodeURIComponent(newListingKey)}`);
+  const card = guest.locator("article", { hasText: newListingKey });
+  await card.waitFor({ timeout: 15000 });
+  newListingPath = (await card.locator('a[href^="/ilan/"]').first().getAttribute("href")) ?? "";
+});
+
+await step("JSON-LD XSS regresyonu: başlık, açıklama ve satıcı adı (P0-01)", async () => {
+  // Give the seller a script-breaking display name for the duration of the check.
+  await buyer.goto(`${BASE}/hesabim/duzenle`);
+  const nameField = buyer.getByLabel("Görünen ad");
+  const originalName = await nameField.inputValue();
+  // The field has maxLength=40, so keep the hostile name short enough to survive intact.
+  const hostileName = `E2E ${XSS}`;
+  const saveName = async (value) => {
+    await buyer.goto(`${BASE}/hesabim/duzenle`);
+    await nameField.fill(value);
+    const filled = await nameField.inputValue();
+    if (filled !== value) throw new Error(`görünen ad alanı değeri kırptı: ${filled}`);
+    await buyer.getByRole("button", { name: "Kaydet" }).click();
+    await expectText(buyer, "Profilin kaydedildi.");
+  };
+
+  let alerted = false;
+  const onDialog = async (dialog) => {
+    alerted = true;
+    await dialog.dismiss();
+  };
+  guest.on("dialog", onDialog);
+
+  await saveName(hostileName);
+  try {
+    if (!newListingPath) throw new Error("test ilanının adresi bulunamadı");
+    await guest.goto(`${BASE}${newListingPath}`);
+    const ownSellerPath = await guest.locator('a[href^="/satici/"]').first().getAttribute("href");
+    if (!ownSellerPath) throw new Error("test ilanının satıcı adresi bulunamadı");
+    const pages = [
+      [newListingPath, [newListingTitle, `Otomatik test ile oluşturuldu. ${XSS}`, hostileName]],
+      [ownSellerPath, [hostileName]],
+      [`/ilanlar?q=${encodeURIComponent(newListingKey)}`, [newListingTitle]],
+    ];
+    for (const [path, expected] of pages) {
+      // Raw server HTML, before the browser gets a chance to repair anything.
+      const html = await (await guest.request.get(`${BASE}${path}`)).text();
+      if (html.includes(XSS)) throw new Error(`${path}: ham HTML'de kaçışsız payload var`);
+      const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+      if (!blocks.length) throw new Error(`${path}: JSON-LD bulunamadı`);
+      // Every block must still be valid JSON that round-trips the original text.
+      const strings = JSON.stringify(blocks.map((b) => JSON.parse(b)));
+      for (const value of expected) {
+        if (!strings.includes(JSON.stringify(value).slice(1, -1))) {
+          throw new Error(`${path}: JSON-LD beklenen metni içermiyor: ${value.slice(0, 40)}`);
+        }
+      }
+      await guest.goto(`${BASE}${path}`);
+      await guest.waitForLoadState("networkidle");
+    }
+    if (alerted) throw new Error("payload tarayıcıda çalıştı (alert açıldı)");
+  } finally {
+    guest.off("dialog", onDialog);
+    await saveName(originalName);
+  }
 });
 
 await step("Satıcıya onay bildirimi gitti", async () => {

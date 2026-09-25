@@ -1,0 +1,13 @@
+-- notify() is SECURITY DEFINER and lives in the API-exposed public schema, so
+-- anyone holding the publishable key could call POST /rest/v1/rpc/notify and
+-- plant notifications with arbitrary text and links in any user's inbox.
+--
+-- Only the notification triggers need it (on_message_created,
+-- on_listing_status_changed, on_rating_created, on_sanction_created,
+-- on_verification_resolved). They are SECURITY DEFINER functions owned by the
+-- same role as notify(), so they keep calling it with the owner's rights.
+-- Client-facing RPCs such as send_announcement do not use notify() and are
+-- left untouched.
+--
+-- Safe to re-run: REVOKE of a privilege that is not held is a no-op.
+revoke execute on function public.notify(uuid, text, text, text, text) from public, anon, authenticated;
