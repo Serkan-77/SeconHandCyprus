@@ -8,6 +8,8 @@ import { TextLink } from "@/components/ui/TextLink";
 import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { signUp } from "@/lib/actions/auth";
+import { GoogleButton, OrDivider } from "@/components/GoogleButton";
+import { AUTH_METHODS } from "@/lib/site";
 
 export default function RegisterPage() {
   const [state, action, pending] = useActionState(signUp, undefined);
@@ -34,6 +36,12 @@ export default function RegisterPage() {
   return (
     <AuthLayout title="Adaya hoş geldin." backHref="/" backLabel="Keşfetmeye dön">
       <p className="text-sm text-muted">Birkaç bilgiyle, sen de ilan verip mesajlaşmaya başla.</p>
+      {AUTH_METHODS.google ? (
+        <div className="mt-5 flex flex-col gap-4">
+          <GoogleButton returnTo="/kurulum" />
+          <OrDivider />
+        </div>
+      ) : null}
 
       <form action={action} className="mt-5 flex flex-col gap-5">
         <Field label="Ad Soyad" name="name" autoComplete="name" required minLength={2} />

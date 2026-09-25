@@ -8,8 +8,18 @@ import { TextLink } from "@/components/ui/TextLink";
 import { Icon } from "@/components/icons";
 import { FormError } from "@/components/ui/FormError";
 import { signIn, signInWithPhone } from "@/lib/actions/auth";
+import { GoogleButton, OrDivider } from "@/components/GoogleButton";
+import { AUTH_METHODS } from "@/lib/site";
 
-export function LoginForm({ returnTo, linkError }: { returnTo: string; linkError: boolean }) {
+export function LoginForm({
+  returnTo,
+  linkError,
+  googleError,
+}: {
+  returnTo: string;
+  linkError: boolean;
+  googleError: boolean;
+}) {
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [emailState, emailAction, emailPending] = useActionState(signIn, undefined);
   const [phoneState, phoneAction, phonePending] = useActionState(signInWithPhone, undefined);
@@ -22,24 +32,36 @@ export function LoginForm({ returnTo, linkError }: { returnTo: string; linkError
       {linkError ? (
         <FormError className="mt-5">Bağlantının süresi dolmuş ya da daha önce kullanılmış. Tekrar giriş yap.</FormError>
       ) : null}
+      {googleError ? (
+        <FormError className="mt-5">Google ile giriş şu anda yapılamadı. E-posta ile dene.</FormError>
+      ) : null}
 
-      <div className="mt-5 flex gap-0 border-b border-border" role="tablist">
-        {(["email", "phone"] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            role="tab"
-            aria-selected={mode === tab}
-            onClick={() => setMode(tab)}
-            className={
-              "flex-1 border-b-2 px-1 py-3 text-xs " +
-              (mode === tab ? "border-brand font-semibold text-brand" : "border-transparent text-muted")
-            }
-          >
-            {tab === "email" ? "E-posta" : "Telefon"}
-          </button>
-        ))}
-      </div>
+      {AUTH_METHODS.google ? (
+        <div className="mt-5 flex flex-col gap-4">
+          <GoogleButton returnTo={returnTo} />
+          <OrDivider />
+        </div>
+      ) : null}
+
+      {AUTH_METHODS.phone ? (
+        <div className="mt-5 flex gap-0 border-b border-border" role="tablist">
+          {(["email", "phone"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={mode === tab}
+              onClick={() => setMode(tab)}
+              className={
+                "flex-1 border-b-2 px-1 py-3 text-xs " +
+                (mode === tab ? "border-brand font-semibold text-brand" : "border-transparent text-muted")
+              }
+            >
+              {tab === "email" ? "E-posta" : "Telefon"}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {mode === "email" ? (
         <form action={emailAction} className="mt-5 flex flex-col gap-5">

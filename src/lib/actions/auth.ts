@@ -43,6 +43,17 @@ export async function signIn(_: FormState, formData: FormData): Promise<FormStat
   redirect(safeReturnTo(formData.get("returnTo")));
 }
 
+export async function signInWithGoogle(formData: FormData) {
+  const returnTo = safeReturnTo(formData.get("returnTo"));
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${await siteOrigin()}/auth/callback?next=${encodeURIComponent(returnTo)}` },
+  });
+  if (error || !data.url) redirect("/giris?hata=google");
+  redirect(data.url);
+}
+
 export async function signInWithPhone(_: FormState, formData: FormData): Promise<FormState> {
   const phone = String(formData.get("phone") ?? "").replace(/\s/g, "");
   if (!/^\+?\d{10,15}$/.test(phone)) return { error: "Geçerli bir telefon numarası gir." };

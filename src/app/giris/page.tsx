@@ -8,5 +8,5 @@ export default async function LoginPage({
   searchParams: Promise<{ returnTo?: string; hata?: string }>;
 }) {
   const { returnTo, hata } = await searchParams;
-  return <LoginForm returnTo={returnTo ?? "/"} linkError={hata === "baglanti"} />;
+  return <LoginForm returnTo={returnTo ?? "/"} linkError={hata === "baglanti"} googleError={hata === "google"} />;
 }
