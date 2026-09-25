@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { REGION_COOKIE, regionNames } from "@/lib/regions";
 import { safeInternalPath } from "@/lib/safeRedirect";
 import { firstError, phoneSchema, profileSchema, supportSchema } from "@/lib/validation";
-import { rateLimitMessage } from "@/lib/dbErrors";
+import { accountDeletionMessage, rateLimitMessage } from "@/lib/dbErrors";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -117,7 +117,7 @@ export async function deleteAccount(): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
   const { error } = await supabase.rpc("delete_my_account");
-  if (error) return { error: "Hesap silinemedi. Destek ekibiyle iletişime geç." };
+  if (error) return { error: accountDeletionMessage(error) ?? "Hesap silinemedi. Destek ekibiyle iletişime geç." };
   await supabase.auth.signOut();
   redirect("/");
 }

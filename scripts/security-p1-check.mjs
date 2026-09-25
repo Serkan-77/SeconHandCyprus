@@ -291,6 +291,49 @@ try {
     if (!readError && data?.length) throw new Error("rate_limit_events okunabiliyor");
     return note;
   });
+
+  // ==================================================================== Batch 5
+  // ------------------------------------------------------------ P1-08 abuse evidence
+  const scammer = await tempUser("scammer");
+  const witness = await tempUser("witness");
+  const scamListing = await newListing(scammer, `${MARK} scam listing`);
+  await check("P1-08: ilan silinince şikayet ve ilanın kaydı (snapshot) kalır", async () => {
+    const r = must(
+      await witness.supabase.from("reports").insert({ reporter_id: witness.id, listing_id: scamListing.id, reason: "Dolandırıcılık", detail: MARK }).select("id").single(),
+      "şikayet",
+    );
+    must(await scammer.supabase.from("listings").delete().eq("id", scamListing.id).select("id"), "ilanı sil");
+    const kept = must(await service.from("reports").select("listing_id, target_snapshot").eq("id", r.id).maybeSingle(), "şikayet oku");
+    if (!kept) throw new Error("şikayet ilanla birlikte silindi");
+    if (kept.listing_id !== null || kept.target_snapshot?.listing?.title !== `${MARK} scam listing`) throw new Error(JSON.stringify(kept));
+  });
+  await check("P1-08: aynı hedefe ikinci açık şikayet 23505; kendini şikayet 23514; sahte durum pending olur", async () => {
+    const first = must(
+      await witness.supabase.from("reports").insert({ reporter_id: witness.id, reported_user_id: scammer.id, reason: "Spam", detail: MARK, status: "resolved" }).select("status").single(),
+      "şikayet",
+    );
+    if (first.status !== "pending") throw new Error(`durum sahtelendi: ${first.status}`);
+    const dup = await witness.supabase.from("reports").insert({ reporter_id: witness.id, reported_user_id: scammer.id, reason: "Yine spam", detail: MARK });
+    if (dup.error?.code !== "23505") throw new Error(`ikinci şikayet: ${dup.error?.code ?? "kabul edildi"}`);
+    const self = await scammer.supabase.from("reports").insert({ reporter_id: scammer.id, reported_user_id: scammer.id, reason: "Spam", detail: MARK });
+    if (self.error?.code !== "23514") throw new Error(`kendini şikayet: ${self.error?.code ?? "kabul edildi"}`);
+    return "23505, 23514";
+  });
+  await check("P1-08: kısıtlı hesap kendini silemez (PT403)", async () => {
+    must(await admin.supabase.from("sanctions").insert({ user_id: scammer.id, kind: "suspend", reason: MARK, created_by: admin.id }), "askıya al");
+    const { error } = await scammer.supabase.rpc("delete_my_account");
+    if (error?.code !== "PT403") throw new Error(`beklenen PT403, gelen: ${error?.code ?? "hesap silindi"}`);
+    must(await admin.supabase.from("sanctions").insert({ user_id: scammer.id, kind: "lift", reason: MARK, created_by: admin.id }), "kaldır");
+  });
+  await check("P1-08: hesap silinince hakkındaki şikayet ve yaptırım geçmişi kalır", async () => {
+    must(await scammer.supabase.rpc("delete_my_account"), "hesabı sil");
+    const { data: reports } = await service.from("reports").select("reported_user_id, target_snapshot").like("detail", `${MARK}%`).eq("reason", "Spam");
+    const aboutHim = (reports ?? []).filter((r) => r.target_snapshot?.user?.id === scammer.id);
+    if (!aboutHim.length || aboutHim.some((r) => r.reported_user_id !== null)) throw new Error(`şikayet: ${JSON.stringify(reports)}`);
+    const { data: sanctions } = await service.from("sanctions").select("user_id, subject_name").eq("subject_user_id", scammer.id);
+    if ((sanctions ?? []).length < 2 || sanctions.some((s) => s.user_id !== null)) throw new Error(`yaptırım: ${JSON.stringify(sanctions)}`);
+    return `${aboutHim.length} şikayet, ${sanctions.length} yaptırım korundu`;
+  });
 } catch (e) {
   kit.results.push(["✗", `Kurulum adımı başarısız, kalan kontroller çalışmadı: ${e.message}`]);
 } finally {

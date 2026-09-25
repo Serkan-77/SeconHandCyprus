@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/queries";
 import { formatDate } from "@/lib/format";
 import { reportStatus } from "@/lib/adminLabels";
+import { snapshotLabel, type ReportSnapshot } from "@/lib/reportSnapshot";
 import { ResolveReportForm } from "./ResolveReportForm";
 
 export const metadata = { title: "Yönetim · Şikayet", robots: { index: false } };
@@ -35,6 +36,8 @@ async function ReportDetail({ id }: { id: string }) {
   const listing = one(report.listing) as { id: string; title: string; status: string } | null;
   const reported = one(report.reported) as { id: string; display_name: string } | null;
   const reporter = one(report.reporter) as { id: string; display_name: string } | null;
+  const snapshot = report.target_snapshot as ReportSnapshot | null;
+  const snapListing = snapshot?.listing;
   const s = reportStatus[report.status];
 
   return (
@@ -63,7 +66,7 @@ async function ReportDetail({ id }: { id: string }) {
                 Kullanıcı · {reported.display_name}
               </Link>
             ) : (
-              "Silinmiş içerik"
+              snapshotLabel(snapshot)
             )}
           </p>
           <p className="mt-1 text-xs text-muted">
@@ -80,6 +83,34 @@ async function ReportDetail({ id }: { id: string }) {
           <p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed">
             {report.detail || <span className="text-muted">Bildiren kullanıcı ek açıklama bırakmadı.</span>}
           </p>
+          {snapListing ? (
+            <div className="mt-4 rounded-lg border border-border p-3 text-xs">
+              <p className="font-semibold">
+                Şikayet anındaki ilan{listing ? "" : " (ilan silinmiş)"}
+                {snapshot?.captured_at ? ` · ${formatDate(snapshot.captured_at)}` : ""}
+              </p>
+              <p className="mt-1">
+                {snapListing.title}
+                {snapListing.ref_no ? ` · #${snapListing.ref_no}` : ""}
+                {snapListing.price != null ? ` · ${snapListing.price} ${snapListing.currency ?? ""}` : ""}
+                {snapListing.city ? ` · ${snapListing.city}` : ""}
+              </p>
+              <p className="mt-1 text-muted">
+                Satıcı:{" "}
+                {snapListing.seller_id ? (
+                  <Link href={`/yonetim/kullanicilar/${snapListing.seller_id}`} className="text-accent">
+                    {snapListing.seller_name ?? "—"}
+                  </Link>
+                ) : (
+                  (snapListing.seller_name ?? "—")
+                )}
+                {snapListing.images?.length ? ` · ${snapListing.images.length} fotoğraf` : ""}
+              </p>
+              {snapListing.description ? (
+                <p className="mt-2 whitespace-pre-line text-muted">{snapListing.description}</p>
+              ) : null}
+            </div>
+          ) : null}
           {report.resolution_note ? (
             <p className="mt-4 rounded-lg bg-brand-soft p-3 text-xs">
               <b>Moderasyon notu:</b> {report.resolution_note}

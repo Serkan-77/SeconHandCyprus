@@ -6,6 +6,7 @@ import { one } from "@/lib/queries";
 import { formatDate } from "@/lib/format";
 import { reportStatus } from "@/lib/adminLabels";
 import { cn } from "@/lib/cn";
+import { snapshotLabel, type ReportSnapshot } from "@/lib/reportSnapshot";
 
 export const metadata = { title: "Yönetim · Şikayetler", robots: { index: false } };
 
@@ -23,7 +24,7 @@ async function Reports({ showResolved }: { showResolved: boolean }) {
   let query = supabase
     .from("reports")
     .select(
-      "id, reason, status, created_at, listing:listings(title), reported:profiles!reports_reported_user_id_fkey(display_name), reporter:profiles!reports_reporter_id_fkey(display_name)",
+      "id, reason, status, created_at, target_snapshot, listing:listings(title), reported:profiles!reports_reported_user_id_fkey(display_name), reporter:profiles!reports_reporter_id_fkey(display_name)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -83,7 +84,11 @@ async function Reports({ showResolved }: { showResolved: boolean }) {
                   <tr key={r.id} className="border-b border-border last:border-0">
                     <td className="p-3 font-medium">{r.reason}</td>
                     <td className="max-w-[220px] truncate p-3 text-muted">
-                      {listing ? listing.title : `Kullanıcı: ${reported?.display_name ?? "—"}`}
+                      {listing
+                        ? listing.title
+                        : reported
+                          ? `Kullanıcı: ${reported.display_name}`
+                          : snapshotLabel(r.target_snapshot as ReportSnapshot | null)}
                     </td>
                     <td className="p-3 text-muted">{reporter?.display_name ?? "Silinmiş kullanıcı"}</td>
                     <td className="p-3 text-muted">{formatDate(r.created_at)}</td>

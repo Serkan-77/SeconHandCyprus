@@ -220,6 +220,17 @@ async function removeSeedUsers() {
   await supabase.from("support_tickets").delete().eq("email", "ziyaretci@example.com");
   await supabase.from("support_tickets").delete().like("email", `%@${SEED_DOMAIN}`);
   await supabase.from("announcements").delete().eq("title", "Kıbrıs İkinci El yayında!");
+  // Reports and sanctions outlive deleted accounts and listings (P1-08), so
+  // the seed's own moderation history is removed explicitly.
+  const ids = doomed.map((u) => u.id);
+  if (ids.length) {
+    const { data: owned } = await supabase.from("listings").select("id").in("seller_id", ids);
+    const listingIds = (owned ?? []).map((l) => l.id);
+    await supabase.from("reports").delete().in("reporter_id", ids);
+    await supabase.from("reports").delete().in("reported_user_id", ids);
+    if (listingIds.length) await supabase.from("reports").delete().in("listing_id", listingIds);
+    await supabase.from("sanctions").delete().in("user_id", ids);
+  }
   for (const user of doomed) {
     const { data: files } = await supabase.storage.from("listing-images").list(user.id, { limit: 1000 });
     if (files?.length) await supabase.storage.from("listing-images").remove(files.map((f) => `${user.id}/${f.name}`));

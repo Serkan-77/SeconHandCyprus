@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { firstError, listingCreateSchema, listingUpdateSchema, reportSchema } from "@/lib/validation";
-import { rateLimitMessage } from "@/lib/dbErrors";
+import { rateLimitMessage, reportErrorMessage } from "@/lib/dbErrors";
 
 type Result = { error?: string; ok?: boolean };
 /** review: an approved listing's content changed, so it went back to moderation (P1-01). */
@@ -200,7 +200,7 @@ export async function reportListing(listingId: string, reason: string, detail: s
   const { error } = await supabase
     .from("reports")
     .insert({ reporter_id: user.id, listing_id: listingId, reason: parsed.data.reason, detail: parsed.data.detail });
-  if (error) return { error: dbError(error) };
+  if (error) return { error: reportErrorMessage(error) ?? dbError(error) };
   return { ok: true };
 }
 
