@@ -442,6 +442,117 @@ try {
     );
     return `RPC 42501, ${note}`;
   });
+
+  // ==================================================================== Batch 11
+  // ------------------------------------------------------------ P1-16 authorization boundaries
+  // Two throwaway accounts: alice tries to act on bob's things and on admin-only data.
+  const alice = await tempUser("alice");
+  const bob = await tempUser("bob");
+  const bobListing = await newListing(bob, `${MARK} bob listing`);
+  const exists = async (id) => ((await service.from("listings").select("id").eq("id", id)).data ?? []).length === 1;
+  await check("P1-16: başkasının ilanı düzenlenemez / silinemez / durumu değiştirilemez / fotoğraf eklenemez", async () => {
+    const notes = [
+      await expectRefused(alice.supabase.from("listings").update({ price: 1 }).eq("id", bobListing.id).select("id"), "düzenleme"),
+      await expectRefused(alice.supabase.from("listings").update({ status: "removed" }).eq("id", bobListing.id).select("id"), "durum"),
+      await expectRefused(alice.supabase.from("listings").delete().eq("id", bobListing.id).select("id"), "silme"),
+      await expectRefused(
+        alice.supabase.from("listing_images").insert({ listing_id: bobListing.id, path: `${alice.id}/x.png`, position: 0 }).select("id"),
+        "fotoğraf",
+      ),
+    ];
+    const { data: after } = await service.from("listings").select("price, status").eq("id", bobListing.id).single();
+    if (!(await exists(bobListing.id)) || Number(after.price) !== 10 || after.status !== "active") throw new Error(`ilan değişti: ${JSON.stringify(after)}`);
+    return notes.join(", ");
+  });
+  await check("P1-16: kullanıcı kendi ilanını onaylayamaz / vitrine alamaz", async () => {
+    const mine = await newListing(alice, `${MARK} alice pending`, { approve: false });
+    const note = await expectRefused(alice.supabase.from("listings").update({ status: "active" }).eq("id", mine.id).select("id"), "onay");
+    await alice.supabase.from("listings").update({ featured: true }).eq("id", mine.id);
+    const { data } = await service.from("listings").select("status, featured").eq("id", mine.id).single();
+    if (data.status !== "pending" || data.featured) throw new Error(JSON.stringify(data));
+    return note;
+  });
+  await check("P1-16: normal kullanıcı admin işlemi yapamaz (yaptırım, şikayet çözme, doğrulama onayı, kategori, duyuru)", async () => {
+    const report = must(
+      await alice.supabase.from("reports").insert({ reporter_id: alice.id, listing_id: bobListing.id, reason: "Spam", detail: MARK }).select("id").single(),
+      "şikayet",
+    );
+    const { data: pending } = await service.from("verification_requests").select("id").eq("status", "pending").neq("user_id", alice.id).limit(1);
+    const notes = [
+      await expectRefused(alice.supabase.from("sanctions").insert({ user_id: bob.id, kind: "suspend", reason: MARK }).select("id"), "yaptırım"),
+      await expectRefused(alice.supabase.from("reports").update({ status: "resolved", resolution_note: MARK }).eq("id", report.id).select("id"), "şikayet çözme"),
+      await expectRefused(alice.supabase.from("categories").insert({ name: MARK, slug: MARK, icon: "box", sort_order: 999 }).select("id"), "kategori"),
+    ];
+    if (pending?.length) {
+      notes.push(await expectRefused(alice.supabase.from("verification_requests").update({ status: "approved" }).eq("id", pending[0].id).select("id"), "doğrulama onayı"));
+    }
+    const { error } = await alice.supabase.rpc("send_announcement", { p_audience: "Herkes", p_title: MARK, p_body: MARK });
+    if (!error) throw new Error("duyuru gönderildi");
+    notes.push("duyuru: reddedildi");
+    const { data: sanctions } = await service.from("sanctions").select("id").eq("user_id", bob.id);
+    if (sanctions?.length) throw new Error("yaptırım yazıldı");
+    return notes.join(", ");
+  });
+  await check("P1-16: başkasının özel verisi okunamaz (telefon/e-posta, bildirim, destek, başkasının şikayetleri, konuşmaları)", async () => {
+    const leaks = [];
+    const probes = [
+      ["profile_private", alice.supabase.from("profile_private").select("id").eq("id", seller.id)],
+      ["notifications", alice.supabase.from("notifications").select("id").eq("user_id", seller.id).limit(1)],
+      ["support_tickets", alice.supabase.from("support_tickets").select("id").limit(1)],
+      ["reports (başkası)", alice.supabase.from("reports").select("id").neq("reporter_id", alice.id).limit(1)],
+      ["conversations", alice.supabase.from("conversations").select("id").or(`buyer_id.eq.${seller.id},seller_id.eq.${seller.id}`).limit(1)],
+      ["messages", alice.supabase.from("messages").select("id").limit(1)],
+      ["favorites", alice.supabase.from("favorites").select("user_id").eq("user_id", seller.id).limit(1)],
+      ["verification_requests", alice.supabase.from("verification_requests").select("id").neq("user_id", alice.id).limit(1)],
+    ];
+    for (const [name, query] of probes) {
+      const { data } = await query;
+      if (data?.length) leaks.push(name);
+    }
+    if (leaks.length) throw new Error(`okunabildi: ${leaks.join(", ")}`);
+    return `${probes.length} tablo kapalı`;
+  });
+  await check("P1-16: engellenen kullanıcıyla iki yönde de mesajlaşılamaz", async () => {
+    const aliceListing = await newListing(alice, `${MARK} alice active`);
+    const chat = must(
+      await bob.supabase.from("conversations").insert({ listing_id: aliceListing.id, buyer_id: bob.id, seller_id: alice.id }).select("id").single(),
+      "konuşma",
+    );
+    conversationIds.add(chat.id);
+    must(await bob.supabase.from("messages").insert({ conversation_id: chat.id, sender_id: bob.id, body: `${MARK} merhaba` }), "ilk mesaj");
+    must(await alice.supabase.from("blocks").insert({ blocker_id: alice.id, blocked_id: bob.id }), "engelle");
+    const notes = [
+      await expectRefused(bob.supabase.from("messages").insert({ conversation_id: chat.id, sender_id: bob.id, body: `${MARK} engelli` }).select("id"), "engellenen"),
+      await expectRefused(alice.supabase.from("messages").insert({ conversation_id: chat.id, sender_id: alice.id, body: `${MARK} engelleyen` }).select("id"), "engelleyen"),
+      await expectRefused(bob.supabase.from("blocks").delete().eq("blocker_id", alice.id).eq("blocked_id", bob.id).select("blocker_id"), "engeli kaldırma (başkası)"),
+    ];
+    return notes.join(", ");
+  });
+  await check("P1-16: Storage — başkasının klasörüne yükleme / üzerine yazma / silme yapılamaz", async () => {
+    const path = `${bob.id}/p1-own.png`;
+    must(await bob.supabase.storage.from("listing-images").upload(path, png, { contentType: "image/png" }), "bob yükler");
+    const notes = [];
+    const upload = await alice.supabase.storage.from("listing-images").upload(`${bob.id}/p1-intruder.png`, png, { contentType: "image/png" });
+    if (!upload.error) throw new Error("başkasının klasörüne yüklendi");
+    notes.push("yükleme reddedildi");
+    const overwrite = await alice.supabase.storage.from("listing-images").upload(path, png, { contentType: "image/png", upsert: true });
+    if (!overwrite.error) throw new Error("başkasının dosyasının üzerine yazıldı");
+    notes.push("üzerine yazma reddedildi");
+    await alice.supabase.storage.from("listing-images").remove([path]);
+    const { data: files } = await service.storage.from("listing-images").list(bob.id, { limit: 10 });
+    if (!files?.some((f) => f.name === "p1-own.png")) throw new Error("başkasının dosyası silindi");
+    notes.push("silme etkisiz");
+    const avatar = await alice.supabase.storage.from("avatars").upload(`${bob.id}/avatar.png`, png, { contentType: "image/png" });
+    if (!avatar.error) throw new Error("başkasının avatar klasörüne yüklendi");
+    return notes.join(", ");
+  });
+  await check("P1-16: hesap silme yalnızca oturum sahibinin hesabını siler; anonim çağıramaz", async () => {
+    const { error } = await anon.rpc("delete_my_account");
+    if (!error) throw new Error("anonim çağrı hata vermedi");
+    const { data: user } = await service.auth.admin.getUserById(bob.id);
+    if (!user?.user) throw new Error("bob silinmiş");
+    return `anonim: ${error.code ?? "reddedildi"}`;
+  });
 } catch (e) {
   kit.results.push(["✗", `Kurulum adımı başarısız, kalan kontroller çalışmadı: ${e.message}`]);
 } finally {
