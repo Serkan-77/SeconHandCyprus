@@ -1,38 +1,60 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_KEY, SUPABASE_URL, isSupabaseConfigured } from "@/lib/supabase/env";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { regionNames } from "@/lib/regions";
+import { absoluteUrl } from "@/lib/site";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticPages = ["", "/ilanlar", "/kategori", "/yardim", "/destek", "/kosullar", "/gizlilik"].map((path) => ({
-    url: `${siteUrl}${path}`,
-    changeFrequency: "daily" as const,
-    priority: path === "" ? 1 : 0.6,
-  }));
-  if (!isSupabaseConfigured) return staticPages;
+  const pages: MetadataRoute.Sitemap = [
+    { url: absoluteUrl("/"), changeFrequency: "daily", priority: 1 },
+    { url: absoluteUrl("/ilanlar"), changeFrequency: "hourly", priority: 0.9 },
+    { url: absoluteUrl("/kategori"), changeFrequency: "weekly", priority: 0.7 },
+    ...regionNames.map((city) => ({
+      url: absoluteUrl(`/ilanlar?sehir=${encodeURIComponent(city)}`),
+      changeFrequency: "daily" as const,
+      priority: 0.6,
+    })),
+    ...["/hakkimizda", "/yardim", "/destek", "/kosullar", "/gizlilik", "/cerez-politikasi"].map((path) => ({
+      url: absoluteUrl(path),
+      changeFrequency: "monthly" as const,
+      priority: 0.3,
+    })),
+  ];
+  if (!isSupabaseConfigured) return pages;
 
   // Anonymous client: the sitemap only lists what the public can see.
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
   const [{ data: listings }, { data: categories }] = await Promise.all([
-    supabase.from("listings").select("slug, updated_at").eq("status", "active").order("updated_at", { ascending: false }).limit(5000),
+    supabase
+      .from("listings")
+      .select("slug, seller_id, updated_at")
+      .eq("status", "active")
+      .order("updated_at", { ascending: false })
+      .limit(10000),
     supabase.from("categories").select("slug"),
   ]);
 
+  const sellers = [...new Set((listings ?? []).map((l) => l.seller_id))];
+
   return [
-    ...staticPages,
+    ...pages,
     ...(categories ?? []).map((c) => ({
-      url: `${siteUrl}/ilanlar?kategori=${c.slug}`,
+      url: absoluteUrl(`/kategori/${c.slug}`),
       changeFrequency: "daily" as const,
-      priority: 0.7,
+      priority: 0.8,
     })),
     ...(listings ?? []).map((l) => ({
-      url: `${siteUrl}/ilan/${l.slug}`,
+      url: absoluteUrl(`/ilan/${l.slug}`),
       lastModified: l.updated_at,
       changeFrequency: "weekly" as const,
-      priority: 0.8,
+      priority: 0.7,
+    })),
+    ...sellers.map((id) => ({
+      url: absoluteUrl(`/satici/${id}`),
+      changeFrequency: "weekly" as const,
+      priority: 0.4,
     })),
   ];
 }

@@ -10,7 +10,12 @@ const UUID = /^[0-9a-f-]{36}$/i;
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const seller = UUID.test(id) ? await getSellerSummary(id) : null;
-  return { title: seller ? `${seller.displayName} — satıcı profili` : "Satıcı bulunamadı" };
+  if (!seller) return { title: "Satıcı bulunamadı" };
+  return {
+    title: `${seller.displayName} — satıcı profili`,
+    description: `${seller.displayName} kullanıcısının Kıbrıs İkinci El'deki ${seller.activeListings} aktif ilanı ve ${seller.ratingCount} değerlendirmesi.`,
+    alternates: { canonical: `/satici/${id}` },
+  };
 }
 
 export default async function SellerProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,7 +27,7 @@ export default async function SellerProfilePage({ params }: { params: Promise<{ 
 
   return (
     <div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6">
-      <Breadcrumbs items={["Satıcı", seller.displayName]} />
+      <Breadcrumbs items={[seller.displayName]} />
       <SellerHeader seller={seller} active="profil" />
       <h2 className="mb-5 text-lg font-semibold">Aktif ilanları</h2>
       <ListingGrid items={items} columns={3} empty={`${seller.displayName} şu an aktif bir ilan yayınlamıyor.`} />

@@ -32,7 +32,7 @@ export default async function CategoriesPage() {
         {categories.map((cat, i) => (
             <Link
               key={cat.slug}
-              href={`/ilanlar?kategori=${cat.slug}`}
+              href={`/kategori/${cat.slug}`}
               className="flex flex-col items-center gap-3 rounded-2xl border border-border p-6 text-center text-sm transition hover:border-accent hover:bg-accent-soft"
             >
               <span className="grid h-16 w-16 place-items-center rounded-2xl bg-bg">

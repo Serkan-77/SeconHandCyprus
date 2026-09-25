@@ -9,6 +9,9 @@ import { ReportListingButton } from "@/components/ReportListingButton";
 import { SellerCard } from "@/components/SellerCard";
 import { MapPreview } from "@/components/MapPreview";
 import { ListingGrid } from "@/components/ListingGrid";
+import { AdSlot } from "@/components/AdSlot";
+import { JsonLd } from "@/components/JsonLd";
+import { absoluteUrl } from "@/lib/site";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { MessageSellerButton } from "@/components/MessageSellerButton";
 import { LinkButton } from "@/components/ui/Button";
@@ -37,11 +40,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const price = formatPrice(listing.price, listing.currency);
   return {
     title: `${listing.title} — ${price}`,
+    alternates: { canonical: `/ilan/${listing.slug}` },
+    // Sold or pending listings stay reachable for their owner but should not be indexed.
+    robots: listing.status === "active" ? undefined : { index: false, follow: true },
     description: (listing.description || `${listing.title}, ${listing.city}`).slice(0, 160),
     openGraph: {
       title: `${listing.title} · ${price}`,
       description: `${listing.city} · ${listing.condition}`,
-      images: images[0] ? [{ url: publicImageUrl(images[0].path) }] : undefined,
+      type: "website",
+      images: images[0] ? [{ url: publicImageUrl(images[0].path), alt: listing.title }] : undefined,
     },
   };
 }
@@ -87,9 +94,36 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const price = formatPrice(listing.price, listing.currency);
   const location = listing.district ? `${listing.city}, ${listing.district}` : listing.city;
 
+  const product = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: listing.title,
+    description: listing.description || listing.title,
+    sku: `KB${listing.ref_no}`,
+    image: images.filter((src) => src.startsWith("http")),
+    category: category?.name,
+    offers: {
+      "@type": "Offer",
+      url: absoluteUrl(`/ilan/${listing.slug}`),
+      price: Number(listing.price),
+      priceCurrency: listing.currency === "€" ? "EUR" : "TRY",
+      itemCondition:
+        listing.condition === "Sıfır" ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
+      availability: isActive ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+      areaServed: { "@type": "City", name: listing.city },
+      seller: seller ? { "@type": "Person", name: seller.displayName, url: absoluteUrl(`/satici/${seller.id}`) } : undefined,
+    },
+  };
+
   return (
     <div className="mx-auto max-w-[1328px] px-4 pb-8 sm:px-6">
-      <Breadcrumbs items={[category?.name ?? "İlan", listing.title]} />
+      <JsonLd data={product} />
+      <Breadcrumbs
+        items={[
+          ...(category ? [{ label: category.name, href: `/kategori/${category.slug}` }] : []),
+          listing.title,
+        ]}
+      />
 
       {!isActive ? (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl bg-brand-soft px-4 py-3 text-xs">
@@ -185,6 +219,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               <ReportListingButton listingId={listing.id} loggedIn={Boolean(viewer)} />
             </div>
           ) : null}
+
+          {isActive ? <AdSlot placement="listing" className="mt-6" /> : null}
         </aside>
       </div>
 

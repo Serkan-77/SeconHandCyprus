@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import Script from "next/script";
 import { cookies } from "next/headers";
 import { Inter } from "next/font/google";
 import { Header } from "@/components/Header";
@@ -9,6 +10,8 @@ import { FavoritesProvider } from "@/components/FavoritesProvider";
 import { getCategories, getFavoriteIds, getUnreadCounts, getViewer } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { REGION_COOKIE } from "@/lib/regions";
+import { ADSENSE_CLIENT, adsEnabled } from "@/lib/ads";
+import { SITE } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,24 +20,27 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#181b20" },
+  ],
+};
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE.url),
   title: {
-    default: "Kıbrıs İkinci El — İyi eşyalara ikinci bir hikâye",
-    template: "%s · Kıbrıs İkinci El",
+    default: `${SITE.name} — ${SITE.tagline}`,
+    template: `%s · ${SITE.name}`,
   },
-  description:
-    "Kıbrıs'ta ikinci el mobilya, elektronik, giyim ve daha fazlası. Adadan insanlarla doğrudan iletişim, ücretsiz ilan.",
-  applicationName: "Kıbrıs İkinci El",
-  openGraph: {
-    type: "website",
-    locale: "tr_TR",
-    siteName: "Kıbrıs İkinci El",
-    images: [{ url: "/images/demo-chair.jpg", width: 1200, height: 800, alt: "Kıbrıs İkinci El" }],
-  },
+  description: SITE.description,
+  applicationName: SITE.name,
+  keywords: ["Kıbrıs ikinci el", "KKTC ikinci el", "Girne ikinci el", "Lefkoşa ikinci el", "ikinci el eşya", "satılık", "ilan"],
+  openGraph: { type: "website", locale: SITE.locale, siteName: SITE.name },
   twitter: { card: "summary_large_image" },
+  formatDetection: { telephone: false },
+  // Lets AdSense verify site ownership during review.
+  ...(adsEnabled ? { other: { "google-adsense-account": ADSENSE_CLIENT } } : {}),
 };
 
 
@@ -91,6 +97,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </main>
         </FavoritesProvider>
         <Footer />
+        {adsEnabled ? (
+          <Script
+            id="adsense"
+            async
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+          />
+        ) : null}
       </body>
     </html>
   );

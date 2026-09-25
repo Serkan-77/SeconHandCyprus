@@ -1,14 +1,14 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { absoluteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/yonetim", "/hesabim", "/mesajlar", "/ilan-ver", "/kurulum", "/auth", "/sistem"],
+      disallow: ["/yonetim", "/hesabim", "/mesajlar", "/ilan-ver", "/kurulum", "/auth", "/sistem", "/giris", "/kayit", "/sifre-yenile", "/yeni-sifre", "/telefon-dogrula", "/giris-gerekli"],
     },
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

@@ -37,7 +37,7 @@ export function Header({
 
   const categoryNav = [
     { icon: "grid" as IconName, label: "Tüm kategoriler", href: "/kategori" },
-    ...categories.slice(0, 6).map((c) => ({ icon: c.icon, label: c.name, href: `/ilanlar?kategori=${c.slug}` })),
+    ...categories.slice(0, 6).map((c) => ({ icon: c.icon, label: c.name, href: `/kategori/${c.slug}` })),
   ];
 
   const mobileMenu = [

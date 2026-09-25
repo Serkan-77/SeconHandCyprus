@@ -4,10 +4,40 @@ import { Icon } from "@/components/icons";
 import { LinkButton } from "@/components/ui/Button";
 import { TextLink } from "@/components/ui/TextLink";
 import { ListingGrid } from "@/components/ListingGrid";
+import { AdSlot } from "@/components/AdSlot";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE, absoluteUrl } from "@/lib/site";
+import type { Metadata } from "next";
+
 import { cookies } from "next/headers";
 import { getCategories, searchListings } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
 import { REGION_COOKIE } from "@/lib/regions";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+const siteSchema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE.name,
+    url: absoluteUrl("/"),
+    inLanguage: "tr",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: absoluteUrl("/ilanlar?q={search_term_string}") },
+      "query-input": "required name=search_term_string",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE.name,
+    url: absoluteUrl("/"),
+    logo: absoluteUrl("/icon.svg"),
+    areaServed: "Cyprus",
+  },
+];
 
 const howItWorks = [
   {
@@ -39,6 +69,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto flex max-w-[1328px] flex-col gap-12 px-4 pb-16 pt-6 sm:gap-16 sm:px-6 sm:pt-8">
+      <JsonLd data={siteSchema} />
       <section className="grid grid-cols-1 overflow-hidden rounded-hero bg-bg sm:min-h-[490px] sm:grid-cols-2">
         <div className="flex flex-col items-start justify-center gap-1 px-6 py-8 sm:px-12 sm:py-11">
           <span className="text-[9px] font-semibold tracking-[1.8px] text-accent">
@@ -135,7 +166,7 @@ export default async function HomePage() {
             .map((cat) => (
               <Link
                 key={cat.slug}
-                href={`/ilanlar?kategori=${cat.slug}`}
+                href={`/kategori/${cat.slug}`}
                 className="flex flex-col items-center gap-2 text-[10px] sm:gap-3 sm:text-xs"
               >
                 <span className="grid h-[59px] w-full place-items-center rounded-[10px] border border-border bg-bg transition group-hover:bg-accent-soft sm:h-[87px] sm:rounded-2xl">
@@ -159,6 +190,8 @@ export default async function HomePage() {
         </div>
         <ListingGrid items={latest.items} />
       </section>
+
+      <AdSlot placement="home" />
 
       <section className="flex flex-col gap-5 rounded-2xl bg-text px-6 py-8 text-surface sm:flex-row sm:items-center sm:gap-6 sm:px-9">
         <div className="hidden h-[74px] w-[74px] flex-shrink-0 place-items-center rounded-full border border-[#9da4af]/30 sm:grid">

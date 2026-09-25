@@ -31,7 +31,7 @@ export default async function SellerReviewsPage({ params }: { params: Promise<{ 
 
   return (
     <div className="mx-auto max-w-[760px] px-4 pb-16 sm:px-6">
-      <Breadcrumbs items={["Satıcı", seller.displayName, "Değerlendirmeler"]} />
+      <Breadcrumbs items={[{ label: seller.displayName, href: `/satici/${id}` }, "Değerlendirmeler"]} />
       <SellerHeader seller={seller} active="yorumlar" />
 
       {reviews && reviews.length > 0 ? (

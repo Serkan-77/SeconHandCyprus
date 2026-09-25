@@ -68,13 +68,17 @@ export function ResultsFilters({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const sp = new URLSearchParams();
+    let category = "";
     for (const [key, value] of form.entries()) {
-      if (typeof value === "string" && value.trim()) sp.append(key, value.trim());
+      if (typeof value !== "string" || !value.trim()) continue;
+      if (key === "kategori") category = value;
+      else sp.append(key, value.trim());
     }
     if (values.q) sp.set("q", values.q);
     if (values.sirala) sp.set("sirala", values.sirala);
     setOpen(false);
-    router.push(`/ilanlar${sp.size ? `?${sp}` : ""}`);
+    const base = category ? `/kategori/${category}` : "/ilanlar";
+    router.push(`${base}${sp.size ? `?${sp}` : ""}`);
   }
 
   // Remount the form whenever the URL-driven values change so defaults stay in sync.
@@ -179,7 +183,7 @@ export function SortSelect({ value }: { value: string }) {
           if (e.target.value) sp.set("sirala", e.target.value);
           else sp.delete("sirala");
           sp.delete("sayfa");
-          router.push(`/ilanlar${sp.size ? `?${sp}` : ""}`);
+          router.push(`${window.location.pathname}${sp.size ? `?${sp}` : ""}`);
         }}
         className="ml-2 rounded-md border border-border bg-surface px-2 py-2.5 text-xs text-text"
       >
