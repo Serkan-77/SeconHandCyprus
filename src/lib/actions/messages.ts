@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fetchOlderMessages, type ChatMessageRow } from "@/lib/chat";
+import { firstError, messageSchema, ratingSchema, reportSchema } from "@/lib/validation";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -20,11 +21,12 @@ export async function sendMessage(
 ): Promise<Result & { message?: { id: string; body: string; created_at: string; sender_id: string; read_at: string | null } }> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturumun sona erdi. Tekrar giriş yap." };
-  const text = body.trim();
-  if (!text) return { error: "Boş mesaj gönderilemez." };
+  const parsed = messageSchema.safeParse(body);
+  if (!parsed.success) return { error: firstError(parsed.error) };
+  const text = parsed.data;
   const { data, error } = await supabase
     .from("messages")
-    .insert({ conversation_id: conversationId, sender_id: user.id, body: text.slice(0, 2000) })
+    .insert({ conversation_id: conversationId, sender_id: user.id, body: text })
     .select("id, body, created_at, sender_id, read_at")
     .single();
   if (error) {
@@ -112,14 +114,16 @@ export async function confirmMeeting(conversationId: string): Promise<Result & {
 export async function rateUser(conversationId: string, rateeId: string, score: number, comment: string): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
+  const parsed = ratingSchema.safeParse({ score, comment });
+  if (!parsed.success) return { error: firstError(parsed.error) };
   const { data: conv } = await supabase.from("conversations").select("listing_id").eq("id", conversationId).single();
   const { error } = await supabase.from("ratings").insert({
     rater_id: user.id,
     ratee_id: rateeId,
     conversation_id: conversationId,
     listing_id: conv?.listing_id ?? null,
-    score: Math.min(5, Math.max(1, Math.round(score))),
-    comment: comment.trim() || null,
+    score: parsed.data.score,
+    comment: parsed.data.comment,
   });
   if (error) {
     return {
@@ -137,9 +141,11 @@ export async function rateUser(conversationId: string, rateeId: string, score: n
 export async function reportUser(userId: string, reason: string, detail: string): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
+  const parsed = reportSchema.safeParse({ reason, detail });
+  if (!parsed.success) return { error: firstError(parsed.error) };
   const { error } = await supabase
     .from("reports")
-    .insert({ reporter_id: user.id, reported_user_id: userId, reason, detail: detail.trim() || null });
+    .insert({ reporter_id: user.id, reported_user_id: userId, reason: parsed.data.reason, detail: parsed.data.detail });
   if (error) return { error: "Şikayet gönderilemedi." };
   return { ok: true };
 }

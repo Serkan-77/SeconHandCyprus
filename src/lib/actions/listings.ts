@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { firstError, listingCreateSchema, listingUpdateSchema, reportSchema } from "@/lib/validation";
 
 type Result = { error?: string; ok?: boolean };
 /** review: an approved listing's content changed, so it went back to moderation (P1-01). */
@@ -25,9 +26,14 @@ async function requireUser() {
   return { supabase, user };
 }
 
-function dbError(message: string) {
+// Limits and guards raised by our triggers carry a Turkish message meant for
+// the user (limits: PT429, i.e. HTTP 429; checks: 23514); built-in errors don't.
+function dbError(error: { code?: string; message: string }) {
+  const { code, message } = error;
   if (message.includes("row-level security")) return "Bu işlem için yetkin yok ya da hesabın kısıtlı.";
   if (message.includes("yetkin yok")) return "Bu durum değişikliğine yetkin yok.";
+  if (message.includes("violates check constraint")) return "Girdiğin bilgileri kontrol et.";
+  if (code === "PT429" || code === "23514") return message;
   return "İşlem tamamlanamadı. Lütfen tekrar dene.";
 }
 
@@ -44,22 +50,14 @@ export type ListingInput = {
   photos: string[];
 };
 
-function validate(input: ListingInput) {
-  if (input.photos.length === 0) return "En az 1 fotoğraf ekle.";
-  if (input.title.trim().length < 3) return "Başlık en az 3 karakter olmalı.";
-  const price = Number(input.price);
-  if (!input.price || Number.isNaN(price) || price < 0) return "Geçerli bir fiyat gir.";
-  if (!input.city) return "Bölge seç.";
-  return null;
-}
-
 export async function createListing(input: ListingInput): Promise<Result & { id?: string }> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Devam etmek için giriş yap." };
-  const invalid = validate(input);
-  if (invalid) return { error: invalid };
+  const parsed = listingCreateSchema.safeParse(input);
+  if (!parsed.success) return { error: firstError(parsed.error) };
+  const valid = parsed.data;
 
-  const { data: category } = await supabase.from("categories").select("id").eq("slug", input.categorySlug).single();
+  const { data: category } = await supabase.from("categories").select("id").eq("slug", valid.categorySlug).single();
   if (!category) return { error: "Kategori seç." };
 
   const { data: listing, error } = await supabase
@@ -67,24 +65,24 @@ export async function createListing(input: ListingInput): Promise<Result & { id?
     .insert({
       seller_id: user.id,
       category_id: category.id,
-      title: input.title.trim(),
-      description: input.description.trim(),
-      price: Number(input.price),
-      currency: input.currency,
-      city: input.city,
-      district: input.district?.trim() || null,
-      condition: input.condition,
-      negotiable: input.negotiable,
+      title: valid.title,
+      description: valid.description,
+      price: valid.price,
+      currency: valid.currency,
+      city: valid.city,
+      district: valid.district ?? null,
+      condition: valid.condition,
+      negotiable: valid.negotiable,
       status: "pending",
     })
     .select("id")
     .single();
-  if (error || !listing) return { error: dbError(error?.message ?? "") };
+  if (error || !listing) return { error: dbError(error ?? { message: "" }) };
 
   const { error: imageError } = await supabase
     .from("listing_images")
     .insert(input.photos.map((path, position) => ({ listing_id: listing.id, path, position })));
-  if (imageError) return { error: dbError(imageError.message) };
+  if (imageError) return { error: dbError(imageError) };
 
   return { ok: true, id: listing.id };
 }
@@ -95,21 +93,23 @@ export async function updateListing(
 ): Promise<EditResult> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Devam etmek için giriş yap." };
-  if (fields.title.trim().length < 3) return { error: "Başlık en az 3 karakter olmalı." };
+  const parsed = listingUpdateSchema.safeParse(fields);
+  if (!parsed.success) return { error: firstError(parsed.error) };
+  const valid = parsed.data;
   const before = await listingStatus(supabase, id);
   const { data, error } = await supabase
     .from("listings")
     .update({
-      title: fields.title.trim(),
-      price: Number(fields.price),
-      city: fields.city,
-      district: fields.district?.trim() || null,
-      description: fields.description.trim(),
-      ...(fields.negotiable === undefined ? {} : { negotiable: fields.negotiable }),
+      title: valid.title,
+      price: valid.price,
+      city: valid.city,
+      district: valid.district ?? null,
+      description: valid.description,
+      ...(valid.negotiable === undefined ? {} : { negotiable: valid.negotiable }),
     })
     .eq("id", id)
     .select("status");
-  if (error) return { error: dbError(error.message) };
+  if (error) return { error: dbError(error) };
   if (!data?.length) return { error: NOT_EDITABLE };
   refresh();
   return { ok: true, review: before === "active" && data[0].status === "pending" };
@@ -119,7 +119,7 @@ export async function setListingStatus(id: string, status: "pending" | "sold" | 
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Devam etmek için giriş yap." };
   const { data, error } = await supabase.from("listings").update({ status }).eq("id", id).select("id");
-  if (error) return { error: dbError(error.message) };
+  if (error) return { error: dbError(error) };
   if (!data?.length) return { error: NOT_EDITABLE };
   refresh();
   return { ok: true };
@@ -130,7 +130,7 @@ export async function deleteListing(id: string) {
   if (!user) return { error: "Devam etmek için giriş yap." };
   const { data: images } = await supabase.from("listing_images").select("path").eq("listing_id", id);
   const { error } = await supabase.from("listings").delete().eq("id", id);
-  if (error) return { error: dbError(error.message) };
+  if (error) return { error: dbError(error) };
   const paths = (images ?? []).map((i) => i.path).filter((p) => !p.startsWith("http"));
   if (paths.length) await supabase.storage.from("listing-images").remove(paths);
   redirect("/hesabim/ilanlar");
@@ -150,7 +150,7 @@ export async function addListingImages(listingId: string, paths: string[]): Prom
   const { error } = await supabase
     .from("listing_images")
     .insert(paths.map((path, i) => ({ listing_id: listingId, path, position: start + i })));
-  if (error) return { error: dbError(error.message) };
+  if (error) return { error: dbError(error) };
   refresh();
   return { ok: true, review: before === "active" && (await listingStatus(supabase, listingId)) === "pending" };
 }
@@ -166,7 +166,7 @@ export async function removeListingImage(imageId: string): Promise<EditResult> {
   if ((count ?? 0) <= 1) return { error: "İlanda en az bir fotoğraf kalmalı." };
   const before = await listingStatus(supabase, image.listing_id);
   const { data: removed, error } = await supabase.from("listing_images").delete().eq("id", imageId).select("id");
-  if (error) return { error: dbError(error.message) };
+  if (error) return { error: dbError(error) };
   if (!removed?.length) return { error: NOT_EDITABLE };
   if (!image.path.startsWith("http")) await supabase.storage.from("listing-images").remove([image.path]);
   refresh();
@@ -187,17 +187,19 @@ export async function toggleFavorite(listingId: string): Promise<{ favorite?: bo
     return { favorite: false };
   }
   const { error } = await supabase.from("favorites").insert({ user_id: user.id, listing_id: listingId });
-  if (error) return { error: dbError(error.message) };
+  if (error) return { error: dbError(error) };
   return { favorite: true };
 }
 
 export async function reportListing(listingId: string, reason: string, detail: string): Promise<Result> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Şikayet göndermek için giriş yap." };
+  const parsed = reportSchema.safeParse({ reason, detail });
+  if (!parsed.success) return { error: firstError(parsed.error) };
   const { error } = await supabase
     .from("reports")
-    .insert({ reporter_id: user.id, listing_id: listingId, reason, detail: detail.trim() || null });
-  if (error) return { error: dbError(error.message) };
+    .insert({ reporter_id: user.id, listing_id: listingId, reason: parsed.data.reason, detail: parsed.data.detail });
+  if (error) return { error: dbError(error) };
   return { ok: true };
 }
 

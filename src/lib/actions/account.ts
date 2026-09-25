@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { REGION_COOKIE, regionNames } from "@/lib/regions";
+import { safeInternalPath } from "@/lib/safeRedirect";
+import { firstError, phoneSchema, profileSchema, supportSchema } from "@/lib/validation";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -19,22 +21,26 @@ async function session() {
 export async function updateProfile(_: Result | undefined, formData: FormData): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
-  const displayName = String(formData.get("name") ?? "").trim();
-  if (displayName.length < 2) return { error: "Görünen ad en az 2 karakter olmalı." };
+  const parsed = profileSchema.safeParse({
+    name: String(formData.get("name") ?? ""),
+    region: String(formData.get("region") ?? ""),
+    ...(formData.has("bio") ? { bio: String(formData.get("bio") ?? "") } : {}),
+  });
+  if (!parsed.success) return { error: firstError(parsed.error) };
   const avatar = formData.get("avatar");
   const { error } = await supabase
     .from("profiles")
     .update({
-      display_name: displayName,
-      region: String(formData.get("region") ?? "") || null,
-      ...(formData.has("bio") ? { bio: String(formData.get("bio") ?? "").trim() || null } : {}),
+      display_name: parsed.data.name,
+      region: parsed.data.region,
+      ...(parsed.data.bio !== undefined ? { bio: parsed.data.bio } : {}),
       ...(typeof avatar === "string" && avatar ? { avatar_url: avatar } : {}),
     })
     .eq("id", user.id);
   if (error) return { error: "Profil kaydedilemedi." };
-  const next = String(formData.get("next") ?? "");
   refresh();
-  if (next.startsWith("/")) redirect(next);
+  // Same-origin paths only (P1-03).
+  if (formData.has("next")) redirect(safeInternalPath(formData.get("next")));
   return { ok: true };
 }
 
@@ -53,8 +59,13 @@ export async function updateSettings(patch: Record<string, unknown>): Promise<Re
 export async function updateContact(_: Result | undefined, formData: FormData): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
-  const phone = String(formData.get("phone") ?? "").replace(/\s/g, "");
-  if (phone && !/^\+?\d{10,15}$/.test(phone)) return { error: "Geçerli bir telefon numarası gir." };
+  const raw = String(formData.get("phone") ?? "");
+  let phone = "";
+  if (raw.trim()) {
+    const parsed = phoneSchema.safeParse(raw);
+    if (!parsed.success) return { error: firstError(parsed.error) };
+    phone = parsed.data;
+  }
   const { error } = await supabase
     .from("profile_private")
     .update({ phone: phone || null, whatsapp_enabled: formData.get("whatsapp") === "on" && Boolean(phone) })
@@ -67,8 +78,9 @@ export async function updateContact(_: Result | undefined, formData: FormData): 
 export async function requestPhoneVerification(_: Result | undefined, formData: FormData): Promise<Result> {
   const { supabase, user } = await session();
   if (!user) return { error: "Oturum bulunamadı." };
-  const phone = String(formData.get("phone") ?? "").replace(/\s/g, "");
-  if (!/^\+?\d{10,15}$/.test(phone)) return { error: "Geçerli bir telefon numarası gir." };
+  const parsedPhone = phoneSchema.safeParse(String(formData.get("phone") ?? ""));
+  if (!parsedPhone.success) return { error: firstError(parsedPhone.error) };
+  const phone = parsedPhone.data;
   const { data: pending } = await supabase
     .from("verification_requests")
     .select("id")
@@ -121,15 +133,17 @@ export async function setRegion(region: string) {
 
 export async function createSupportTicket(_: Result | undefined, formData: FormData): Promise<Result> {
   const { supabase, user } = await session();
-  const email = String(formData.get("email") ?? "").trim();
-  const message = String(formData.get("message") ?? "").trim();
-  if (!email.includes("@")) return { error: "Geçerli bir e-posta adresi gir." };
-  if (message.length < 10) return { error: "Mesajın en az 10 karakter olmalı." };
+  const parsed = supportSchema.safeParse({
+    email: String(formData.get("email") ?? ""),
+    topic: String(formData.get("topic") ?? "Diğer"),
+    message: String(formData.get("message") ?? ""),
+  });
+  if (!parsed.success) return { error: firstError(parsed.error) };
   const { error } = await supabase.from("support_tickets").insert({
     user_id: user?.id ?? null,
-    email,
-    topic: String(formData.get("topic") ?? "Diğer"),
-    message,
+    email: parsed.data.email,
+    topic: parsed.data.topic,
+    message: parsed.data.message,
   });
   if (error) return { error: "Talep gönderilemedi. Lütfen tekrar dene." };
   return { ok: true };
