@@ -25,6 +25,8 @@ const buyer = await signIn("mert");
 const admin = await signIn("admin");
 const anon = kit.client();
 const listingIds = new Set();
+const conversationLinks = new Set(); // notification links of test conversations
+const conversationIds = new Set();
 // Snapshot of the demo buyer's profile: before 0009 the validation checks below
 // would succeed and change it, so it is always put back in `finally`.
 const buyerProfile = (await buyer.supabase.from("profiles").select("display_name, region").eq("id", buyer.id).single()).data;
@@ -198,6 +200,8 @@ try {
       await buyer.supabase.from("conversations").insert({ listing_id: lamp.id, buyer_id: buyer.id, seller_id: seller.id }).select("id").single(),
       "konuşma",
     );
+    conversationIds.add(chat.id);
+    conversationLinks.add(`/mesajlar?c=${chat.id}`);
     const notes = [
       await expectRefused(buyer.supabase.from("messages").insert({ conversation_id: chat.id, sender_id: buyer.id, body: "x".repeat(2001) }).select("id"), "uzun"),
       await expectRefused(buyer.supabase.from("messages").insert({ conversation_id: chat.id, sender_id: buyer.id, body: "     " }).select("id"), "boş"),
@@ -225,6 +229,68 @@ try {
       .insert({ seller_id: spammer.id, category_id: categoryId, title: `${MARK} quota 11`, price: 1, city: "Girne", condition: "Sıfır", status: "pending" });
     if (error?.code !== "PT429") throw new Error(`beklenen PT429, gelen: ${error?.code ?? "kabul edildi"}`);
   });
+
+  // ==================================================================== Batch 4
+  // ------------------------------------------------------------ P1-07 rate limits
+  // Throwaway accounts only, so the demo users used by e2e never hit a limit.
+  const expect429 = (error, what) => {
+    if (error?.code !== "PT429") throw new Error(`${what}: beklenen PT429, gelen: ${error?.code ?? "kabul edildi"}`);
+    return `${what}: 429`;
+  };
+  const flooder = await tempUser("rate");
+  await check("P1-07: dakikada 21. mesaj PT429 (HTTP 429) ile reddedilir", async () => {
+    const chat = must(
+      await flooder.supabase.from("conversations").insert({ listing_id: lamp.id, buyer_id: flooder.id, seller_id: seller.id }).select("id").single(),
+      "konuşma",
+    );
+    conversationIds.add(chat.id);
+    conversationLinks.add(`/mesajlar?c=${chat.id}`);
+    for (let i = 0; i < 20; i++) {
+      must(await flooder.supabase.from("messages").insert({ conversation_id: chat.id, sender_id: flooder.id, body: `${MARK} ${i}` }), `mesaj ${i}`);
+    }
+    const { error } = await flooder.supabase.from("messages").insert({ conversation_id: chat.id, sender_id: flooder.id, body: `${MARK} 21` });
+    return expect429(error, "21. mesaj");
+  });
+  await check("P1-07: saatte 11. şikayet PT429 ile reddedilir", async () => {
+    const { data: people } = await anon.from("profiles").select("id").neq("id", flooder.id).limit(6);
+    const { data: listings } = await anon.from("listings").select("id").eq("status", "active").neq("seller_id", flooder.id).limit(11);
+    const targets = [...people.map((p) => ({ reported_user_id: p.id })), ...listings.map((l) => ({ listing_id: l.id }))].slice(0, 11);
+    if (targets.length < 11) throw new Error(`yeterli hedef yok (${targets.length})`);
+    for (const target of targets.slice(0, 10)) {
+      must(await flooder.supabase.from("reports").insert({ reporter_id: flooder.id, reason: "Spam", detail: MARK, ...target }), "şikayet");
+    }
+    const { error } = await flooder.supabase.from("reports").insert({ reporter_id: flooder.id, reason: "Spam", detail: MARK, ...targets[10] });
+    return expect429(error, "11. şikayet");
+  });
+  await check("P1-07: günde 4. telefon doğrulama talebi PT429 ile reddedilir", async () => {
+    for (let i = 0; i < 3; i++) {
+      must(await flooder.supabase.from("verification_requests").insert({ user_id: flooder.id, kind: "phone", detail: `+90555000${1000 + i}` }), "talep");
+    }
+    const { error } = await flooder.supabase.from("verification_requests").insert({ user_id: flooder.id, kind: "phone", detail: "+905550009999" });
+    return expect429(error, "4. talep");
+  });
+  await check("P1-07: saatte 6. destek talebi (üye) ve aynı e-postayla 4. anonim talep PT429", async () => {
+    const ticket = { topic: MARK, message: `${MARK} yeterince uzun bir mesaj` };
+    for (let i = 0; i < 5; i++) {
+      must(await flooder.supabase.from("support_tickets").insert({ ...ticket, user_id: flooder.id, email: flooder.email }), "destek");
+    }
+    const member = expect429(
+      (await flooder.supabase.from("support_tickets").insert({ ...ticket, user_id: flooder.id, email: flooder.email })).error,
+      "6. üye talebi",
+    );
+    const email = `${MARK}-anon-${Date.now()}@example.com`;
+    for (let i = 0; i < 3; i++) must(await anon.from("support_tickets").insert({ ...ticket, email }), "anonim destek");
+    const guest = expect429((await anon.from("support_tickets").insert({ ...ticket, email: email.toUpperCase() })).error, "4. anonim talep");
+    return `${member}, ${guest}`;
+  });
+  await check("P1-07: saatte 31. WhatsApp numarası sorgusu PT429; tablo istemciye kapalı", async () => {
+    for (let i = 0; i < 30; i++) must(await flooder.supabase.rpc("get_listing_whatsapp", { p_listing: lamp.id }), `sorgu ${i}`);
+    const { error } = await flooder.supabase.rpc("get_listing_whatsapp", { p_listing: lamp.id });
+    const note = expect429(error, "31. sorgu");
+    const { data, error: readError } = await flooder.supabase.from("rate_limit_events").select("id");
+    if (!readError && data?.length) throw new Error("rate_limit_events okunabiliyor");
+    return note;
+  });
 } catch (e) {
   kit.results.push(["✗", `Kurulum adımı başarısız, kalan kontroller çalışmadı: ${e.message}`]);
 } finally {
@@ -242,6 +308,11 @@ try {
     await service.from("reports").delete().like("detail", `${MARK}%`);
   }
   await seller.supabase.from("notifications").delete().like("link", `/ilan/${MARK}-%`).gte("created_at", STARTED);
+  if (conversationLinks.size) {
+    for (const u of [seller, buyer]) await u.supabase.from("notifications").delete().in("link", [...conversationLinks]);
+  }
+  // Conversations may outlive a deleted account (P1-09), so remove them by id.
+  if (service && conversationIds.size) await service.from("conversations").delete().in("id", [...conversationIds]);
   const tempLeft = service ? await removeTempUsers() : ["SUPABASE_SECRET_KEY yok"];
 
   const left = [...tempLeft];
@@ -251,6 +322,10 @@ try {
   if (JSON.stringify(bp) !== JSON.stringify(buyerProfile)) left.push("mert profili geri yüklenmedi");
   const { count: n } = await seller.supabase.from("notifications").select("id", { count: "exact", head: true }).like("link", `/ilan/${MARK}-%`).gte("created_at", STARTED);
   if (n) left.push(`${n} bildirim`);
+  if (conversationLinks.size) {
+    const { count: cn } = await seller.supabase.from("notifications").select("id", { count: "exact", head: true }).in("link", [...conversationLinks]);
+    if (cn) left.push(`${cn} mesaj bildirimi`);
+  }
   if (service) {
     const { count: t } = await service.from("support_tickets").select("id", { count: "exact", head: true }).or(`message.like.${MARK}%,topic.eq.${MARK}`);
     const { count: s } = await service.from("sanctions").select("id", { count: "exact", head: true }).eq("reason", MARK);
@@ -258,6 +333,10 @@ try {
     if (s) left.push(`${s} yaptırım`);
     const { count: r } = await service.from("reports").select("id", { count: "exact", head: true }).like("detail", `${MARK}%`);
     if (r) left.push(`${r} şikayet`);
+    if (conversationIds.size) {
+      const { count: c } = await service.from("conversations").select("id", { count: "exact", head: true }).in("id", [...conversationIds]);
+      if (c) left.push(`${c} konuşma`);
+    }
   }
   kit.results.push(left.length ? ["✗", `Test verisi temizlenemedi: ${left.join(", ")}`] : ["✓", "Test verisi temizlendi (kalıntı yok)"]);
   await Promise.all([seller, buyer, admin].map((u) => u.supabase.auth.signOut()));

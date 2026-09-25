@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fetchOlderMessages, type ChatMessageRow } from "@/lib/chat";
 import { firstError, messageSchema, ratingSchema, reportSchema } from "@/lib/validation";
+import { rateLimitMessage } from "@/lib/dbErrors";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -33,7 +34,7 @@ export async function sendMessage(
     return {
       error: error.message.includes("row-level security")
         ? "blocked"
-        : "Mesaj gönderilemedi. Bağlantını kontrol edip tekrar dene.",
+        : (rateLimitMessage(error) ?? "Mesaj gönderilemedi. Bağlantını kontrol edip tekrar dene."),
     };
   }
   return { ok: true, message: data };
@@ -146,6 +147,6 @@ export async function reportUser(userId: string, reason: string, detail: string)
   const { error } = await supabase
     .from("reports")
     .insert({ reporter_id: user.id, reported_user_id: userId, reason: parsed.data.reason, detail: parsed.data.detail });
-  if (error) return { error: "Şikayet gönderilemedi." };
+  if (error) return { error: rateLimitMessage(error) ?? "Şikayet gönderilemedi." };
   return { ok: true };
 }

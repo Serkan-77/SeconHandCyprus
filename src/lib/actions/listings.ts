@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { firstError, listingCreateSchema, listingUpdateSchema, reportSchema } from "@/lib/validation";
+import { rateLimitMessage } from "@/lib/dbErrors";
 
 type Result = { error?: string; ok?: boolean };
 /** review: an approved listing's content changed, so it went back to moderation (P1-01). */
@@ -203,7 +204,8 @@ export async function reportListing(listingId: string, reason: string, detail: s
   return { ok: true };
 }
 
-export async function startConversation(listingId: string) {
+/** Redirects to the conversation; returns only when a rate limit (P1-07) stops a new one. */
+export async function startConversation(listingId: string): Promise<{ error?: string }> {
   const { supabase, user } = await requireUser();
   if (!user) redirect(`/giris-gerekli?returnTo=${encodeURIComponent("/mesajlar")}`);
 
@@ -224,6 +226,8 @@ export async function startConversation(listingId: string) {
     .insert({ listing_id: listingId, buyer_id: user.id, seller_id: listing.seller_id })
     .select("id")
     .single();
+  const limited = rateLimitMessage(error);
+  if (limited) return { error: limited };
   if (error || !created) redirect("/hesap-kisitlandi");
   redirect(`/mesajlar?c=${created.id}`);
 }
@@ -231,7 +235,9 @@ export async function startConversation(listingId: string) {
 export async function getListingWhatsapp(listingId: string): Promise<{ phone?: string; error?: string }> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "auth" };
-  const { data } = await supabase.rpc("get_listing_whatsapp", { p_listing: listingId });
+  const { data, error } = await supabase.rpc("get_listing_whatsapp", { p_listing: listingId });
+  const limited = rateLimitMessage(error);
+  if (limited) return { error: limited };
   if (!data) return { error: "Satıcı WhatsApp iletişimini açmamış. Uygulama içinden mesaj gönderebilirsin." };
   return { phone: String(data) };
 }

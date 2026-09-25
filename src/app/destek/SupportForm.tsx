@@ -44,6 +44,13 @@ export function SupportForm({ defaultEmail }: { defaultEmail: string }) {
           minLength={10}
           maxLength={3000}
         />
+        {/* Honeypot (P1-07): hidden from people, filled in by form bots. */}
+        <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+          <label>
+            Web sitesi
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
+          </label>
+        </div>
         {state?.error ? <FormError>{state.error}</FormError> : null}
         <Button type="submit" disabled={pending}>
           {pending ? "Gönderiliyor…" : "Talebi gönder"}

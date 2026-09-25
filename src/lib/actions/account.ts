@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { REGION_COOKIE, regionNames } from "@/lib/regions";
 import { safeInternalPath } from "@/lib/safeRedirect";
 import { firstError, phoneSchema, profileSchema, supportSchema } from "@/lib/validation";
+import { rateLimitMessage } from "@/lib/dbErrors";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -90,7 +91,7 @@ export async function requestPhoneVerification(_: Result | undefined, formData: 
     .maybeSingle();
   if (pending) return { error: "Zaten incelemede olan bir talebin var." };
   const { error } = await supabase.from("verification_requests").insert({ user_id: user.id, kind: "phone", detail: phone });
-  if (error) return { error: "Talep gönderilemedi." };
+  if (error) return { error: rateLimitMessage(error) ?? "Talep gönderilemedi." };
   refresh();
   return { ok: true };
 }
@@ -132,6 +133,9 @@ export async function setRegion(region: string) {
 }
 
 export async function createSupportTicket(_: Result | undefined, formData: FormData): Promise<Result> {
+  // Honeypot: a hidden field people never fill in; bots that fill every field
+  // get a normal-looking answer and nothing is stored (P1-07).
+  if (String(formData.get("website") ?? "").trim()) return { ok: true };
   const { supabase, user } = await session();
   const parsed = supportSchema.safeParse({
     email: String(formData.get("email") ?? ""),
@@ -145,6 +149,6 @@ export async function createSupportTicket(_: Result | undefined, formData: FormD
     topic: parsed.data.topic,
     message: parsed.data.message,
   });
-  if (error) return { error: "Talep gönderilemedi. Lütfen tekrar dene." };
+  if (error) return { error: rateLimitMessage(error) ?? "Talep gönderilemedi. Lütfen tekrar dene." };
   return { ok: true };
 }
