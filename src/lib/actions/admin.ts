@@ -140,11 +140,12 @@ export async function deleteCategory(id: number): Promise<Result> {
   return { ok: true };
 }
 
-export async function togglePackage(id: number, active: boolean): Promise<Result> {
+// Editorial "showcase" pick. Featured listings sort first; nothing is sold.
+export async function setFeatured(id: string, featured: boolean): Promise<Result> {
   const { supabase, ok } = await admin();
   if (!ok) return DENIED;
-  const { error } = await supabase.from("packages").update({ active }).eq("id", id);
-  if (error) return { error: "Paket güncellenemedi." };
+  const { error } = await supabase.from("listings").update({ featured }).eq("id", id);
+  if (error) return { error: "Vitrin durumu güncellenemedi." };
   refresh();
   return { ok: true };
 }

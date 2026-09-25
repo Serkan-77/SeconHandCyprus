@@ -13,7 +13,6 @@ const nav: { href: string; icon: IconName; label: string }[] = [
   { href: "/yonetim/dogrulama", icon: "shield", label: "Doğrulama" },
   { href: "/yonetim/destek", icon: "mail", label: "Destek talepleri" },
   { href: "/yonetim/kategoriler", icon: "grid", label: "Kategoriler" },
-  { href: "/yonetim/paketler", icon: "credit", label: "Paketler" },
   { href: "/yonetim/duyurular", icon: "bell", label: "Duyurular" },
 ];
 

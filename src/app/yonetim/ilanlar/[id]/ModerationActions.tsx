@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { SelectField, TextareaField } from "@/components/ui/Field";
 import { FormError, FormSuccess } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
-import { approveListing, rejectListing } from "@/lib/actions/admin";
+import { approveListing, rejectListing, setFeatured } from "@/lib/actions/admin";
 
 const rejectReasons = ["Fotoğraflar net değil", "Yanıltıcı bilgi", "Yasaklı ürün", "Yanlış kategori", "Diğer"];
 
@@ -16,11 +16,13 @@ export function ModerationActions({
   status,
   title,
   slug,
+  featured,
 }: {
   id: string;
   status: string;
   title: string;
   slug: string;
+  featured: boolean;
 }) {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [error, setError] = useState("");
@@ -64,6 +66,27 @@ export function ModerationActions({
           ) : null}
         </div>
       )}
+      {status === "active" ? (
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4 text-xs">
+          <span className="text-muted">
+            {featured ? "Bu ilan vitrinde; listelerde en üstte görünüyor." : "Vitrine eklenen ilanlar listelerde en üstte görünür."}
+          </span>
+          <Button
+            variant="outline"
+            full={false}
+            disabled={pending}
+            className="min-h-9 text-xs"
+            onClick={() =>
+              startTransition(async () => {
+                const result = await setFeatured(id, !featured);
+                if (result.error) setError(result.error);
+              })
+            }
+          >
+            {featured ? "Vitrinden çıkar" : "Vitrine ekle"}
+          </Button>
+        </div>
+      ) : null}
       {error ? <FormError className="mt-3">{error}</FormError> : null}
 
       <Modal title="Gerekçeli ret" open={rejectOpen} onClose={() => setRejectOpen(false)}>

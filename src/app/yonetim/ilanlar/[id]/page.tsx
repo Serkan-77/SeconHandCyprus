@@ -103,7 +103,7 @@ async function Review({ id }: { id: string }) {
               <p className="mt-3 text-xs text-danger">Bu ilan hakkında {reportCount} şikayet var.</p>
             ) : null}
           </div>
-          <ModerationActions id={listing.id} status={listing.status} title={listing.title} slug={listing.slug} />
+          <ModerationActions id={listing.id} status={listing.status} title={listing.title} slug={listing.slug} featured={listing.featured} />
         </div>
       </div>
     </>

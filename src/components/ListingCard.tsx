@@ -30,7 +30,7 @@ export function ListingCard({ listing, priority = false }: { listing: ListingCar
         />
         {listing.featured ? (
           <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2 py-1 text-[9px] font-semibold tracking-wide text-[#111318]">
-            ÖNE ÇIKAN
+            VİTRİN
           </span>
         ) : null}
       </Link>
