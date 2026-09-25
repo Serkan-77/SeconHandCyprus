@@ -71,6 +71,7 @@ export const listingCreateSchema = z.object({
   city,
   district: district.optional(),
   negotiable: z.boolean(),
+  submissionKey: z.uuid({ error: "Sayfayı yenileyip tekrar dene." }),
   photos: z
     .array(z.string().min(1))
     .min(1, "En az 1 fotoğraf ekle.")

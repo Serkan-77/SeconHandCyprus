@@ -14,7 +14,7 @@ import { formatPrice } from "@/lib/format";
 import { createListing } from "@/lib/actions/listings";
 
 export default function AddPreviewPage() {
-  const { draft, resetDraft } = useWizardDraft();
+  const { draft, setDraft, resetDraft } = useWizardDraft();
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -28,6 +28,9 @@ export default function AddPreviewPage() {
 
   function submit() {
     setError("");
+    // Kept until the listing is created, so a retry cannot create it twice.
+    const submissionKey = draft.submissionKey || crypto.randomUUID();
+    if (!draft.submissionKey) setDraft({ submissionKey });
     startTransition(async () => {
       const result = await createListing({
         title: draft.title,
@@ -40,6 +43,7 @@ export default function AddPreviewPage() {
         district: draft.district,
         negotiable: draft.negotiable,
         photos: draft.photos,
+        submissionKey,
       });
       if (result.error) {
         setError(result.error);

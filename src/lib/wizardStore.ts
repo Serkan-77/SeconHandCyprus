@@ -16,6 +16,12 @@ export type ListingDraft = {
   city: string;
   district: string;
   negotiable: boolean;
+  /**
+   * Idempotency key of the submission (P1-10): created on the first "send",
+   * reused by retries so a lost response or a double click cannot create the
+   * listing twice. Any change to the draft makes it a new submission.
+   */
+  submissionKey: string;
 };
 
 export const emptyDraft: ListingDraft = {
@@ -30,7 +36,13 @@ export const emptyDraft: ListingDraft = {
   city: "Girne",
   district: "",
   negotiable: false,
+  submissionKey: "",
 };
+
+/** The draft after a change; a content change drops the submission key. */
+export function applyDraftPatch(draft: ListingDraft, patch: Partial<ListingDraft>): ListingDraft {
+  return { ...draft, ...patch, submissionKey: patch.submissionKey ?? "" };
+}
 
 const STORAGE_KEY = "kie-wizard-draft";
 const listeners = new Set<() => void>();
@@ -78,7 +90,7 @@ function persist() {
 }
 
 export function setWizardDraft(patch: Partial<ListingDraft>) {
-  snapshot = { ...snapshot, ...patch };
+  snapshot = applyDraftPatch(snapshot, patch);
   persist();
   notify();
 }

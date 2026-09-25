@@ -28,6 +28,7 @@ const listing = {
   district: " Alsancak ",
   negotiable: false,
   photos: ["u/1.jpg"],
+  submissionKey: "0b0e4a8e-7c1d-4f5e-9a3b-2c6d8e1f0a4b",
 };
 const ok = (schema, value) => {
   const r = schema.safeParse(value);
@@ -57,6 +58,8 @@ test("listing abuse: whitespace title, megabyte description, invalid city, bad p
   bad(listingCreateSchema, { ...listing, condition: "Mükemmel" });
   bad(listingCreateSchema, { ...listing, photos: [] }, /En az 1/);
   bad(listingCreateSchema, { ...listing, photos: Array(LIMITS.maxPhotos + 1).fill("u/x.jpg") }, /En fazla 10/);
+  bad(listingCreateSchema, { ...listing, submissionKey: "" });
+  bad(listingCreateSchema, { ...listing, submissionKey: "not-a-uuid" });
   bad(listingUpdateSchema, { title: "  ab  ", price: 1, city: "Girne", description: "" }, /en az 3/);
 });
 

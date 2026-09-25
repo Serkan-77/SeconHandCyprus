@@ -49,6 +49,8 @@ export type ListingInput = {
   district?: string;
   negotiable: boolean;
   photos: string[];
+  /** Idempotency key kept with the wizard draft (P1-10). */
+  submissionKey: string;
 };
 
 export async function createListing(input: ListingInput): Promise<Result & { id?: string }> {
@@ -58,34 +60,23 @@ export async function createListing(input: ListingInput): Promise<Result & { id?
   if (!parsed.success) return { error: firstError(parsed.error) };
   const valid = parsed.data;
 
-  const { data: category } = await supabase.from("categories").select("id").eq("slug", valid.categorySlug).single();
-  if (!category) return { error: "Kategori seç." };
-
-  const { data: listing, error } = await supabase
-    .from("listings")
-    .insert({
-      seller_id: user.id,
-      category_id: category.id,
-      title: valid.title,
-      description: valid.description,
-      price: valid.price,
-      currency: valid.currency,
-      city: valid.city,
-      district: valid.district ?? null,
-      condition: valid.condition,
-      negotiable: valid.negotiable,
-      status: "pending",
-    })
-    .select("id")
-    .single();
-  if (error || !listing) return { error: dbError(error ?? { message: "" }) };
-
-  const { error: imageError } = await supabase
-    .from("listing_images")
-    .insert(input.photos.map((path, position) => ({ listing_id: listing.id, path, position })));
-  if (imageError) return { error: dbError(imageError) };
-
-  return { ok: true, id: listing.id };
+  // Listing and photos in one transaction; a retry with the same key returns
+  // the listing already created (create_listing, migration 0013).
+  const { data: id, error } = await supabase.rpc("create_listing", {
+    p_key: valid.submissionKey,
+    p_category: valid.categorySlug,
+    p_title: valid.title,
+    p_description: valid.description,
+    p_price: valid.price,
+    p_currency: valid.currency,
+    p_city: valid.city,
+    p_district: valid.district ?? "",
+    p_condition: valid.condition,
+    p_negotiable: valid.negotiable,
+    p_photos: valid.photos,
+  });
+  if (error || !id) return { error: dbError(error ?? { message: "" }) };
+  return { ok: true, id: String(id) };
 }
 
 export async function updateListing(

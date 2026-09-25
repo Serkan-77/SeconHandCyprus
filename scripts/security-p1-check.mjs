@@ -9,6 +9,7 @@
 // rows users cannot delete (sanctions, reports, tickets) are cleaned with it.
 // Every row written is removed in `finally` and leftovers are reported.
 
+import { randomUUID } from "node:crypto";
 import { assertDevDatabase } from "./lib/dev-guard.mjs";
 import { env, makeKit } from "./lib/test-kit.mjs";
 import { deleteOwnAccount } from "../src/lib/accountDeletion.ts";
@@ -33,8 +34,9 @@ const conversationIds = new Set();
 const buyerProfile = (await buyer.supabase.from("profiles").select("display_name, region").eq("id", buyer.id).single()).data;
 const buyerPhone = (await buyer.supabase.from("profile_private").select("phone").eq("id", buyer.id).single()).data?.phone ?? null;
 
-const { data: categories } = await anon.from("categories").select("id").order("sort_order").limit(1);
+const { data: categories } = await anon.from("categories").select("id, slug").order("sort_order").limit(1);
 const categoryId = categories[0].id;
+const categorySlug = categories[0].slug;
 
 async function newListing(owner, title, { approve = true } = {}) {
   const listing = must(
@@ -384,6 +386,61 @@ try {
       "silinmiş kullanıcıya mesaj",
     );
     return `2 mesaj korundu, ${note}`;
+  });
+
+  // ==================================================================== Batch 7
+  // ------------------------------------------------------------ P1-10 listing creation
+  const creator = await tempUser("creator");
+  const createArgs = (key, photos, title = `${MARK} created`) => ({
+    p_key: key,
+    p_category: categorySlug,
+    p_title: title,
+    p_description: MARK,
+    p_price: 10,
+    p_currency: "TL",
+    p_city: "Girne",
+    p_district: "",
+    p_condition: "Sıfır",
+    p_negotiable: false,
+    p_photos: photos,
+  });
+  const ownPhotos = [`${creator.id}/p1-1.png`, `${creator.id}/p1-2.png`];
+  await check("P1-10: aynı gönderim anahtarıyla iki çağrı tek ilan + fotoğraflar oluşturur", async () => {
+    for (const path of ownPhotos) must(await creator.supabase.storage.from("listing-images").upload(path, png, { contentType: "image/png" }), "yükle");
+    const key = randomUUID();
+    const [a, b] = await Promise.all([
+      creator.supabase.rpc("create_listing", createArgs(key, ownPhotos)),
+      creator.supabase.rpc("create_listing", createArgs(key, ownPhotos)),
+    ]);
+    const id = must(a, "ilk çağrı");
+    if (must(b, "ikinci çağrı") !== id) throw new Error("iki farklı ilan döndü");
+    listingIds.add(id);
+    const retry = must(await creator.supabase.rpc("create_listing", createArgs(key, ownPhotos)), "tekrar deneme");
+    if (retry !== id) throw new Error("tekrar deneme yeni ilan açtı");
+    const { count: n } = await service.from("listings").select("id", { count: "exact", head: true }).eq("idempotency_key", key);
+    const { count: m } = await service.from("listing_images").select("id", { count: "exact", head: true }).eq("listing_id", id);
+    if (n !== 1 || m !== 2) throw new Error(`ilan ${n}, fotoğraf ${m}`);
+    return "eşzamanlı 2 + tekrar 1 çağrı → 1 ilan, 2 fotoğraf";
+  });
+  await check("P1-10: fotoğraf adımı başarısızsa ilan da oluşmaz (atomik)", async () => {
+    const before = (await service.from("listings").select("id", { count: "exact", head: true }).eq("seller_id", creator.id)).count;
+    const tooMany = Array.from({ length: 11 }, (_, i) => `${creator.id}/p1-${i}.png`);
+    const { error } = await creator.supabase.rpc("create_listing", createArgs(randomUUID(), tooMany));
+    const after = (await service.from("listings").select("id", { count: "exact", head: true }).eq("seller_id", creator.id)).count;
+    if (error?.code !== "23514") throw new Error(`beklenen 23514, gelen: ${error?.code ?? "kabul edildi"}`);
+    if (after !== before) throw new Error(`yarım ilan kaldı (${before} → ${after})`);
+    return `reddedildi: ${error.code}`;
+  });
+  await check("P1-10: başka kullanıcının klasöründeki dosya ilana eklenemez (RPC ve doğrudan)", async () => {
+    const foreign = [`${seller.id}/stolen.jpg`];
+    const { error } = await creator.supabase.rpc("create_listing", createArgs(randomUUID(), foreign));
+    if (error?.code !== "42501") throw new Error(`RPC: ${error?.code ?? "kabul edildi"}`);
+    const own = await newListing(creator, `${MARK} path check`, { approve: false });
+    const note = await expectRefused(
+      creator.supabase.from("listing_images").insert({ listing_id: own.id, path: `${seller.id}/stolen.jpg`, position: 0 }).select("id"),
+      "doğrudan",
+    );
+    return `RPC 42501, ${note}`;
   });
 } catch (e) {
   kit.results.push(["✗", `Kurulum adımı başarısız, kalan kontroller çalışmadı: ${e.message}`]);
