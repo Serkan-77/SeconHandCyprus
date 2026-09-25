@@ -13,9 +13,11 @@ import { cn } from "@/lib/cn";
 import { chatTime, clockTime, initials } from "@/lib/format";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { MEETING_TEXT, meetingActions, meetingStage, type MeetingState } from "@/lib/meeting";
+import { mergeMessages } from "@/lib/chat";
 import {
   blockUser,
   confirmMeeting,
+  loadOlderMessages,
   markConversationRead,
   rateUser,
   reportUser,
@@ -62,16 +64,23 @@ export function ChatView({
   conversations,
   activeId,
   initialMessages,
+  initialHasOlder = false,
   hasRated,
 }: {
   me: string;
   conversations: ChatConversation[];
   activeId: string | null;
   initialMessages: ChatMessage[];
+  /** More messages exist before the first one loaded (the page opens on the newest). */
+  initialHasOlder?: boolean;
   hasRated: boolean;
 }) {
   const active = conversations.find((c) => c.id === activeId) ?? null;
   const [messages, setMessages] = useState(initialMessages);
+  const [hasOlder, setHasOlder] = useState(initialHasOlder);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [olderError, setOlderError] = useState("");
+  const listRef = useRef<HTMLDivElement>(null);
   const [modal, setModal] = useState<ModalKind>(null);
   const [rating, setRating] = useState(5);
   const [ratingComment, setRatingComment] = useState("");
@@ -101,7 +110,7 @@ export function ChatView({
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${active.id}` },
         (payload: { new: unknown }) => {
           const msg = payload.new as ChatMessage;
-          setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+          setMessages((prev) => mergeMessages(prev, [msg]));
           if (msg.sender_id !== me) markConversationRead(active.id);
         },
       )
@@ -119,9 +128,33 @@ export function ChatView({
     };
   }, [active, me]);
 
+  // Follow the conversation when a newer message arrives, but not when an
+  // older page is prepended above what the user is reading.
+  const newestId = messages.at(-1)?.id;
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+  }, [newestId]);
+
+  async function showOlder() {
+    const first = messages[0];
+    if (!active || !first || loadingOlder) return;
+    setLoadingOlder(true);
+    setOlderError("");
+    const list = listRef.current;
+    const heightBefore = list?.scrollHeight ?? 0;
+    const result = await loadOlderMessages(active.id, { created_at: first.created_at, id: first.id });
+    setLoadingOlder(false);
+    if (result.error || !result.messages) {
+      setOlderError(result.error ?? "Eski mesajlar yüklenemedi.");
+      return;
+    }
+    setMessages((prev) => mergeMessages(prev, result.messages ?? []));
+    setHasOlder(Boolean(result.hasMore));
+    // Keep the message that was on top where it was.
+    requestAnimationFrame(() => {
+      if (list) list.scrollTop += list.scrollHeight - heightBefore;
+    });
+  }
 
   const visibleConversations = useMemo(() => {
     const q = filter.trim().toLocaleLowerCase("tr-TR");
@@ -143,7 +176,7 @@ export function ChatView({
       const result = await sendMessage(active.id, text);
       if (result.message) {
         const msg = result.message;
-        setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+        setMessages((prev) => mergeMessages(prev, [msg]));
         if (inputRef.current) inputRef.current.value = "";
       } else if (result.error === "blocked") {
         setSendError("Mesaj gönderilemedi. Bu kullanıcıyla artık mesajlaşamazsın ya da hesabın kısıtlı.");
@@ -285,11 +318,22 @@ export function ChatView({
               )}
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4 sm:p-7" aria-live="polite">
+            <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4 sm:p-7" aria-live="polite">
               <div className="mx-auto flex max-w-[600px] items-center gap-2.5 rounded-xl bg-brand-soft p-3 text-[11px]">
                 <Icon name="shield" className="h-4 w-4 flex-shrink-0 text-accent" />
                 Ürünü görmeden ödeme yapma. Güvenli ve kalabalık bir yerde buluş.
               </div>
+              {hasOlder ? (
+                <button
+                  type="button"
+                  onClick={showOlder}
+                  disabled={loadingOlder}
+                  className="self-center text-[11px] font-medium text-accent"
+                >
+                  {loadingOlder ? "Yükleniyor…" : "Daha eski mesajları göster"}
+                </button>
+              ) : null}
+              {olderError ? <p className="self-center text-[11px] text-danger">{olderError}</p> : null}
               {messages.map((m, i) => {
                 const label = dayLabel(m.created_at);
                 const showDay = i === 0 || dayLabel(messages[i - 1].created_at) !== label;

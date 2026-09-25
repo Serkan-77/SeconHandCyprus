@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { fetchOlderMessages, type ChatMessageRow } from "@/lib/chat";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -34,6 +35,20 @@ export async function sendMessage(
     };
   }
   return { ok: true, message: data };
+}
+
+/** The page of messages just before the oldest one on screen. RLS limits it to participants. */
+export async function loadOlderMessages(
+  conversationId: string,
+  before: { created_at: string; id: string },
+): Promise<{ messages?: ChatMessageRow[]; hasMore?: boolean; error?: string }> {
+  const { supabase, user } = await session();
+  if (!user) return { error: "Oturumun sona erdi. Tekrar giriş yap." };
+  try {
+    return await fetchOlderMessages(supabase, conversationId, before);
+  } catch {
+    return { error: "Eski mesajlar yüklenemedi." };
+  }
 }
 
 export async function markConversationRead(conversationId: string) {
