@@ -44,7 +44,9 @@ async function step(name, fn) {
 }
 
 async function shot(page, name) {
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
+  // caret: "initial" — the default ("hide") injects caret-color styles into the
+  // page, which React reports as a hydration mismatch if it lands mid-hydration.
+  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false, caret: "initial" });
 }
 
 async function login(page, user) {
@@ -175,6 +177,38 @@ const buyer = await newPage();
 await step("Alıcı girişi (ece)", async () => {
   await login(buyer, "ece");
   await expectText(buyer, "Ece");
+});
+
+await step("Güvenlik başlıkları ve nonce'lu CSP (P1-15)", async () => {
+  const res = await buyer.request.get(`${BASE}/`);
+  const h = res.headers();
+  const csp = h["content-security-policy"] ?? "";
+  const nonce = csp.match(/'nonce-([^']+)'/)?.[1];
+  if (!nonce) throw new Error(`CSP'de nonce yok: ${csp.slice(0, 80)}`);
+  if (/script-src[^;]*'unsafe-inline'/.test(csp)) throw new Error("script-src 'unsafe-inline' içeriyor");
+  for (const d of ["frame-ancestors 'none'", "object-src 'none'", "base-uri 'self'"]) {
+    if (!csp.includes(d)) throw new Error(`CSP'de ${d} yok`);
+  }
+  const html = await res.text();
+  const scriptNonces = [...html.matchAll(/<script\b[^>]*\snonce="([^"]+)"/g)].map((m) => m[1]);
+  if (!scriptNonces.length || scriptNonces.some((n) => n !== nonce)) throw new Error("script nonce'ları CSP ile eşleşmiyor");
+  const expected = { "x-content-type-options": "nosniff", "x-frame-options": "DENY", "referrer-policy": "strict-origin-when-cross-origin" };
+  for (const [k, v] of Object.entries(expected)) if (h[k] !== v) throw new Error(`${k}: ${h[k]}`);
+  if (!h["permissions-policy"]?.includes("camera=()")) throw new Error("Permissions-Policy eksik");
+  if (h["x-powered-by"]) throw new Error("X-Powered-By gönderiliyor");
+  const second = (await (await buyer.request.get(`${BASE}/`)).headers())["content-security-policy"];
+  if (second === csp) throw new Error("nonce her istekte değişmiyor");
+});
+
+await step("Açık yönlendirme engelli: /giris?returnTo=/\\evil (P1-03)", async () => {
+  // A signed-in user opening /giris is redirected to returnTo by the proxy.
+  for (const target of ["/\\evil.example", "/%5Cevil.example", "//evil.example", "https://evil.example"]) {
+    await buyer.goto(`${BASE}/giris?returnTo=${encodeURIComponent(target)}`);
+    const host = new URL(buyer.url()).host;
+    if (host !== new URL(BASE).host) throw new Error(`${target} → ${buyer.url()}`);
+  }
+  await buyer.goto(`${BASE}/giris?returnTo=${encodeURIComponent("/hesabim/favoriler")}`);
+  await buyer.waitForURL(/\/hesabim\/favoriler/);
 });
 
 await step("Hesabım özeti", async () => {

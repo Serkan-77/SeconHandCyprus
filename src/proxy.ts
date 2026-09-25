@@ -1,12 +1,37 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_KEY, SUPABASE_URL, isSupabaseConfigured } from "@/lib/supabase/env";
+import { safeInternalPath } from "@/lib/safeRedirect";
+import { buildCsp, createNonce } from "@/lib/csp";
+import { adsEnabled } from "@/lib/ads";
+import { SITE } from "@/lib/site";
 
 const PROTECTED = ["/hesabim", "/mesajlar", "/ilan-ver", "/kurulum", "/yonetim"];
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
-  if (!isSupabaseConfigured) return response;
+  const nonce = createNonce();
+  const csp = buildCsp({
+    nonce,
+    supabaseUrl: SUPABASE_URL,
+    dev: process.env.NODE_ENV === "development",
+    https: SITE.url.startsWith("https://"),
+    ads: adsEnabled,
+  });
+
+  // Next.js takes the nonce from the request's CSP header while rendering.
+  const forward = () => {
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+    headers.set("Content-Security-Policy", csp);
+    return NextResponse.next({ request: { headers } });
+  };
+  const withCsp = (res: NextResponse) => {
+    res.headers.set("Content-Security-Policy", csp);
+    return res;
+  };
+
+  let response = forward();
+  if (!isSupabaseConfigured) return withCsp(response);
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
@@ -15,7 +40,7 @@ export async function proxy(request: NextRequest) {
       },
       setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = forward();
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
       },
@@ -40,11 +65,11 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && (pathname === "/giris" || pathname === "/kayit")) {
-    const target = request.nextUrl.searchParams.get("returnTo");
-    return NextResponse.redirect(new URL(target?.startsWith("/") && !target.startsWith("//") ? target : "/", request.url));
+    const target = safeInternalPath(request.nextUrl.searchParams.get("returnTo"));
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
-  return response;
+  return withCsp(response);
 }
 
 export const config = {

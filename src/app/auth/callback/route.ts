@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { safeInternalPath } from "@/lib/safeRedirect";
 
 // Landing point for e-mail confirmation and password-reset links.
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
-  const next = searchParams.get("next") ?? "/";
-  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const safeNext = safeInternalPath(searchParams.get("next"));
   const supabase = await createClient();
 
   const code = searchParams.get("code");

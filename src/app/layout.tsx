@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Script from "next/script";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Inter } from "next/font/google";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -45,13 +45,16 @@ export const metadata: Metadata = {
 
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [viewer, categories, favoriteIds, unread, cookieStore] = await Promise.all([
+  const [viewer, categories, favoriteIds, unread, cookieStore, requestHeaders] = await Promise.all([
     getViewer(),
     getCategories(),
     getFavoriteIds(),
     getUnreadCounts(),
     cookies(),
+    headers(),
   ]);
+  // Per-request CSP nonce from src/proxy.ts; Next.js applies it to its own scripts.
+  const nonce = requestHeaders.get("x-nonce") ?? undefined;
   const region = cookieStore.get(REGION_COOKIE)?.value ?? null;
   // Explicit theme choice lives in a cookie so the server renders the right
   // class; without one, CSS follows prefers-color-scheme.
@@ -103,6 +106,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             async
             strategy="afterInteractive"
             crossOrigin="anonymous"
+            nonce={nonce}
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
           />
         ) : null}

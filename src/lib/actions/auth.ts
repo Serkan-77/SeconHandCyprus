@@ -1,22 +1,22 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { safeInternalPath } from "@/lib/safeRedirect";
+import { absoluteUrl } from "@/lib/site";
 
 export type FormState = { error?: string; ok?: boolean; message?: string; email?: string } | undefined;
 
-async function siteOrigin() {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
+// Links in auth e-mails and the OAuth return URL are built from the configured
+// site URL (NEXT_PUBLIC_SITE_URL), never from the request's Host or
+// X-Forwarded-Host headers, which a client can forge (P1-04).
+function authCallbackUrl(next: string) {
+  return absoluteUrl(`/auth/callback?next=${encodeURIComponent(next)}`);
 }
 
 function safeReturnTo(value: FormDataEntryValue | null) {
-  const path = typeof value === "string" ? value : "";
-  return path.startsWith("/") && !path.startsWith("//") ? path : "/";
+  return safeInternalPath(value);
 }
 
 function translateAuthError(message: string) {
@@ -48,7 +48,7 @@ export async function signInWithGoogle(formData: FormData) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${await siteOrigin()}/auth/callback?next=${encodeURIComponent(returnTo)}` },
+    options: { redirectTo: authCallbackUrl(returnTo) },
   });
   if (error || !data.url) redirect("/giris?hata=google");
   redirect(data.url);
@@ -88,7 +88,7 @@ export async function signUp(_: FormState, formData: FormData): Promise<FormStat
     password,
     options: {
       data: { display_name: displayName, phone, marketing: formData.get("marketing") === "on" },
-      emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/kurulum`,
+      emailRedirectTo: authCallbackUrl("/kurulum"),
     },
   });
   if (error) return { error: translateAuthError(error.message) };
@@ -104,7 +104,7 @@ export async function requestPasswordReset(_: FormState, formData: FormData): Pr
   const email = String(formData.get("email") ?? "").trim();
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${await siteOrigin()}/auth/callback?next=/yeni-sifre`,
+    redirectTo: authCallbackUrl("/yeni-sifre"),
   });
   if (error) return { error: translateAuthError(error.message) };
   return { ok: true, email };
@@ -130,7 +130,7 @@ export async function resendEmailVerification(): Promise<FormState> {
   const { error } = await supabase.auth.resend({
     type: "signup",
     email: user.email,
-    options: { emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/hesabim/dogrulama` },
+    options: { emailRedirectTo: authCallbackUrl("/hesabim/dogrulama") },
   });
   if (error) return { error: translateAuthError(error.message) };
   return { ok: true, email: user.email };
