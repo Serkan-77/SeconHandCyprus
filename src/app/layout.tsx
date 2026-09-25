@@ -10,7 +10,7 @@ import { FavoritesProvider } from "@/components/FavoritesProvider";
 import { getCategories, getFavoriteIds, getUnreadCounts, getViewer } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { REGION_COOKIE } from "@/lib/regions";
-import { ADSENSE_CLIENT, adsEnabled } from "@/lib/ads";
+import { ADSENSE_CLIENT, adsEnabled, adsenseConfigured } from "@/lib/ads";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
   formatDetection: { telephone: false },
   // Lets AdSense verify site ownership during review.
-  ...(adsEnabled ? { other: { "google-adsense-account": ADSENSE_CLIENT } } : {}),
+  ...(adsenseConfigured ? { other: { "google-adsense-account": ADSENSE_CLIENT } } : {}),
 };
 
 
