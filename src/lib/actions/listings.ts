@@ -5,6 +5,17 @@ import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 type Result = { error?: string; ok?: boolean };
+/** review: an approved listing's content changed, so it went back to moderation (P1-01). */
+type EditResult = Result & { review?: boolean };
+
+// RLS turns an update the user may not make (e.g. while their account is
+// restricted) into "0 rows" rather than an error; report it as one.
+const NOT_EDITABLE = "Bu ilanı şu anda düzenleyemezsin. Hesabın kısıtlı olabilir.";
+
+async function listingStatus(supabase: Awaited<ReturnType<typeof createClient>>, id: string) {
+  const { data } = await supabase.from("listings").select("status").eq("id", id).maybeSingle();
+  return (data?.status as string | undefined) ?? null;
+}
 
 async function requireUser() {
   const supabase = await createClient();
@@ -81,11 +92,12 @@ export async function createListing(input: ListingInput): Promise<Result & { id?
 export async function updateListing(
   id: string,
   fields: { title: string; price: string; city: string; district?: string; description: string; negotiable?: boolean },
-): Promise<Result> {
+): Promise<EditResult> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Devam etmek için giriş yap." };
   if (fields.title.trim().length < 3) return { error: "Başlık en az 3 karakter olmalı." };
-  const { error } = await supabase
+  const before = await listingStatus(supabase, id);
+  const { data, error } = await supabase
     .from("listings")
     .update({
       title: fields.title.trim(),
@@ -95,17 +107,20 @@ export async function updateListing(
       description: fields.description.trim(),
       ...(fields.negotiable === undefined ? {} : { negotiable: fields.negotiable }),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("status");
   if (error) return { error: dbError(error.message) };
+  if (!data?.length) return { error: NOT_EDITABLE };
   refresh();
-  return { ok: true };
+  return { ok: true, review: before === "active" && data[0].status === "pending" };
 }
 
 export async function setListingStatus(id: string, status: "pending" | "sold" | "removed" | "draft"): Promise<Result> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Devam etmek için giriş yap." };
-  const { error } = await supabase.from("listings").update({ status }).eq("id", id);
+  const { data, error } = await supabase.from("listings").update({ status }).eq("id", id).select("id");
   if (error) return { error: dbError(error.message) };
+  if (!data?.length) return { error: NOT_EDITABLE };
   refresh();
   return { ok: true };
 }
@@ -121,8 +136,9 @@ export async function deleteListing(id: string) {
   redirect("/hesabim/ilanlar");
 }
 
-export async function addListingImages(listingId: string, paths: string[]): Promise<Result> {
+export async function addListingImages(listingId: string, paths: string[]): Promise<EditResult> {
   const { supabase } = await requireUser();
+  const before = await listingStatus(supabase, listingId);
   const { data: last } = await supabase
     .from("listing_images")
     .select("position")
@@ -136,10 +152,10 @@ export async function addListingImages(listingId: string, paths: string[]): Prom
     .insert(paths.map((path, i) => ({ listing_id: listingId, path, position: start + i })));
   if (error) return { error: dbError(error.message) };
   refresh();
-  return { ok: true };
+  return { ok: true, review: before === "active" && (await listingStatus(supabase, listingId)) === "pending" };
 }
 
-export async function removeListingImage(imageId: string): Promise<Result> {
+export async function removeListingImage(imageId: string): Promise<EditResult> {
   const { supabase } = await requireUser();
   const { data: image } = await supabase.from("listing_images").select("path, listing_id").eq("id", imageId).single();
   if (!image) return { error: "Fotoğraf bulunamadı." };
@@ -148,11 +164,13 @@ export async function removeListingImage(imageId: string): Promise<Result> {
     .select("id", { count: "exact", head: true })
     .eq("listing_id", image.listing_id);
   if ((count ?? 0) <= 1) return { error: "İlanda en az bir fotoğraf kalmalı." };
-  const { error } = await supabase.from("listing_images").delete().eq("id", imageId);
+  const before = await listingStatus(supabase, image.listing_id);
+  const { data: removed, error } = await supabase.from("listing_images").delete().eq("id", imageId).select("id");
   if (error) return { error: dbError(error.message) };
+  if (!removed?.length) return { error: NOT_EDITABLE };
   if (!image.path.startsWith("http")) await supabase.storage.from("listing-images").remove([image.path]);
   refresh();
-  return { ok: true };
+  return { ok: true, review: before === "active" && (await listingStatus(supabase, image.listing_id)) === "pending" };
 }
 
 export async function toggleFavorite(listingId: string): Promise<{ favorite?: boolean; error?: "auth" | string }> {

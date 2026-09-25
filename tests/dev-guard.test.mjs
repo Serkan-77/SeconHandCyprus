@@ -39,7 +39,7 @@ test("each missing condition blocks the script on its own", () => {
 });
 
 test("seed, e2e, security and integration call the guard before touching the database", () => {
-  for (const [file, name] of [["seed", "seed"], ["e2e-check", "e2e"], ["security-check", "security"], ["integration-check", "integration"]]) {
+  for (const [file, name] of [["seed", "seed"], ["e2e-check", "e2e"], ["security-check", "security"], ["integration-check", "integration"], ["security-p1-check", "security-p1"]]) {
     const src = readFileSync(fileURLToPath(new URL(`../scripts/${file}.mjs`, import.meta.url)), "utf8");
     const guard = src.indexOf(`assertDevDatabase("${name}")`);
     assert.ok(guard > 0, `${file}: guard call missing`);

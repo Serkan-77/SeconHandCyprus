@@ -40,6 +40,9 @@ type Props = {
   images: { id: string; url: string }[];
 };
 
+// A published listing whose text or photos change is reviewed again (P1-01).
+const REVIEW_TEXT = "Değişiklikler kaydedildi. İlan içeriği değiştiği için yayından alındı ve tekrar incelemeye gönderildi.";
+
 export function ManageListing({ listing, images }: Props) {
   const [modal, setModal] = useState<"sold" | "delete" | null>(null);
   const [message, setMessage] = useState<{ error?: string; ok?: string }>({});
@@ -47,11 +50,12 @@ export function ManageListing({ listing, images }: Props) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  function run(task: () => Promise<{ error?: string; ok?: boolean } | void>, okText?: string) {
+  function run(task: () => Promise<{ error?: string; ok?: boolean; review?: boolean } | void>, okText?: string) {
     setMessage({});
     startTransition(async () => {
       const result = await task();
       if (result && result.error) setMessage({ error: result.error });
+      else if (result && result.review) setMessage({ ok: REVIEW_TEXT });
       else if (okText) setMessage({ ok: okText });
       setModal(null);
     });
@@ -70,6 +74,7 @@ export function ManageListing({ listing, images }: Props) {
       for (const file of Array.from(files)) paths.push(await uploadImage("listing-images", file));
       const result = await addListingImages(listing.id, paths);
       if (result.error) setMessage({ error: result.error });
+      else if (result.review) setMessage({ ok: REVIEW_TEXT });
     } catch (e) {
       setMessage({ error: e instanceof Error ? e.message : "Fotoğraf yüklenemedi." });
     } finally {

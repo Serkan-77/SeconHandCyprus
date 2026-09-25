@@ -248,6 +248,9 @@ try {
     const row = await readRow(seller.supabase, "listings", listing.id);
     if (row.title !== `${TEST_TITLE} lamp updated`) throw new Error(`başlık: ${row.title}`);
     if (row.slug !== `security-check-lamp-updated-${ref_no}`) throw new Error(`slug: ${row.slug}`);
+    // Since 0008 a content edit sends the listing back to review (P1-01); the
+    // checks below need it public again, so the admin re-approves it.
+    must(await admin.supabase.from("listings").update({ status: "active" }).eq("id", listing.id), "admin yeniden onay");
   });
 
   await check("Admin setFeatured hâlâ çalışır", async () => {
