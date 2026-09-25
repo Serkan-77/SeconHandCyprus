@@ -21,10 +21,12 @@ const columns = [
   {
     title: "Yanındayız",
     links: [
+      { href: "/hakkimizda", label: "Hakkımızda" },
       { href: "/yardim", label: "Yardım & güvenlik" },
       { href: "/destek", label: "Destek" },
       { href: "/kosullar", label: "Kullanım koşulları" },
       { href: "/gizlilik", label: "Gizlilik bildirimi" },
+      { href: "/cerez-politikasi", label: "Çerez politikası" },
     ],
   },
 ];
