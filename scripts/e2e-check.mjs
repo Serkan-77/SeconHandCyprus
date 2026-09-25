@@ -70,8 +70,9 @@ await step("Ana sayfa ilanları gösteriyor", async () => {
   await shot(guest, "01-ana-sayfa");
 });
 
-await step("Kategori filtresi", async () => {
+await step("Eski kategori adresi temiz URL'ye yönleniyor", async () => {
   await guest.goto(`${BASE}/ilanlar?kategori=mobilya`);
+  await guest.waitForURL(/\/kategori\/mobilya$/);
   await expectText(guest, "Mobilya ilanları");
   await shot(guest, "02-mobilya");
 });
@@ -124,9 +125,31 @@ await step("Admin paneli misafiri yönlendiriyor", async () => {
 });
 
 await step("Statik sayfalar", async () => {
-  for (const path of ["/kategori", "/yardim", "/destek", "/kosullar", "/gizlilik", "/konum", "/sitemap.xml"]) {
+  for (const path of ["/kategori", "/yardim", "/destek", "/kosullar", "/gizlilik", "/cerez-politikasi", "/hakkimizda", "/konum", "/sitemap.xml", "/robots.txt", "/manifest.webmanifest", "/opengraph-image", "/kategori/mobilya/opengraph-image"]) {
     const res = await guest.goto(`${BASE}${path}`);
     if (!res || res.status() >= 400) throw new Error(`${path} → ${res?.status()}`);
+  }
+});
+
+await step("SEO: canonical, yapılandırılmış veri ve sitemap", async () => {
+  await guest.goto(`${BASE}${listingPath}`);
+  const canonical = await guest.locator('link[rel="canonical"]').getAttribute("href");
+  if (!canonical?.endsWith(listingPath)) throw new Error(`canonical: ${canonical}`);
+  const types = await guest.$$eval('script[type="application/ld+json"]', (els) => els.flatMap((e) => [].concat(JSON.parse(e.textContent)).map((d) => d["@type"])));
+  for (const t of ["Product", "BreadcrumbList"]) if (!types.includes(t)) throw new Error(`${t} yok: ${types}`);
+  const og = await guest.locator('meta[property="og:image"]').first().getAttribute("content");
+  if (!og) throw new Error("og:image yok");
+  await guest.goto(`${BASE}/ilanlar?q=berjer`);
+  const robots = await guest.locator('meta[name="robots"]').getAttribute("content");
+  if (!robots?.includes("noindex")) throw new Error(`arama sayfası indekslenebilir: ${robots}`);
+  const sitemap = await (await guest.request.get(`${BASE}/sitemap.xml`)).text();
+  if (!sitemap.includes("/kategori/mobilya") || !sitemap.includes("/ilan/")) throw new Error("sitemap eksik");
+});
+
+await step("Ödeme sayfaları kaldırıldı, ads.txt AdSense yokken 404", async () => {
+  for (const path of ["/one-cikar", "/premium", "/odeme/ozet", "/yonetim/paketler", "/ads.txt"]) {
+    const res = await guest.request.get(`${BASE}${path}`, { maxRedirects: 0 });
+    if (![404, 307, 308].includes(res.status())) throw new Error(`${path} → ${res.status()}`);
   }
 });
 
@@ -254,7 +277,6 @@ await step("Yönetim alt sayfaları", async () => {
     ["/yonetim/dogrulama", "Doğrulama incelemesi"],
     ["/yonetim/destek", "Destek talepleri"],
     ["/yonetim/kategoriler", "Kategori yönetimi"],
-    ["/yonetim/paketler", "Paket ve fiyatlandırma"],
     ["/yonetim/duyurular", "Duyuru oluştur"],
   ]) {
     await admin.goto(`${BASE}${path}`);
