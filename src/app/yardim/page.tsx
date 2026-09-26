@@ -88,7 +88,7 @@ const topics: { id: string; icon: IconName; title: string; desc: string; faqs: [
       ],
       [
         "Hesabımı nasıl silerim?",
-        "Hesabım › Ayarlar › Tehlikeli bölge adımından hesabını kalıcı olarak silebilirsin. İlanların ve mesajların da silinir.",
+        "Hesabım › Ayarlar › Tehlikeli bölge adımından hesabını kalıcı olarak silebilirsin. Profilin, ilanların ve fotoğrafların silinir; gönderdiğin mesajlar karşı tarafın konuşmasında “Silinmiş kullanıcı” adıyla kalır.",
       ],
     ],
   },

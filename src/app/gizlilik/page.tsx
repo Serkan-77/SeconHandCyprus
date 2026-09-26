@@ -118,10 +118,23 @@ const sections: LegalSection[] = [
     title: "Saklama süreleri",
     body: (
       <ul>
-        <li>Hesap ve ilan verileri: hesabın açık olduğu sürece; hesabını sildiğinde kalıcı olarak silinir.</li>
-        <li>Silinen ilanların fotoğrafları depolamadan da kaldırılır.</li>
-        <li>Şikayet ve yaptırım kayıtları: güvenlik amacıyla ilgili hesap silinse de makul bir süre saklanabilir.</li>
-        <li>Destek talepleri: talebin çözülmesinden sonra en fazla 2 yıl.</li>
+        <li>
+          Hesap ve ilan verileri: hesabın açık olduğu sürece. Hesabını sildiğinde profilin, iletişim bilgilerin (e-posta,
+          telefon), ilanların, favorilerin, bildirimlerin ve değerlendirmelerin kalıcı olarak silinir.
+        </li>
+        <li>Silinen ilanların ve hesabın fotoğrafları (profil fotoğrafı dahil) depolamadan da kaldırılır.</li>
+        <li>
+          Mesajlar: gönderdiğin mesajlar, hesabını silsen de karşı tarafın konuşma geçmişinde kalır; mesajlar artık
+          hesabınla ilişkilendirilmez ve “Silinmiş kullanıcı” olarak görünür. Bu konuşmaya yeni mesaj gönderilemez.
+        </li>
+        <li>
+          Şikayet ve yaptırım kayıtları: güvenlik amacıyla ilgili ilan veya hesap silinse de, şikayet anındaki ilan
+          bilgileriyle birlikte makul bir süre saklanabilir. Hesabın kısıtlıyken hesap silme işlemi yapılamaz.
+        </li>
+        <li>
+          Destek talepleri: talebin çözülmesinden sonra en fazla 2 yıl. Hesabını sildiğinde taleplerindeki e-posta
+          adresin anonimleştirilir.
+        </li>
       </ul>
     ),
   },

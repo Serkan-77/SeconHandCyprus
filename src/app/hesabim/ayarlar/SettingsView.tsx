@@ -156,7 +156,7 @@ export function SettingsView({
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border p-5">
           <div>
             <b className="text-[13px]">Hesabımı sil</b>
-            <p className="mt-1 text-xs text-muted">Bu işlem geri alınamaz; ilanların ve mesajların kalıcı olarak silinir.</p>
+            <p className="mt-1 text-xs text-muted">Bu işlem geri alınamaz; profilin, ilanların ve fotoğrafların kalıcı olarak silinir. Gönderdiğin mesajlar karşı tarafın konuşmasında “Silinmiş kullanıcı” adıyla kalır.</p>
           </div>
           <Button variant="danger" full={false} onClick={() => setDeleteOpen(true)} icon={<Icon name="trash" className="h-4 w-4" />}>
             Hesabımı sil
@@ -181,7 +181,7 @@ export function SettingsView({
           </p>
           <Field label="Onay metni" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
           <Checkbox
-            label="İlanlarımın, mesajlarımın ve profil bilgilerimin silineceğini biliyorum."
+            label="Profil bilgilerimin, ilanlarımın ve fotoğraflarımın silineceğini biliyorum."
             checked={confirmChecked}
             onChange={(e) => setConfirmChecked(e.target.checked)}
           />

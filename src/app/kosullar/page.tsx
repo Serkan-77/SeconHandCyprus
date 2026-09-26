@@ -150,7 +150,9 @@ const sections: LegalSection[] = [
     body: (
       <p>
         Hesabını dilediğin zaman <Link href="/hesabim/ayarlar">Hesabım › Ayarlar</Link> bölümünden kalıcı olarak
-        silebilirsin; ilanların, mesajların ve profil bilgilerin de silinir. Kuralları ağır biçimde ihlal eden hesaplar
+        silebilirsin; profil bilgilerin, ilanların ve fotoğrafların da silinir. Gönderdiğin mesajlar karşı tarafın konuşma
+        geçmişinde hesabınla ilişkisi kaldırılmış olarak kalır. Hesabın kısıtlıyken silme işlemi yapılamaz; bu durumda
+        destek talebi oluşturabilirsin. Kuralları ağır biçimde ihlal eden hesaplar
         bizim tarafımızdan kapatılabilir.
       </p>
     ),

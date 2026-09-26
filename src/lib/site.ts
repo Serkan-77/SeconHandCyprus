@@ -19,7 +19,7 @@ export const SITE = {
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
   /** Shown on legal pages; leave empty to point people to the support form instead. */
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
-  legalUpdated: "24 Eylül 2026",
+  legalUpdated: "26 Eylül 2026",
   locale: "tr_TR",
 } as const;
 
