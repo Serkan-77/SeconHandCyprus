@@ -7,12 +7,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "security": "npm run security:p0 && npm run security:p1",
+    "security:p0": "node --env-file=.env.local scripts/security-check.mjs",
+    "security:p1": "node --env-file=.env.local scripts/security-p1-check.mjs",
+    "integration": "node --env-file=.env.local scripts/integration-check.mjs",
     "e2e": "node --env-file=.env.local scripts/e2e-check.mjs",
     "responsive": "node --env-file=.env.local scripts/responsive-check.mjs",
-    "test": "node --test \"tests/**/*.test.mjs\"",
-    "security": "node --env-file=.env.local scripts/security-check.mjs && node --env-file=.env.local scripts/security-p1-check.mjs",
-    "integration": "node --env-file=.env.local scripts/integration-check.mjs"
+    "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "smoke": "node scripts/production-smoke.mjs",
+    "smoke:local": "node --env-file=.env.local scripts/production-smoke.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

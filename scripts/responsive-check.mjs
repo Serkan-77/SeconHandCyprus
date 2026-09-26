@@ -1,6 +1,11 @@
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { assertDevDatabase } from "./lib/dev-guard.mjs";
+
+// Signs in as a seeded demo account: development project only (never spend
+// sign-in attempts or look for demo data on production).
+assertDevDatabase("responsive");
 
 // Screenshots every main page on mobile/tablet/desktop in light and dark mode
 // and flags horizontal overflow. Run with `npm run responsive` while the dev
