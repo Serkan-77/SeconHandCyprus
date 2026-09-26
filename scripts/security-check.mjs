@@ -251,6 +251,8 @@ try {
     // Since 0008 a content edit sends the listing back to review (P1-01); the
     // checks below need it public again, so the admin re-approves it.
     must(await admin.supabase.from("listings").update({ status: "active" }).eq("id", listing.id), "admin yeniden onay");
+    // The re-approval notifies the seller under the new slug.
+    notificationLinks[seller.id].add(`/ilan/${row.slug}`);
   });
 
   await check("Admin setFeatured hâlâ çalışır", async () => {

@@ -3,7 +3,9 @@
 //   npm run integration
 //
 // Needs NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY and
-// SEED_PASSWORD (demo accounts). Every row it writes is removed in `finally`.
+// SEED_PASSWORD (demo accounts), and SUPABASE_SECRET_KEY to remove the test
+// conversation (no user may delete conversations, and since migration 0012
+// they outlive their listing). Every row it writes is removed in `finally`.
 //
 // Chat paging (P1-11): a 7-message test conversation is read in pages of 3,
 // newest first, and must come back complete and in order; the inbox query
@@ -19,8 +21,9 @@ assertDevDatabase("integration");
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const password = process.env.SEED_PASSWORD;
-if (!url || !key || !password) {
-  console.error("NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ve SEED_PASSWORD .env.local içinde olmalı.");
+const secret = process.env.SUPABASE_SECRET_KEY;
+if (!url || !key || !password || !secret) {
+  console.error("NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SEED_PASSWORD ve SUPABASE_SECRET_KEY .env.local içinde olmalı.");
   process.exit(1);
 }
 
@@ -124,6 +127,8 @@ try {
 } catch (e) {
   results.push(["✗", `Kurulum adımı başarısız: ${e.message}`]);
 } finally {
+  const service = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (conversationId) await service.from("conversations").delete().eq("id", conversationId);
   if (listingId) await seller.supabase.from("listings").delete().eq("id", listingId);
   for (const owner of [seller, buyer]) {
     if (conversationId) await owner.supabase.from("notifications").delete().eq("link", `/mesajlar?c=${conversationId}`);

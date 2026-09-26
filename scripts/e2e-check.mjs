@@ -504,6 +504,8 @@ await browser.close();
 if (process.env.SUPABASE_SECRET_KEY) {
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
   await db.from("messages").delete().like("body", "Test mesajı %");
+  // Conversations outlive their listing since migration 0012 (P1-09).
+  if (meetingConversationId) await db.from("conversations").delete().eq("id", meetingConversationId);
   await db.from("listings").delete().like("title", "E2E test %");
   // Ratings outlive their conversation, and the meeting step leaves two notifications.
   await db.from("ratings").delete().eq("comment", E2E_RATING);
