@@ -96,13 +96,27 @@ export function SettingsView({
             name="phone"
             defaultValue={contact.phone}
             placeholder="+90 5xx xxx xx xx"
-            hint="Numaran hiçbir zaman ilanlarda açıkça gösterilmez."
+            hint="Numaran profilinde ve ilanlarında hiçbir zaman açıkça yazmaz. Boş da bırakabilirsin."
           />
-          <Checkbox
-            name="whatsapp"
-            defaultChecked={contact.whatsapp}
-            label="Giriş yapmış alıcılar ilanlarımdan bana WhatsApp ile ulaşabilsin."
-          />
+          <fieldset className="flex flex-col gap-2.5">
+            <legend className="mb-2 text-[13px] font-semibold">Alıcılar bana nasıl ulaşsın?</legend>
+            <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
+              <input type="radio" name="whatsapp" value="off" defaultChecked={!contact.whatsapp} className="mt-0.5 accent-[var(--accent)]" />
+              <span>
+                <b className="block">Yalnızca uygulama içi mesaj</b>
+                <span className="text-xs text-muted">Numaran gizli kalır; ilanlarında WhatsApp butonu görünmez.</span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
+              <input type="radio" name="whatsapp" value="on" defaultChecked={contact.whatsapp} className="mt-0.5 accent-[var(--accent)]" />
+              <span>
+                <b className="block">Uygulama içi mesaj + WhatsApp</b>
+                <span className="text-xs text-muted">
+                  Giriş yapmış alıcılar ilanlarındaki WhatsApp butonuyla numarana ulaşabilir. Telefon numarası gerekir.
+                </span>
+              </span>
+            </label>
+          </fieldset>
           {contactState?.error ? <FormError>{contactState.error}</FormError> : null}
           {contactState?.ok ? <FormSuccess>İletişim bilgilerin kaydedildi.</FormSuccess> : null}
           <Button type="submit" full={false} disabled={contactPending} className="sm:min-w-[180px]">

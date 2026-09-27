@@ -27,7 +27,7 @@ export function StoreForm({ userId, isStore, initial }: { userId: string; isStor
             type="tel"
             defaultValue={initial.phone}
             placeholder="+905331234567"
-            hint="Mağaza sayfanda herkese açık görünür."
+            hint="Mağaza sayfanda herkese açık görünür. Boş bırakırsan gösterilmez."
           />
           <Field label="Web sitesi (opsiyonel)" name="website" defaultValue={initial.website} maxLength={200} placeholder="ornek.com" />
         </div>

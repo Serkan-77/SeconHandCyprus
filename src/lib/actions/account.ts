@@ -116,9 +116,11 @@ export async function updateContact(_: Result | undefined, formData: FormData): 
     if (!parsed.success) return { error: firstError(parsed.error) };
     phone = parsed.data;
   }
+  const whatsapp = formData.get("whatsapp") === "on";
+  if (whatsapp && !phone) return { error: "WhatsApp ile ulaşılabilmek için telefon numaranı gir." };
   const { error } = await supabase
     .from("profile_private")
-    .update({ phone: phone || null, whatsapp_enabled: formData.get("whatsapp") === "on" && Boolean(phone) })
+    .update({ phone: phone || null, whatsapp_enabled: whatsapp })
     .eq("id", user.id);
   if (error) return { error: "İletişim bilgileri kaydedilemedi." };
   refresh();

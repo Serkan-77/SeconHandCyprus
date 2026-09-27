@@ -57,7 +57,7 @@ Build ve çalışma zamanı doğrulaması (`src/lib/envCheck.ts`) şöyle davran
 
 ---
 
-## 3. Supabase migration'ları (0001 → 0014)
+## 3. Supabase migration'ları (0001 → 0015)
 
 SQL'i bu dokümandan değil, **repodaki dosyalardan** çalıştır:
 `supabase/migrations/`. Her dosyayı açıp tüm içeriğini kopyala, Supabase
@@ -90,6 +90,7 @@ Başlamadan önce tarayıcı adres çubuğunda **production** projesinin ref'ini
 | 0012 | `0012_account_deletion_privacy.sql` | Hesap veya ilan silinince karşı tarafın konuşması korunur (FK `SET NULL`); destek e-postası anonimleşir. | **evet (FK, NOT NULL)** |
 | 0013 | `0013_idempotent_listing_creation.sql` | Atomik ve tekrar denenebilir `create_listing` RPC'si; fotoğraf yolu sahibin klasöründe olmalı. | evet (kolon, index) |
 | 0014 | `0014_realtime_admin_details_stores.sql` | Bildirimler Realtime'a eklenir; yönetici her kullanıcıyı/ilanı düzenleyip silebilir (`admin_delete_user`); ilan ek bilgileri (`listings.details`); mağaza hesapları (`profiles.account_type`, `store_*`). **Uygulama kodu bu migration'dan önce deploy edilmemeli.** | evet (kolon, policy, fonksiyon) |
+| 0015 | `0015_listing_whatsapp_flag.sql` | `listing_accepts_whatsapp()`: ilan sayfası, numarayı göstermeden satıcının WhatsApp'a açık olup olmadığını öğrenir; kapalıysa buton gizlenir. | hayır (fonksiyon) |
 
 ### Migration sonrası doğrulama (salt okuma) **MANUAL**
 

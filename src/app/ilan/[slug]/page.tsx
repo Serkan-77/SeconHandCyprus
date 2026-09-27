@@ -54,6 +54,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+/**
+ * Whether the seller shares a WhatsApp number (yes/no only, migration 0015).
+ * Without that function (not migrated yet) the button shows as before.
+ */
+async function sellerAcceptsWhatsapp(listingId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("listing_accepts_whatsapp", { p_listing: listingId });
+  return error ? true : Boolean(data);
+}
+
 const statusNotice: Record<string, string> = {
   pending: "Bu ilan incelemede. Onaylandığında herkes görebilecek.",
   rejected: "Bu ilan yayınlanamadı. Düzenleyip tekrar incelemeye gönderebilirsin.",
@@ -78,9 +88,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     .sort((a, b) => a.position - b.position)
     .map((i) => publicImageUrl(i.path));
 
-  const [seller, similar] = await Promise.all([
+  const [seller, similar, acceptsWhatsapp] = await Promise.all([
     getSellerSummary(listing.seller_id),
     searchListings({ category: category?.slug, excludeId: listing.id, pageSize: 4 }),
+    sellerAcceptsWhatsapp(listing.id),
   ]);
 
   if (isActive && !isOwner) {
@@ -199,7 +210,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               ) : (
                 <>
                   <MessageSellerButton listingId={listing.id} loggedIn={Boolean(viewer)} />
-                  <WhatsAppButton listingId={listing.id} listingTitle={listing.title} loggedIn={Boolean(viewer)} />
+                  {acceptsWhatsapp ? (
+                    <WhatsAppButton listingId={listing.id} listingTitle={listing.title} loggedIn={Boolean(viewer)} />
+                  ) : (
+                    <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted">
+                      <Icon name="lock" className="h-3.5 w-3.5" />
+                      Satıcı yalnızca uygulama içinden mesajlaşıyor.
+                    </p>
+                  )}
                 </>
               )}
             </div>
