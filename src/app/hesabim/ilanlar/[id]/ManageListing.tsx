@@ -112,14 +112,14 @@ export function ManageListing({ listing, images }: Props) {
       ) : listing.status === "active" ? (
         <Link
           href="/one-cikar"
-          className="flex items-center gap-3 rounded-xl bg-accent-soft p-4 text-xs text-text transition hover:brightness-95"
+          className="flex items-center gap-3 rounded-xl bg-bg p-4 text-xs text-text transition hover:bg-brand-soft"
         >
-          <Icon name="spark" className="h-5 w-5 flex-shrink-0 text-accent" />
+          <Icon name="spark" className="h-5 w-5 flex-shrink-0" />
           <span className="flex-1">
-            <b className="block text-accent">İlanını öne çıkar</b>
+            <b className="block">İlanını öne çıkar</b>
             Vitrin ve üste taşıma paketleri yakında. Ayrıntıları gör.
           </span>
-          <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-accent" />
+          <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-muted" />
         </Link>
       ) : listing.status === "pending" ? (
         <div className="flex items-start gap-2.5 rounded-xl bg-bg p-4 text-xs text-muted">

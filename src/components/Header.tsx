@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Icon, type IconName } from "@/components/icons";
 import { LinkButton } from "@/components/ui/Button";
 import { signOut } from "@/lib/actions/auth";
+import { useUnreadCounts } from "@/lib/liveCounts";
 
 export type HeaderViewer = {
   name: string;
@@ -25,7 +26,7 @@ export function Header({
   viewer,
   categories,
   region,
-  unread,
+  unread: serverUnread,
 }: {
   viewer: HeaderViewer;
   categories: { icon: IconName; name: string; slug: string }[];
@@ -33,6 +34,7 @@ export function Header({
   unread: { messages: number; notifications: number };
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const unread = useUnreadCounts(serverUnread);
   const router = useRouter();
 
   const categoryNav = [

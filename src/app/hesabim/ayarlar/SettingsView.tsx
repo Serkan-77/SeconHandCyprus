@@ -100,15 +100,15 @@ export function SettingsView({
           />
           <fieldset className="flex flex-col gap-2.5">
             <legend className="mb-2 text-[13px] font-semibold">Alıcılar bana nasıl ulaşsın?</legend>
-            <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
-              <input type="radio" name="whatsapp" value="off" defaultChecked={!contact.whatsapp} className="mt-0.5 accent-[var(--accent)]" />
+            <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-brand has-[:checked]:bg-bg">
+              <input type="radio" name="whatsapp" value="off" defaultChecked={!contact.whatsapp} className="mt-0.5 accent-brand" />
               <span>
                 <b className="block">Yalnızca uygulama içi mesaj</b>
                 <span className="text-xs text-muted">Numaran gizli kalır; ilanlarında WhatsApp butonu görünmez.</span>
               </span>
             </label>
-            <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
-              <input type="radio" name="whatsapp" value="on" defaultChecked={contact.whatsapp} className="mt-0.5 accent-[var(--accent)]" />
+            <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-brand has-[:checked]:bg-bg">
+              <input type="radio" name="whatsapp" value="on" defaultChecked={contact.whatsapp} className="mt-0.5 accent-brand" />
               <span>
                 <b className="block">Uygulama içi mesaj + WhatsApp</b>
                 <span className="text-xs text-muted">

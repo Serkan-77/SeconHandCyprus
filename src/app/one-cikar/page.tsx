@@ -76,7 +76,7 @@ export default function PromotePage() {
                 En çok tercih edilecek
               </span>
             ) : null}
-            <span className="grid h-12 w-12 place-items-center rounded-xl bg-accent-soft text-accent">
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-soft text-brand">
               <Icon name={p.icon} className="h-6 w-6" />
             </span>
             <div>
@@ -90,7 +90,7 @@ export default function PromotePage() {
             <ul className="flex flex-1 flex-col gap-2.5 text-[13px]">
               {p.features.map((f) => (
                 <li key={f} className="flex items-start gap-2">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                  <Icon name="check" className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   {f}
                 </li>
               ))}
@@ -107,7 +107,7 @@ export default function PromotePage() {
             <details key={q} className="group p-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium">
                 {q}
-                <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-accent transition group-open:rotate-90" />
+                <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-muted transition group-open:rotate-90" />
               </summary>
               <p className="mt-3 text-[13px] leading-relaxed text-muted">{a}</p>
             </details>

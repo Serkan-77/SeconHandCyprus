@@ -7,15 +7,17 @@ import { Icon, type IconName } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
 import { signOut } from "@/lib/actions/auth";
+import { useUnreadCounts } from "@/lib/liveCounts";
 
 export function AccountMenu({
   profile,
-  unread,
+  unread: serverUnread,
 }: {
   profile: { displayName: string; avatarUrl: string | null; region: string | null; createdAt: string };
   unread: { messages: number; notifications: number };
 }) {
   const pathname = usePathname();
+  const unread = useUnreadCounts(serverUnread);
   const items: { href: string; icon: IconName; label: string; count?: number }[] = [
     { href: "/hesabim", icon: "user", label: "Hesabım" },
     { href: "/hesabim/ilanlar", icon: "bag", label: "İlanlarım" },

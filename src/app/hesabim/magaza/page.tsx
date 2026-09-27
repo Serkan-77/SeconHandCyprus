@@ -35,8 +35,8 @@ export default async function StoreSettingsPage() {
           { icon: "shield" as const, title: "Onaylı mağaza rozeti", text: "Ekibimiz işletmeni doğruladığında rozetin eklenir." },
           { icon: "bag" as const, title: "Daha fazla ilan", text: "Onaylı mağazalar aynı anda 500'e kadar ilan yayınlayabilir." },
         ].map((b) => (
-          <div key={b.title} className="rounded-xl bg-accent-soft p-4">
-            <Icon name={b.icon} className="h-5 w-5 text-accent" />
+          <div key={b.title} className="rounded-xl bg-bg p-4">
+            <Icon name={b.icon} className="h-5 w-5" />
             <b className="mt-2 block text-[13px]">{b.title}</b>
             <p className="mt-1 text-[11px] leading-relaxed text-muted">{b.text}</p>
           </div>

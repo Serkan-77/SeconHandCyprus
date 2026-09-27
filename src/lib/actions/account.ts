@@ -9,6 +9,7 @@ import { safeInternalPath } from "@/lib/safeRedirect";
 import { firstError, phoneSchema, profileSchema, storeSchema, supportSchema } from "@/lib/validation";
 import { rateLimitMessage } from "@/lib/dbErrors";
 import { deleteOwnAccount } from "@/lib/accountDeletion";
+import { getUnreadCounts } from "@/lib/queries";
 
 type Result = { error?: string; ok?: boolean };
 
@@ -145,6 +146,11 @@ export async function requestPhoneVerification(_: Result | undefined, formData: 
   if (error) return { error: rateLimitMessage(error) ?? "Talep gönderilemedi." };
   refresh();
   return { ok: true };
+}
+
+/** Header badge counts for LiveUpdates, without re-rendering the page. */
+export async function getLiveUnreadCounts() {
+  return getUnreadCounts();
 }
 
 export async function markAllNotificationsRead() {

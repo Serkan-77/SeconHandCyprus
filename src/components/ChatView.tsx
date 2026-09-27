@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -114,6 +114,11 @@ export function ChatView({
   // the id: a router refresh hands in a new `active` object for the same
   // conversation, which must not drop and re-open the channel.
   const activeConversationId = active?.id ?? null;
+  // Re-renders the messages page for the list and badges, but never after the
+  // user has already moved on to another page.
+  const refreshIfStillHere = useCallback(() => {
+    if (window.location.pathname === "/mesajlar") router.refresh();
+  }, [router]);
   useEffect(() => {
     if (!activeConversationId) return;
     const conversationId = activeConversationId;
@@ -123,7 +128,7 @@ export function ChatView({
     // conversation list and the header badge show the new state.
     async function readAndRefresh() {
       await markConversationRead(conversationId);
-      router.refresh();
+      refreshIfStillHere();
     }
     markConversationRead(conversationId);
     const channel = supabase
@@ -161,7 +166,7 @@ export function ChatView({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeConversationId, me, router]);
+  }, [activeConversationId, me, refreshIfStillHere]);
 
   // Follow the conversation when a newer message arrives, but not when an
   // older page is prepended above what the user is reading.
@@ -200,23 +205,39 @@ export function ChatView({
     );
   }, [conversations, filter]);
 
+  // `pending` only updates on the next render, so a second Enter pressed
+  // before that would send the same text twice; the ref blocks it at once.
+  const sendingRef = useRef(false);
+
   function send(text: string) {
-    if (!active || !text.trim() || otherGone) return;
+    if (!active || !text.trim() || otherGone || sendingRef.current) return;
     if (blocked) {
       setSendError(`${active.other.name} kullanıcısını engellediğin için mesajlaşamıyorsun.`);
       return;
     }
     setSendError("");
+    sendingRef.current = true;
+    // Clear the box right away; the text comes back if sending fails.
+    const typed = inputRef.current?.value === text;
+    if (typed && inputRef.current) inputRef.current.value = "";
     startTransition(async () => {
-      const result = await sendMessage(active.id, text);
-      if (result.message) {
-        const msg = result.message;
-        setMessages((prev) => mergeMessages(prev, [msg]));
-        if (inputRef.current) inputRef.current.value = "";
-      } else if (result.error === "blocked") {
-        setSendError("Mesaj gönderilemedi. Bu kullanıcıyla artık mesajlaşamazsın ya da hesabın kısıtlı.");
-      } else {
-        setSendError(result.error ?? "Mesaj gönderilemedi.");
+      try {
+        const result = await sendMessage(active.id, text);
+        if (result.message) {
+          const msg = result.message;
+          setMessages((prev) => mergeMessages(prev, [msg]));
+          // The conversation list shows the new last message.
+          refreshIfStillHere();
+          return;
+        }
+        if (typed && inputRef.current && !inputRef.current.value) inputRef.current.value = text;
+        setSendError(
+          result.error === "blocked"
+            ? "Mesaj gönderilemedi. Bu kullanıcıyla artık mesajlaşamazsın ya da hesabın kısıtlı."
+            : (result.error ?? "Mesaj gönderilemedi."),
+        );
+      } finally {
+        sendingRef.current = false;
       }
     });
   }
