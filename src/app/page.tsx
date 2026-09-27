@@ -234,6 +234,38 @@ export default async function HomePage() {
         <ListingGrid items={nearbyItems} />
       </section>
 
+      <section className="flex flex-col gap-6 rounded-2xl border border-border bg-bg px-6 py-8 sm:px-9 lg:flex-row lg:items-center lg:gap-10">
+        <div className="flex-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-[10px] font-semibold tracking-[1px] text-on-brand">
+            <Icon name="spark" className="h-3 w-3" />
+            YAKINDA
+          </span>
+          <h2 className="mt-3 text-xl font-semibold tracking-tight sm:text-[26px]">İlanını öne çıkar, daha hızlı sat.</h2>
+          <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-muted">
+            Üste taşıma, vitrin ve mağazalara özel paketlerle ilanın daha çok kişiye ulaşacak. Şimdilik bilgilendirme
+            amaçlı; hiçbir paket için ödeme alınmıyor.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {[
+              { icon: "arrow" as const, label: "Üste taşı" },
+              { icon: "spark" as const, label: "Vitrin" },
+              { icon: "store" as const, label: "Mağaza Plus" },
+            ].map((p) => (
+              <span
+                key={p.label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-[11px] font-medium"
+              >
+                <Icon name={p.icon} className="h-3.5 w-3.5" />
+                {p.label}
+              </span>
+            ))}
+          </div>
+        </div>
+        <LinkButton href="/one-cikar" full={false} icon={<Icon name="arrow" className="h-4 w-4" />} className="flex-shrink-0 self-start lg:self-center">
+          Paketleri incele
+        </LinkButton>
+      </section>
+
       <section className="grid grid-cols-1 gap-7 pt-1.5 sm:grid-cols-3 sm:gap-12">
         {howItWorks.map((item, i) => (
           <div key={item.title} className="relative min-h-[62px] pl-[70px] sm:pl-19">
