@@ -40,7 +40,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.2fr] lg:gap-12">
         <div className="flex items-center justify-between sm:col-span-2 sm:block lg:col-span-1">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent text-2xl tracking-[-2px] text-on-accent">
+            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand text-2xl tracking-[-2px] text-on-brand">
               k.
             </span>
             Kıbrıs İkinci El

@@ -35,7 +35,7 @@ export function StoreForm({ userId, isStore, initial }: { userId: string; isStor
         {state?.error ? <FormError>{state.error}</FormError> : null}
         {state?.ok ? <FormSuccess>Mağaza bilgilerin kaydedildi.</FormSuccess> : null}
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" variant="accent" full={false} disabled={saving} className="sm:min-w-[180px]">
+          <Button type="submit" full={false} disabled={saving} className="sm:min-w-[180px]">
             {isStore ? "Mağaza bilgilerini kaydet" : "Mağaza hesabına geç"}
           </Button>
           {isStore ? (

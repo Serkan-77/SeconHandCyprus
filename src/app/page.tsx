@@ -86,7 +86,7 @@ export default async function HomePage() {
             Hepsi adada, belki hemen yakınında.
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-4 sm:mt-6 sm:gap-5">
-            <LinkButton href="/ilanlar" variant="accent" full={false} icon={<Icon name="arrow" className="h-4 w-4" />}>
+            <LinkButton href="/ilanlar" full={false} icon={<Icon name="arrow" className="h-4 w-4" />}>
               İlanları keşfet
             </LinkButton>
             <TextLink href="/ilan-ver/fotograflar" underline>
@@ -138,7 +138,7 @@ export default async function HomePage() {
                 {formatPrice(featured.price, featured.currency)}
               </strong>
             </span>
-            <span className="grid h-[42px] w-[42px] place-items-center rounded-full bg-accent text-on-accent">
+            <span className="grid h-[42px] w-[42px] place-items-center rounded-full bg-[#111318] text-white">
               <Icon name="arrow" className="h-4 w-4" />
             </span>
           </Link>
@@ -193,12 +193,12 @@ export default async function HomePage() {
 
       <AdSlot placement="home" />
 
-      <section className="flex flex-col gap-5 rounded-2xl bg-accent px-6 py-8 text-on-accent sm:flex-row sm:items-center sm:gap-6 sm:px-9">
-        <div className="hidden h-[74px] w-[74px] flex-shrink-0 place-items-center rounded-full border border-current/30 sm:grid">
+      <section className="flex flex-col gap-5 rounded-2xl bg-text px-6 py-8 text-surface sm:flex-row sm:items-center sm:gap-6 sm:px-9">
+        <div className="hidden h-[74px] w-[74px] flex-shrink-0 place-items-center rounded-full border border-[#9da4af]/30 sm:grid">
           <Icon name="pin" className="h-8 w-8" strokeWidth={1.5} />
         </div>
         <div>
-          <span className="text-[9px] font-semibold tracking-[1.8px] opacity-75">
+          <span className="text-[9px] font-semibold tracking-[1.8px] text-[#9ba7bb]">
             MAHALLENDEN BİR MERHABA
           </span>
           <h2 className="mt-1.5 text-xl font-semibold sm:text-[26px]">

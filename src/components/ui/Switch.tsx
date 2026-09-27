@@ -31,7 +31,7 @@ export function Switch({
       onClick={toggle}
       className={cn(
         "relative h-[26px] w-11 flex-shrink-0 rounded-full transition-colors",
-        checked ? "bg-accent" : "bg-border",
+        checked ? "bg-brand" : "bg-border",
       )}
     >
       <span

@@ -81,7 +81,7 @@ export function LocationPicker({ current }: { current: string | null }) {
             onClick={() => setSelected(region)}
             className={
               "min-h-11 rounded-button border px-3 text-xs " +
-              (selected === region ? "border-accent bg-accent text-on-accent" : "border-border bg-surface text-text")
+              (selected === region ? "border-brand bg-brand text-on-brand" : "border-border bg-surface text-text")
             }
           >
             {region}

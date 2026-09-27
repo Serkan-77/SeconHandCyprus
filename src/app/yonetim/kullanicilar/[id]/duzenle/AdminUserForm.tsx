@@ -95,7 +95,7 @@ export function AdminUserForm({
               onClick={() => setAccountType(t)}
               className={
                 accountType === t
-                  ? "min-h-10 rounded-button bg-accent px-4 text-xs font-semibold text-on-accent"
+                  ? "min-h-10 rounded-button bg-brand px-4 text-xs font-semibold text-on-brand"
                   : "min-h-10 rounded-button border border-border px-4 text-xs"
               }
             >

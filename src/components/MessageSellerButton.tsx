@@ -24,7 +24,6 @@ export function MessageSellerButton({
   return (
     <>
       <Button
-        variant="accent"
         full={!compact}
         className={compact ? "min-w-[170px]" : undefined}
         disabled={pending}

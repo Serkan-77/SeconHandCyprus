@@ -49,7 +49,7 @@ export default async function StoresPage() {
     <div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6">
       <Breadcrumbs items={["Mağazalar"]} />
 
-      <section className="mb-10 flex flex-col gap-5 overflow-hidden rounded-hero bg-accent p-6 text-on-accent sm:flex-row sm:items-center sm:justify-between sm:p-10">
+      <section className="mb-10 flex flex-col gap-5 overflow-hidden rounded-hero bg-brand p-6 text-on-brand sm:flex-row sm:items-center sm:justify-between sm:p-10">
         <div className="max-w-xl">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold">
             <Icon name="store" className="h-3.5 w-3.5" />

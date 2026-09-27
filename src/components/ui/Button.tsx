@@ -2,12 +2,10 @@ import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "accent" | "secondary" | "outline" | "ghost" | "danger" | "inverse";
+type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger" | "inverse";
 
 const variantClass: Record<Variant, string> = {
   primary: "bg-brand text-on-brand hover:brightness-95",
-  // The blue call to action, for the main step on a page (post, message, send).
-  accent: "bg-accent text-on-accent hover:brightness-95",
   secondary: "bg-brand-soft text-text hover:brightness-95",
   outline: "bg-surface text-text border border-border hover:bg-brand-soft",
   ghost: "bg-transparent text-text hover:bg-brand-soft",

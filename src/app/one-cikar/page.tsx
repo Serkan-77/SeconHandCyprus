@@ -48,8 +48,8 @@ export default function PromotePage() {
     <div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6">
       <Breadcrumbs items={["İlanını öne çıkar"]} />
 
-      <section className="mb-10 rounded-hero bg-accent-soft p-6 sm:p-10">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-[11px] font-semibold text-on-accent">
+      <section className="mb-10 rounded-hero bg-brand-soft p-6 sm:p-10">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-[11px] font-semibold text-on-brand">
           <Icon name="clock" className="h-3.5 w-3.5" />
           Yakında
         </span>
@@ -67,12 +67,12 @@ export default function PromotePage() {
             key={p.name}
             className={
               p.highlight
-                ? "relative flex flex-col gap-4 rounded-2xl border-2 border-accent p-6"
+                ? "relative flex flex-col gap-4 rounded-2xl border-2 border-brand p-6"
                 : "flex flex-col gap-4 rounded-2xl border border-border p-6"
             }
           >
             {p.highlight ? (
-              <span className="absolute -top-3 left-6 rounded-full bg-accent px-3 py-1 text-[10px] font-semibold text-on-accent">
+              <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-1 text-[10px] font-semibold text-on-brand">
                 En çok tercih edilecek
               </span>
             ) : null}
@@ -115,7 +115,7 @@ export default function PromotePage() {
         </div>
         <div className="mt-8 flex flex-col items-center gap-3 text-center">
           <p className="text-sm text-muted">Paketler açıldığında haber almak ya da vitrin için başvurmak ister misin?</p>
-          <LinkButton href="/destek" variant="accent" full={false}>
+          <LinkButton href="/destek" full={false}>
             Bize yaz
           </LinkButton>
         </div>

@@ -81,7 +81,7 @@ export function SellerHeader({ seller, active }: { seller: SellerSummary; active
           href={`/satici/${seller.id}`}
           className={cn(
             "border-b-2 px-1 py-3 text-xs",
-            active === "profil" ? "border-accent font-semibold text-accent" : "border-transparent text-muted",
+            active === "profil" ? "border-brand font-semibold text-brand" : "border-transparent text-muted",
           )}
         >
           {isStore ? "Mağaza ve ürünler" : "Profil ve ilanlar"}
@@ -90,7 +90,7 @@ export function SellerHeader({ seller, active }: { seller: SellerSummary; active
           href={`/satici/${seller.id}/yorumlar`}
           className={cn(
             "ml-6 border-b-2 px-1 py-3 text-xs",
-            active === "yorumlar" ? "border-accent font-semibold text-accent" : "border-transparent text-muted",
+            active === "yorumlar" ? "border-brand font-semibold text-brand" : "border-transparent text-muted",
           )}
         >
           Değerlendirmeler ({seller.ratingCount})

@@ -119,7 +119,7 @@ export function LiveUpdates({ userId }: { userId: string }) {
         return (
           <div
             key={t.id}
-            className="pointer-events-auto flex w-full items-start gap-2 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-3 shadow-lg"
+            className="pointer-events-auto flex w-full items-start gap-2 rounded-xl border border-border border-l-4 border-l-brand bg-surface p-3 shadow-lg"
           >
             {t.link ? (
               <Link href={t.link} onClick={dismiss} className="flex min-w-0 flex-1 items-start gap-3">

@@ -19,9 +19,9 @@ export async function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto my-6 max-w-[1440px] overflow-hidden rounded-xl border border-border px-0 sm:px-6">
       <div className="flex min-h-[820px] flex-col sm:flex-row">
-        <aside className="flex flex-shrink-0 flex-col gap-5 bg-[#16306b] p-4 text-white sm:w-[236px] sm:gap-6 sm:p-7">
+        <aside className="flex flex-shrink-0 flex-col gap-5 bg-[#111318] p-4 text-white sm:w-[236px] sm:gap-6 sm:p-7">
           <div className="hidden items-center gap-2.5 text-[15px] font-bold sm:flex">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white text-2xl tracking-[-2px] text-[#16306b]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white text-2xl tracking-[-2px] text-[#111318]">
               k.
             </span>
             Kıbrıs İkinci El

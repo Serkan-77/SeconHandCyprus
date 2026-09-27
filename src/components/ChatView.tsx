@@ -389,7 +389,7 @@ export function ChatView({
                       className={cn(
                         "max-w-[85%] whitespace-pre-line break-words rounded-2xl border px-4 py-3 text-[13px] leading-relaxed sm:max-w-[76%]",
                         mine
-                          ? "self-end rounded-br-md border-accent bg-accent text-on-accent"
+                          ? "self-end rounded-br-md border-text bg-text text-surface"
                           : "self-start rounded-bl-md border-border bg-bg",
                       )}
                     >
@@ -465,7 +465,7 @@ export function ChatView({
                   maxLength={2000}
                   className="min-w-0 flex-1 rounded-field border border-border bg-bg px-3.5 py-3 text-base text-text outline-none"
                 />
-                <Button type="submit" variant="accent" full={false} disabled={pending} icon={<Icon name="send" className="h-4 w-4" />}>
+                <Button type="submit" full={false} disabled={pending} icon={<Icon name="send" className="h-4 w-4" />}>
                   <span className="hidden sm:inline">Gönder</span>
                 </Button>
               </form>

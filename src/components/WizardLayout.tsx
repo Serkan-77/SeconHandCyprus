@@ -49,7 +49,7 @@ export function WizardLayout({
                   <span
                     className={cn(
                       "grid h-7 w-7 place-items-center rounded-full border border-border text-[11px]",
-                      i === active && "border-accent bg-accent text-on-accent",
+                      i === active && "border-brand bg-brand text-on-brand",
                       i < active && "border-transparent bg-accent-soft text-accent",
                     )}
                   >
@@ -77,7 +77,7 @@ export function WizardLayout({
                 <span
                   className={cn(
                     "grid h-[26px] w-[26px] place-items-center rounded-full border border-border text-[10px]",
-                    i === active && "border-accent bg-accent text-on-accent",
+                    i === active && "border-brand bg-brand text-on-brand",
                     i < active && "border-transparent bg-accent-soft text-accent",
                   )}
                 >
