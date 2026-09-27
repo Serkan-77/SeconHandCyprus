@@ -6,6 +6,7 @@
 // No "@/" imports: tested directly with node --test.
 import { z } from "zod";
 import { regionNames } from "./regions.ts";
+import { DELIVERY_OPTIONS, DETAIL_TEXT_MAX, DETAIL_YEAR_MIN, WARRANTY_OPTIONS } from "./listingDetails.ts";
 
 export const LIMITS = {
   titleMin: 3,
@@ -61,6 +62,48 @@ export const phoneSchema = z
   .transform((v) => v.replace(/\s/g, ""))
   .refine((v) => PHONE.test(v), "Geçerli bir telefon numarası gir.");
 
+// Empty strings and unticked boxes are dropped, so only what the seller
+// filled in is stored (listings.details, migration 0014).
+const detailText = (label: string) =>
+  optionalText(DETAIL_TEXT_MAX, label)
+    .optional()
+    .transform((v) => v || undefined);
+const detailFlag = z
+  .boolean()
+  .optional()
+  .transform((v) => v || undefined);
+
+export const listingDetailsSchema = z
+  .object({
+    brand: detailText("Marka"),
+    model: detailText("Model"),
+    color: detailText("Renk"),
+    year: z
+      .union([z.number(), z.string().trim()])
+      .optional()
+      .transform((v, ctx) => {
+        if (v === undefined || v === "") return undefined;
+        const year = Number(v);
+        if (!Number.isInteger(year) || year < DETAIL_YEAR_MIN || year > new Date().getFullYear()) {
+          ctx.addIssue({ code: "custom", message: "Geçerli bir satın alma yılı gir." });
+          return z.NEVER;
+        }
+        return year;
+      }),
+    warranty: z
+      .union([z.enum(WARRANTY_OPTIONS), z.literal("")])
+      .optional()
+      .transform((v) => v || undefined),
+    invoice: detailFlag,
+    box: detailFlag,
+    exchange: detailFlag,
+    delivery: z
+      .array(z.enum(DELIVERY_OPTIONS))
+      .optional()
+      .transform((v) => (v?.length ? [...new Set(v)] : undefined)),
+  })
+  .transform((d) => Object.fromEntries(Object.entries(d).filter(([, v]) => v !== undefined)));
+
 export const listingCreateSchema = z.object({
   title: text(LIMITS.titleMin, LIMITS.titleMax, "Başlık"),
   categorySlug: z.string().trim().min(1, "Kategori seç."),
@@ -72,6 +115,7 @@ export const listingCreateSchema = z.object({
   district: district.optional(),
   negotiable: z.boolean(),
   submissionKey: z.uuid({ error: "Sayfayı yenileyip tekrar dene." }),
+  details: listingDetailsSchema.optional(),
   photos: z
     .array(z.string().min(1))
     .min(1, "En az 1 fotoğraf ekle.")
@@ -85,12 +129,32 @@ export const listingUpdateSchema = z.object({
   district: district.optional(),
   description: optionalText(LIMITS.descriptionMax, "Açıklama"),
   negotiable: z.boolean().optional(),
+  details: listingDetailsSchema.optional(),
 });
 
 export const profileSchema = z.object({
   name: text(LIMITS.displayNameMin, LIMITS.displayNameMax, "Görünen ad"),
   region: z.union([city, z.literal("")]).transform((v) => v || null),
   bio: optionalText(LIMITS.bioMax, "Hakkımda").transform((v) => v || null).optional(),
+});
+
+/** Store profile (migration 0014); empty optional fields are stored as null. */
+export const storeSchema = z.object({
+  storeName: text(2, 60, "Mağaza adı"),
+  address: optionalText(160, "Adres").transform((v) => v || null),
+  phone: z
+    .string()
+    .transform((v) => v.replace(/\s/g, ""))
+    .refine((v) => !v || PHONE.test(v), "Geçerli bir telefon numarası gir.")
+    .transform((v) => v || null),
+  website: z
+    .string()
+    .trim()
+    .transform((v) => (v && !/^https?:\/\//i.test(v) ? `https://${v}` : v))
+    .refine((v) => v.length <= 200, "Web adresi en fazla 200 karakter olabilir.")
+    .refine((v) => !v || /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v), "Geçerli bir web adresi gir.")
+    .transform((v) => v || null),
+  hours: optionalText(80, "Çalışma saatleri").transform((v) => v || null),
 });
 
 export const messageSchema = text(1, LIMITS.messageMax, "Mesaj");

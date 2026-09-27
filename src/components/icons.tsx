@@ -37,6 +37,7 @@ const paths: Record<string, string> = {
   clock: "M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M12 6v6l4 2",
   image: "M3 3h18v18H3zM3 17l6-6 5 5 3-3 4 4M8 7h.01",
   bag: "M5 7h14l2 15H3zM8 7V5a4 4 0 0 1 8 0v2",
+  store: "M3 9l2-5h14l2 5M3 9v11h18V9M3 9h18M9 20v-6h6v6",
   spark: "M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z",
   grid: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
   chart: "M3 3v18h19M6 15l5-5 4 3 6-8",

@@ -5,6 +5,7 @@ import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { firstError, listingCreateSchema, listingUpdateSchema, reportSchema } from "@/lib/validation";
 import { rateLimitMessage, reportErrorMessage } from "@/lib/dbErrors";
+import type { ListingDetails } from "@/lib/listingDetails";
 
 type Result = { error?: string; ok?: boolean };
 /** review: an approved listing's content changed, so it went back to moderation (P1-01). */
@@ -49,6 +50,7 @@ export type ListingInput = {
   district?: string;
   negotiable: boolean;
   photos: string[];
+  details?: ListingDetails;
   /** Idempotency key kept with the wizard draft (P1-10). */
   submissionKey: string;
 };
@@ -74,6 +76,7 @@ export async function createListing(input: ListingInput): Promise<Result & { id?
     p_condition: valid.condition,
     p_negotiable: valid.negotiable,
     p_photos: valid.photos,
+    p_details: valid.details ?? {},
   });
   if (error || !id) return { error: dbError(error ?? { message: "" }) };
   return { ok: true, id: String(id) };
@@ -81,7 +84,15 @@ export async function createListing(input: ListingInput): Promise<Result & { id?
 
 export async function updateListing(
   id: string,
-  fields: { title: string; price: string; city: string; district?: string; description: string; negotiable?: boolean },
+  fields: {
+    title: string;
+    price: string;
+    city: string;
+    district?: string;
+    description: string;
+    negotiable?: boolean;
+    details?: ListingDetails;
+  },
 ): Promise<EditResult> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Devam etmek için giriş yap." };
@@ -98,6 +109,7 @@ export async function updateListing(
       district: valid.district ?? null,
       description: valid.description,
       ...(valid.negotiable === undefined ? {} : { negotiable: valid.negotiable }),
+      ...(valid.details === undefined ? {} : { details: valid.details }),
     })
     .eq("id", id)
     .select("status");

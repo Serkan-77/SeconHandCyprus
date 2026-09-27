@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/server";
 import { publicImageUrl } from "@/lib/supabase/env";
 import { getSellerSummary, getViewer, one, searchListings } from "@/lib/queries";
 import { formatLongDate, formatPrice } from "@/lib/format";
+import { detailRows, type ListingDetails } from "@/lib/listingDetails";
 
 const getListing = cache(async (slug: string) => {
   const supabase = await createClient();
@@ -154,6 +155,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 ["İlan tarihi", formatLongDate(listing.published_at ?? listing.created_at)],
                 ["Görüntülenme", String(listing.view_count)],
                 ["Pazarlık", listing.negotiable ? "Pazarlığa açık" : "Sabit fiyat"],
+                ...detailRows(listing.details as ListingDetails | null),
               ].map(([term, desc]) => (
                 <div key={term} className="border-b border-border py-3.5">
                   <dt className="text-[11px] text-muted">{term}</dt>

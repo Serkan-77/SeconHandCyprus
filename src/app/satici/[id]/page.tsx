@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SellerHeader } from "@/components/SellerHeader";
 import { ListingGrid } from "@/components/ListingGrid";
-import { getSellerSummary, searchListings } from "@/lib/queries";
+import { getSellerSummary, publicName, searchListings } from "@/lib/queries";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -11,9 +11,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const seller = UUID.test(id) ? await getSellerSummary(id) : null;
   if (!seller) return { title: "Satıcı bulunamadı" };
+  const name = publicName(seller);
   return {
-    title: `${seller.displayName} — satıcı profili`,
-    description: `${seller.displayName} kullanıcısının Kıbrıs İkinci El'deki ${seller.activeListings} aktif ilanı ve ${seller.ratingCount} değerlendirmesi.`,
+    title: seller.accountType === "store" ? `${name} — mağaza` : `${name} — satıcı profili`,
+    description: `${name} kullanıcısının Kıbrıs İkinci El'deki ${seller.activeListings} aktif ilanı ve ${seller.ratingCount} değerlendirmesi.`,
     alternates: { canonical: `/satici/${id}` },
   };
 }
@@ -27,10 +28,12 @@ export default async function SellerProfilePage({ params }: { params: Promise<{ 
 
   return (
     <div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6">
-      <Breadcrumbs items={[seller.displayName]} />
+      <Breadcrumbs
+        items={seller.accountType === "store" ? [{ label: "Mağazalar", href: "/magazalar" }, publicName(seller)] : [publicName(seller)]}
+      />
       <SellerHeader seller={seller} active="profil" />
-      <h2 className="mb-5 text-lg font-semibold">Aktif ilanları</h2>
-      <ListingGrid items={items} columns={3} empty={`${seller.displayName} şu an aktif bir ilan yayınlamıyor.`} />
+      <h2 className="mb-5 text-lg font-semibold">{seller.accountType === "store" ? "Mağazanın ürünleri" : "Aktif ilanları"}</h2>
+      <ListingGrid items={items} columns={3} empty={`${publicName(seller)} şu an aktif bir ilan yayınlamıyor.`} />
     </div>
   );
 }

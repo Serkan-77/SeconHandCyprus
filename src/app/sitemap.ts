@@ -11,12 +11,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/"), changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/ilanlar"), changeFrequency: "hourly", priority: 0.9 },
     { url: absoluteUrl("/kategori"), changeFrequency: "weekly", priority: 0.7 },
+    { url: absoluteUrl("/magazalar"), changeFrequency: "daily", priority: 0.7 },
     ...regionNames.map((city) => ({
       url: absoluteUrl(`/ilanlar?sehir=${encodeURIComponent(city)}`),
       changeFrequency: "daily" as const,
       priority: 0.6,
     })),
-    ...["/hakkimizda", "/yardim", "/destek", "/kosullar", "/gizlilik", "/cerez-politikasi"].map((path) => ({
+    ...["/hakkimizda", "/one-cikar", "/yardim", "/destek", "/kosullar", "/gizlilik", "/cerez-politikasi"].map((path) => ({
       url: absoluteUrl(path),
       changeFrequency: "monthly" as const,
       priority: 0.3,

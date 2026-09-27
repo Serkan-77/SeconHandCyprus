@@ -6,10 +6,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { ListingStatusBadge } from "@/components/ListingStatusBadge";
 import { createClient } from "@/lib/supabase/server";
-import { getSellerSummary, type ListingStatus } from "@/lib/queries";
+import { getSellerSummary, one, type ListingStatus } from "@/lib/queries";
 import { formatDate, formatPrice, initials, ratingLabel } from "@/lib/format";
 import { accountStatus, reportStatus, sanctionLabel } from "@/lib/adminLabels";
 import { SanctionButton } from "./SanctionButton";
+import { DeleteRatingButton } from "./DeleteRatingButton";
 
 export const metadata = { title: "Yönetim · Kullanıcı", robots: { index: false } };
 
@@ -27,7 +28,7 @@ async function UserDetail({ id }: { id: string }) {
   const user = await getSellerSummary(id);
   if (!user) notFound();
   const supabase = await createClient();
-  const [{ data: contact }, { data: listings }, { data: sanctions }, { data: reports }] = await Promise.all([
+  const [{ data: contact }, { data: listings }, { data: sanctions }, { data: reports }, { data: ratings }] = await Promise.all([
     supabase.from("profile_private").select("email, phone").eq("id", id).maybeSingle(),
     supabase
       .from("listings")
@@ -41,6 +42,12 @@ async function UserDetail({ id }: { id: string }) {
       .select("id, reason, status, created_at")
       .eq("reported_user_id", id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("ratings")
+      .select("id, score, comment, created_at, rater:profiles!ratings_rater_id_fkey(display_name)")
+      .eq("ratee_id", id)
+      .order("created_at", { ascending: false })
+      .limit(30),
   ]);
 
   const status = accountStatus[user.status] ?? accountStatus.active;
@@ -57,9 +64,14 @@ async function UserDetail({ id }: { id: string }) {
     <>
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kullanıcı detayı</h1>
-        <LinkButton href="/yonetim/kullanicilar" variant="outline" full={false} className="min-h-10 text-xs">
-          Listeye dön
-        </LinkButton>
+        <div className="flex flex-wrap gap-2.5">
+          <LinkButton href={`/yonetim/kullanicilar/${user.id}/duzenle`} full={false} className="min-h-10 text-xs">
+            Düzenle / sil
+          </LinkButton>
+          <LinkButton href="/yonetim/kullanicilar" variant="outline" full={false} className="min-h-10 text-xs">
+            Listeye dön
+          </LinkButton>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.2fr]">
@@ -93,6 +105,9 @@ async function UserDetail({ id }: { id: string }) {
               {user.statusUntil ? <span className="text-[11px] text-muted">bitiş {formatDate(user.statusUntil)}</span> : null}
               {user.phoneVerified ? <Badge kind="neutral">Telefon elle incelendi</Badge> : null}
               {user.role === "admin" ? <Badge kind="neutral">Yönetici</Badge> : null}
+              {user.accountType === "store" ? (
+                <Badge kind="accent">{user.storeVerified ? "Onaylı mağaza" : "Mağaza"}: {user.storeName}</Badge>
+              ) : null}
             </div>
             {user.role !== "admin" ? <SanctionButton userId={user.id} status={user.status} /> : null}
           </div>
@@ -138,6 +153,28 @@ async function UserDetail({ id }: { id: string }) {
               </ul>
             ) : (
               <p className="text-xs text-muted">Henüz ilanı yok.</p>
+            )}
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-5">
+            <h3 className="mb-3 text-sm font-semibold">Aldığı değerlendirmeler</h3>
+            {ratings && ratings.length ? (
+              <ul className="flex flex-col divide-y divide-border text-xs">
+                {ratings.map((r) => (
+                  <li key={r.id} className="flex items-start justify-between gap-3 py-2.5">
+                    <span className="min-w-0">
+                      <b className="text-accent">{"★".repeat(r.score)}</b>{" "}
+                      <span className="text-muted">
+                        {(one(r.rater) as { display_name: string } | null)?.display_name ?? "Silinmiş kullanıcı"} ·{" "}
+                        {formatDate(r.created_at)}
+                      </span>
+                      {r.comment ? <span className="mt-1 block">{r.comment}</span> : null}
+                    </span>
+                    <DeleteRatingButton id={r.id} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted">Henüz değerlendirme almamış.</p>
             )}
           </div>
           <div className="rounded-xl border border-border bg-surface p-5">

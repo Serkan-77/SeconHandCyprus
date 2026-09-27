@@ -5,6 +5,7 @@ import { WizardLayout } from "@/components/WizardLayout";
 import { WizardPreviewCard } from "@/components/WizardPreviewCard";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Field, SelectField, TextareaField } from "@/components/ui/Field";
+import { ListingDetailsFields } from "@/components/ListingDetailsFields";
 import { useWizardDraft } from "@/lib/wizardStore";
 
 const conditions = ["Sıfır", "Az kullanılmış", "Yıpranmış"];
@@ -74,8 +75,9 @@ export function DetailsForm({ categories }: { categories: { slug: string; name: 
           onChange={(e) => setDraft({ description: e.target.value })}
           placeholder="Ürünün durumunu, kullanım süresini ve öne çıkan özelliklerini anlat."
           hint="Dürüst ve ayrıntılı açıklamalar güven oluşturur."
-          maxLength={3000}
+          maxLength={5000}
         />
+        <ListingDetailsFields value={draft.details} onChange={(details) => setDraft({ details })} />
 
         <div className="mt-auto flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
           <LinkButton href="/ilan-ver/fotograflar" variant="outline" full={false} className="sm:min-w-[140px]">

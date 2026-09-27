@@ -55,3 +55,16 @@ export async function deleteOwnAccount(client: DeletionClient, userId: string): 
   if (error) return { error: accountDeletionMessage(error) ?? "Hesap silinemedi. Destek ekibiyle iletişime geç." };
   return { ok: true };
 }
+
+/**
+ * An admin deletes another user's account: that user's Storage files (admins
+ * may delete any file, migration 0014), then admin_delete_user, which refuses
+ * the admin's own account and other admins.
+ */
+export async function deleteUserAsAdmin(client: DeletionClient, userId: string): Promise<{ ok?: true; error?: string }> {
+  const files = await removeOwnFiles(client, userId);
+  if (files.error) return { error: "Kullanıcının fotoğrafları silinemedi, hesap silinmedi. Tekrar dene." };
+  const { error } = await client.rpc("admin_delete_user", { p_user: userId });
+  if (error) return { error: error.code === "22023" ? error.message : "Hesap silinemedi." };
+  return { ok: true };
+}

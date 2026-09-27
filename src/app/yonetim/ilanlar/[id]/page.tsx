@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { publicImageUrl } from "@/lib/supabase/env";
 import { getSellerSummary, one } from "@/lib/queries";
 import { formatDate, formatPrice, memberSince, ratingLabel } from "@/lib/format";
+import { detailRows, type ListingDetails } from "@/lib/listingDetails";
 import { ModerationActions } from "./ModerationActions";
 
 export const metadata = { title: "Yönetim · İlan inceleme", robots: { index: false } };
@@ -47,7 +48,7 @@ async function Review({ id }: { id: string }) {
         </div>
         <div className="flex flex-wrap gap-2.5">
           <LinkButton href={`/yonetim/ilanlar/${id}/duzenle`} variant="outline" full={false} className="min-h-10 text-xs">
-            İçeriği düzenle
+            Düzenle / sil
           </LinkButton>
           <LinkButton href="/yonetim/ilanlar" variant="outline" full={false} className="min-h-10 text-xs">
             Kuyruğa dön
@@ -73,6 +74,16 @@ async function Review({ id }: { id: string }) {
           <p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed">
             {listing.description || <span className="text-muted">Açıklama yok.</span>}
           </p>
+          {detailRows(listing.details as ListingDetails | null).length ? (
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              {detailRows(listing.details as ListingDetails | null).map(([term, desc]) => (
+                <div key={term}>
+                  <dt className="text-[10px] text-muted">{term}</dt>
+                  <dd>{desc}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
           {listing.reject_reason ? (
             <p className="mt-4 rounded-lg bg-brand-soft p-3 text-xs">
               <b>Ret gerekçesi:</b> {listing.reject_reason}

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { LinkButton } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/server";
+import { publicImageUrl } from "@/lib/supabase/env";
 import { getCategories } from "@/lib/queries";
 import { AdminEditForm } from "./AdminEditForm";
 
@@ -20,10 +21,13 @@ async function Editor({ id }: { id: string }) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
   const [{ data: listing }, categories] = await Promise.all([
-    supabase.from("listings").select("id, title, category_id, price, currency, description").eq("id", id).maybeSingle(),
+    supabase.from("listings").select("*, images:listing_images(id, path, position)").eq("id", id).maybeSingle(),
     getCategories(),
   ]);
   if (!listing) notFound();
+  const images = [...(listing.images ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map((i) => ({ id: i.id as string, url: publicImageUrl(i.path) }));
 
   return (
     <>
@@ -34,7 +38,8 @@ async function Editor({ id }: { id: string }) {
         </LinkButton>
       </div>
       <p className="text-xs text-muted">
-        Onaylamadan önce içerikteki küçük hataları burada düzeltebilirsin; bu bir moderatör işlemidir.
+        Yönetici olarak ilanın her alanını, durumunu ve fotoğraflarını değiştirebilir ya da ilanı silebilirsin. Yönetici
+        düzenlemesi ilanı yeniden incelemeye düşürmez.
       </p>
       <AdminEditForm
         listing={{
@@ -43,9 +48,16 @@ async function Editor({ id }: { id: string }) {
           categoryId: listing.category_id,
           price: String(Number(listing.price)),
           currency: listing.currency,
+          condition: listing.condition,
+          city: listing.city,
+          district: listing.district ?? "",
           description: listing.description,
+          negotiable: listing.negotiable,
+          status: listing.status,
+          details: listing.details ?? {},
         }}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        images={images}
       />
     </>
   );

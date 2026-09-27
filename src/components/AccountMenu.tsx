@@ -22,6 +22,7 @@ export function AccountMenu({
     { href: "/hesabim/favoriler", icon: "heart", label: "Favorilerim" },
     { href: "/mesajlar", icon: "chat", label: "Mesajlarım", count: unread.messages },
     { href: "/hesabim/bildirimler", icon: "bell", label: "Bildirimler", count: unread.notifications },
+    { href: "/hesabim/magaza", icon: "store", label: "Mağaza hesabı" },
     { href: "/hesabim/dogrulama", icon: "shield", label: "Doğrulama" },
     { href: "/hesabim/ayarlar", icon: "settings", label: "Ayarlar" },
   ];

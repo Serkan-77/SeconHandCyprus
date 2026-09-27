@@ -37,6 +37,7 @@ export default async function ManageListingPage({ params }: { params: Promise<{ 
         district: listing.district ?? "",
         description: listing.description,
         negotiable: listing.negotiable,
+        details: listing.details ?? {},
         status: listing.status,
         rejectReason: listing.reject_reason,
         viewCount: listing.view_count,

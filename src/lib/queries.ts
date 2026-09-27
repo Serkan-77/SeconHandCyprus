@@ -39,6 +39,14 @@ export type Profile = {
   phoneVerified: boolean;
   settings: Record<string, unknown>;
   createdAt: string;
+  /** Store accounts (migration 0014). */
+  accountType: "personal" | "store";
+  storeName: string | null;
+  storeVerified: boolean;
+  storeAddress: string | null;
+  storePhone: string | null;
+  storeWebsite: string | null;
+  storeHours: string | null;
 };
 
 export type SellerSummary = Profile & { ratingAvg: number; ratingCount: number; activeListings: number; soldListings: number };
@@ -89,9 +97,21 @@ export function toProfile(row: any): Profile {
     phoneVerified: row.phone_verified,
     settings: row.settings ?? {},
     createdAt: row.created_at,
+    accountType: row.account_type === "store" ? "store" : "personal",
+    storeName: row.store_name ?? null,
+    storeVerified: Boolean(row.store_verified),
+    storeAddress: row.store_address ?? null,
+    storePhone: row.store_phone ?? null,
+    storeWebsite: row.store_website ?? null,
+    storeHours: row.store_hours ?? null,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** A store is shown under its store name, everyone else under their display name. */
+export function publicName(p: Pick<Profile, "accountType" | "storeName" | "displayName">) {
+  return p.accountType === "store" && p.storeName ? p.storeName : p.displayName;
+}
 
 export function locationLabel(l: { city: string; district: string | null }) {
   return l.district ? `${l.city}, ${l.district}` : l.city;
@@ -132,6 +152,8 @@ export type ListingFilters = {
   pageSize?: number;
   sellerId?: string;
   excludeId?: string;
+  /** Only listings of store accounts (migration 0014). */
+  storesOnly?: boolean;
 };
 
 export async function searchListings(filters: ListingFilters = {}) {
@@ -146,11 +168,16 @@ export async function searchListings(filters: ListingFilters = {}) {
 
   let query = supabase
     .from("listings")
-    .select(LISTING_CARD_SELECT, { count: "exact" })
+    .select(
+      filters.storesOnly ? `${LISTING_CARD_SELECT}, seller:profiles!listings_seller_id_fkey!inner(account_type)` : LISTING_CARD_SELECT,
+      { count: "exact" },
+    )
     .eq("status", "active");
+  if (filters.storesOnly) query = query.eq("seller.account_type", "store");
 
   if (filters.q) {
-    const term = filters.q.replace(/[%,()]/g, " ").trim();
+    // Characters that would break the PostgREST or() filter syntax.
+    const term = filters.q.replace(/[%,()"\\*:]/g, " ").trim();
     query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%`);
   }
   if (categoryId) query = query.eq("category_id", categoryId);

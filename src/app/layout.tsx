@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { FavoritesProvider } from "@/components/FavoritesProvider";
+import { LiveUpdates } from "@/components/LiveUpdates";
 import { getCategories, getFavoriteIds, getUnreadCounts, getViewer } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { REGION_COOKIE } from "@/lib/regions";
@@ -100,6 +101,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </main>
         </FavoritesProvider>
         <Footer />
+        {viewer ? <LiveUpdates key={viewer.user.id} userId={viewer.user.id} /> : null}
         {adsEnabled ? (
           <Script
             id="adsense"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { ListingDetails } from "./listingDetails.ts";
 
 export type ListingDraft = {
   /** Storage paths of photos already uploaded to the listing-images bucket. */
@@ -16,6 +17,8 @@ export type ListingDraft = {
   city: string;
   district: string;
   negotiable: boolean;
+  /** Optional attributes (brand, model, delivery...). */
+  details: ListingDetails;
   /**
    * Idempotency key of the submission (P1-10): created on the first "send",
    * reused by retries so a lost response or a double click cannot create the
@@ -36,6 +39,7 @@ export const emptyDraft: ListingDraft = {
   city: "Girne",
   district: "",
   negotiable: false,
+  details: {},
   submissionKey: "",
 };
 
@@ -56,7 +60,12 @@ function hydrateFromStorage() {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      snapshot = { ...emptyDraft, ...parsed, photos: Array.isArray(parsed.photos) ? parsed.photos : [] };
+      snapshot = {
+        ...emptyDraft,
+        ...parsed,
+        photos: Array.isArray(parsed.photos) ? parsed.photos : [],
+        details: parsed.details && typeof parsed.details === "object" ? parsed.details : {},
+      };
     }
   } catch {
     // ignore — start from an empty draft

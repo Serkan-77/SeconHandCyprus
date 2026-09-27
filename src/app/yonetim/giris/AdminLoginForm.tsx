@@ -12,7 +12,7 @@ export function AdminLoginForm({ signedInAs, denied }: { signedInAs: string | nu
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-[400px] flex-col justify-center px-4">
       <div className="mb-6 flex items-center gap-2.5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand text-2xl tracking-[-2px] text-on-brand">
+        <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent text-2xl tracking-[-2px] text-on-accent">
           k.
         </span>
         <span className="text-sm font-semibold">Kıbrıs İkinci El · Yönetim</span>

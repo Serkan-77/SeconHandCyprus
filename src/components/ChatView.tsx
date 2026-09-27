@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/cn";
 import { chatTime, clockTime, initials } from "@/lib/format";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { MEETING_TEXT, meetingActions, meetingStage, type MeetingState } from "@/lib/meeting";
-import { mergeMessages } from "@/lib/chat";
+import { fetchLatestMessages, mergeMessages } from "@/lib/chat";
 import {
   blockUser,
   confirmMeeting,
@@ -77,6 +78,7 @@ export function ChatView({
   hasRated: boolean;
 }) {
   const active = conversations.find((c) => c.id === activeId) ?? null;
+  const router = useRouter();
   const [messages, setMessages] = useState(initialMessages);
   const [hasOlder, setHasOlder] = useState(initialHasOlder);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -89,6 +91,13 @@ export function ChatView({
   const [ratingSent, setRatingSent] = useState(false);
   const [blocked, setBlocked] = useState(active?.blockedByMe ?? false);
   const [meeting, setMeeting] = useState<MeetingState>(active?.meeting ?? { mine: false, theirs: false });
+  // A live refresh can bring the other side's confirmation; confirmations only
+  // ever get added, so merge instead of replacing what this side just did.
+  const [seenMeeting, setSeenMeeting] = useState(active?.meeting);
+  if (active && active.meeting !== seenMeeting) {
+    setSeenMeeting(active.meeting);
+    setMeeting((m) => ({ mine: m.mine || active.meeting.mine, theirs: m.theirs || active.meeting.theirs }));
+  }
   const meetingStep = meetingStage(meeting);
   const { canConfirm, canRate } = meetingActions(meeting);
   // The other side deleted their account: the history stays readable, nothing else.
@@ -101,35 +110,58 @@ export function ChatView({
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Live updates: new messages from the other side and read receipts.
+  // Live updates: new messages from the other side and read receipts. Keyed on
+  // the id: a router refresh hands in a new `active` object for the same
+  // conversation, which must not drop and re-open the channel.
+  const activeConversationId = active?.id ?? null;
   useEffect(() => {
-    if (!active) return;
+    if (!activeConversationId) return;
+    const conversationId = activeConversationId;
     const supabase = getBrowserClient();
-    markConversationRead(active.id);
+    let everSubscribed = false;
+    // Marks the other side's messages read, then refreshes the page so the
+    // conversation list and the header badge show the new state.
+    async function readAndRefresh() {
+      await markConversationRead(conversationId);
+      router.refresh();
+    }
+    markConversationRead(conversationId);
     const channel = supabase
-      .channel(`conversation:${active.id}`)
+      .channel(`conversation:${conversationId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${active.id}` },
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload: { new: unknown }) => {
           const msg = payload.new as ChatMessage;
           setMessages((prev) => mergeMessages(prev, [msg]));
-          if (msg.sender_id !== me) markConversationRead(active.id);
+          if (msg.sender_id !== me) readAndRefresh();
         },
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${active.id}` },
+        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload: { new: unknown }) => {
           const msg = payload.new as ChatMessage;
           setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, read_at: msg.read_at } : m)));
         },
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status !== "SUBSCRIBED") return;
+        // Once live, and again after every reconnect, pick up anything that
+        // arrived while the channel was not listening.
+        const reconnect = everSubscribed;
+        everSubscribed = true;
+        fetchLatestMessages(supabase, conversationId)
+          .then((latest) => {
+            setMessages((prev) => mergeMessages(prev, latest.messages));
+            if (reconnect && latest.messages.some((m) => m.sender_id !== me && !m.read_at)) readAndRefresh();
+          })
+          .catch(() => {});
+      });
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [active, me]);
+  }, [activeConversationId, me, router]);
 
   // Follow the conversation when a newer message arrives, but not when an
   // older page is prepended above what the user is reading.
@@ -357,7 +389,7 @@ export function ChatView({
                       className={cn(
                         "max-w-[85%] whitespace-pre-line break-words rounded-2xl border px-4 py-3 text-[13px] leading-relaxed sm:max-w-[76%]",
                         mine
-                          ? "self-end rounded-br-md border-text bg-text text-surface"
+                          ? "self-end rounded-br-md border-accent bg-accent text-on-accent"
                           : "self-start rounded-bl-md border-border bg-bg",
                       )}
                     >
@@ -433,7 +465,7 @@ export function ChatView({
                   maxLength={2000}
                   className="min-w-0 flex-1 rounded-field border border-border bg-bg px-3.5 py-3 text-base text-text outline-none"
                 />
-                <Button type="submit" full={false} disabled={pending} icon={<Icon name="send" className="h-4 w-4" />}>
+                <Button type="submit" variant="accent" full={false} disabled={pending} icon={<Icon name="send" className="h-4 w-4" />}>
                   <span className="hidden sm:inline">Gönder</span>
                 </Button>
               </form>

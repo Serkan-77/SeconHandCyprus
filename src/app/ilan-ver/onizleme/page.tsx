@@ -11,6 +11,7 @@ import { Icon } from "@/components/icons";
 import { useWizardDraft } from "@/lib/wizardStore";
 import { publicImageUrl } from "@/lib/supabase/env";
 import { formatPrice } from "@/lib/format";
+import { detailRows } from "@/lib/listingDetails";
 import { createListing } from "@/lib/actions/listings";
 
 export default function AddPreviewPage() {
@@ -43,6 +44,7 @@ export default function AddPreviewPage() {
         district: draft.district,
         negotiable: draft.negotiable,
         photos: draft.photos,
+        details: draft.details,
         submissionKey,
       });
       if (result.error) {
@@ -87,6 +89,16 @@ export default function AddPreviewPage() {
             {draft.price ? formatPrice(draft.price, draft.currency) : "Fiyat girilmedi"}
           </strong>
           <p className="mt-3 whitespace-pre-line text-[13px] text-muted">{draft.description || "Açıklama eklenmedi."}</p>
+          {detailRows(draft.details).length ? (
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
+              {detailRows(draft.details).map(([term, desc]) => (
+                <div key={term}>
+                  <dt className="text-[10px] text-muted">{term}</dt>
+                  <dd>{desc}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-muted">
             <span>{[draft.city, draft.district].filter(Boolean).join(", ")}</span>
             {draft.negotiable ? <span>· Pazarlığa açık</span> : null}

@@ -200,7 +200,7 @@ export async function ListingsResults({ params: input, category }: { params: Res
                         aria-current={p === page ? "page" : undefined}
                         className={cn(
                           "grid h-10 w-10 place-items-center rounded-md border text-xs",
-                          p === page ? "border-brand bg-brand text-on-brand" : "border-border",
+                          p === page ? "border-accent bg-accent text-on-accent" : "border-border",
                         )}
                       >
                         {p}

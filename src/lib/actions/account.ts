@@ -6,7 +6,7 @@ import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { REGION_COOKIE, regionNames } from "@/lib/regions";
 import { safeInternalPath } from "@/lib/safeRedirect";
-import { firstError, phoneSchema, profileSchema, supportSchema } from "@/lib/validation";
+import { firstError, phoneSchema, profileSchema, storeSchema, supportSchema } from "@/lib/validation";
 import { rateLimitMessage } from "@/lib/dbErrors";
 import { deleteOwnAccount } from "@/lib/accountDeletion";
 
@@ -43,6 +43,54 @@ export async function updateProfile(_: Result | undefined, formData: FormData): 
   refresh();
   // Same-origin paths only (P1-03).
   if (formData.has("next")) redirect(safeInternalPath(formData.get("next")));
+  return { ok: true };
+}
+
+/** Turns the account into a store, or updates its store details (migration 0014). */
+export async function updateStore(_: Result | undefined, formData: FormData): Promise<Result> {
+  const { supabase, user } = await session();
+  if (!user) return { error: "Oturum bulunamadı." };
+  const parsed = storeSchema.safeParse({
+    storeName: String(formData.get("storeName") ?? ""),
+    address: String(formData.get("address") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+    website: String(formData.get("website") ?? ""),
+    hours: String(formData.get("hours") ?? ""),
+  });
+  if (!parsed.success) return { error: firstError(parsed.error) };
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      account_type: "store",
+      store_name: parsed.data.storeName,
+      store_address: parsed.data.address,
+      store_phone: parsed.data.phone,
+      store_website: parsed.data.website,
+      store_hours: parsed.data.hours,
+    })
+    .eq("id", user.id);
+  if (error) return { error: "Mağaza bilgileri kaydedilemedi." };
+  refresh();
+  return { ok: true };
+}
+
+/** Back to a personal account; the store details and badge are cleared. */
+export async function closeStore(): Promise<Result> {
+  const { supabase, user } = await session();
+  if (!user) return { error: "Oturum bulunamadı." };
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      account_type: "personal",
+      store_name: null,
+      store_address: null,
+      store_phone: null,
+      store_website: null,
+      store_hours: null,
+    })
+    .eq("id", user.id);
+  if (error) return { error: "Hesap türü değiştirilemedi." };
+  refresh();
   return { ok: true };
 }
 

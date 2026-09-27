@@ -13,6 +13,7 @@
   --on-brand: #ffffff;
   --accent: #2458d3;
   --accent-soft: #edf2fe;
+  --on-accent: #ffffff;
   --danger: #242932;
   color-scheme: light;
 }
@@ -28,6 +29,7 @@
   --on-brand: #111318;
   --accent: #9ab6ff;
   --accent-soft: #202c46;
+  --on-accent: #0d0f12;
   --danger: #f7f8fa;
   color-scheme: dark;
 }
@@ -63,6 +65,7 @@
   --color-on-brand: var(--on-brand);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
 
   --radius-field: 12px;

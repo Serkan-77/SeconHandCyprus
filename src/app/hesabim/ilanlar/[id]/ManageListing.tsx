@@ -9,6 +9,8 @@ import { FormError, FormSuccess } from "@/components/ui/FormError";
 import { Modal } from "@/components/ui/Modal";
 import { Icon } from "@/components/icons";
 import { ListingStatusBadge } from "@/components/ListingStatusBadge";
+import { ListingDetailsFields } from "@/components/ListingDetailsFields";
+import type { ListingDetails } from "@/lib/listingDetails";
 import {
   addListingImages,
   deleteListing,
@@ -33,6 +35,7 @@ type Props = {
     district: string;
     description: string;
     negotiable: boolean;
+    details: ListingDetails;
     status: ListingStatus;
     rejectReason: string | null;
     viewCount: number;
@@ -49,6 +52,7 @@ export function ManageListing({ listing, images }: Props) {
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [details, setDetails] = useState<ListingDetails>(listing.details);
 
   function run(task: () => Promise<{ error?: string; ok?: boolean; review?: boolean } | void>, okText?: string) {
     setMessage({});
@@ -105,6 +109,18 @@ export function ManageListing({ listing, images }: Props) {
           <b>İlanın yayınlanamadı.</b> {listing.rejectReason ?? "Kurallara uygun bulunmadı."} Düzeltip tekrar incelemeye
           gönderebilirsin.
         </FormError>
+      ) : listing.status === "active" ? (
+        <Link
+          href="/one-cikar"
+          className="flex items-center gap-3 rounded-xl bg-accent-soft p-4 text-xs text-text transition hover:brightness-95"
+        >
+          <Icon name="spark" className="h-5 w-5 flex-shrink-0 text-accent" />
+          <span className="flex-1">
+            <b className="block text-accent">İlanını öne çıkar</b>
+            Vitrin ve üste taşıma paketleri yakında. Ayrıntıları gör.
+          </span>
+          <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-accent" />
+        </Link>
       ) : listing.status === "pending" ? (
         <div className="flex items-start gap-2.5 rounded-xl bg-bg p-4 text-xs text-muted">
           <Icon name="clock" className="h-4 w-4 flex-shrink-0 text-accent" />
@@ -168,6 +184,7 @@ export function ManageListing({ listing, images }: Props) {
                   district: String(form.get("district") ?? ""),
                   description: String(form.get("description") ?? ""),
                   negotiable: form.get("negotiable") === "on",
+                  details,
                 }),
               "Değişiklikler kaydedildi.",
             );
@@ -205,10 +222,11 @@ export function ManageListing({ listing, images }: Props) {
             label="Açıklama"
             name="description"
             defaultValue={listing.description}
-            maxLength={3000}
+            maxLength={5000}
             disabled={!editable}
           />
           <Checkbox label="Pazarlığa açık" name="negotiable" defaultChecked={listing.negotiable} disabled={!editable} />
+          {editable ? <ListingDetailsFields value={details} onChange={setDetails} /> : null}
           {message.error ? <FormError>{message.error}</FormError> : null}
           {message.ok ? <FormSuccess>{message.ok}</FormSuccess> : null}
           {editable ? (

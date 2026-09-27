@@ -43,6 +43,7 @@ export function Header({
   const mobileMenu = [
     { href: "/", label: "Keşfet" },
     { href: "/kategori", label: "Kategoriler" },
+    { href: "/magazalar", label: "Mağazalar" },
     { href: "/hesabim/favoriler", label: "Favorilerim" },
     { href: "/mesajlar", label: unread.messages ? `Mesajlarım (${unread.messages})` : "Mesajlarım" },
     { href: "/hesabim/bildirimler", label: unread.notifications ? `Bildirimler (${unread.notifications})` : "Bildirimler" },
@@ -68,7 +69,7 @@ export function Header({
     <header className="relative z-40 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-[1328px] flex-wrap items-center gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6">
         <Link href="/" className="flex flex-shrink-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand text-2xl tracking-[-2px] text-on-brand">
+          <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent text-2xl tracking-[-2px] text-on-accent">
             k.
           </span>
           <span>
@@ -104,7 +105,7 @@ export function Header({
           <button
             type="submit"
             aria-label="Ara"
-            className="m-1.5 flex w-9 items-center justify-center rounded-md bg-brand text-on-brand"
+            className="m-1.5 flex w-9 items-center justify-center rounded-md bg-accent text-on-accent"
           >
             <Icon name="arrow" className="h-4 w-4" />
           </button>
@@ -148,6 +149,7 @@ export function Header({
         <div className="hidden sm:block">
           <LinkButton
             href="/ilan-ver/fotograflar"
+            variant="accent"
             full={false}
             icon={<Icon name="plus" className="h-4 w-4" />}
             className="whitespace-nowrap"
@@ -183,6 +185,13 @@ export function Header({
               {label}
             </Link>
           ))}
+          <Link
+            href="/magazalar"
+            className="flex h-12 flex-shrink-0 items-center gap-2 whitespace-nowrap text-xs font-semibold text-accent"
+          >
+            <Icon name="store" className="h-[17px] w-[17px]" />
+            Mağazalar
+          </Link>
           <Link href="/konum" className="ml-auto flex-shrink-0 whitespace-nowrap text-xs text-accent">
             <span className="inline-flex items-center gap-1.5">
               <Icon name="pin" className="h-4 w-4" />
