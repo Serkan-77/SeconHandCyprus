@@ -5,6 +5,7 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/FormError";
+import { TextLink } from "@/components/ui/TextLink";
 import { signIn, signOut } from "@/lib/actions/auth";
 
 export function AdminLoginForm({ signedInAs, denied }: { signedInAs: string | null; denied: boolean }) {
@@ -34,8 +35,11 @@ export function AdminLoginForm({ signedInAs, denied }: { signedInAs: string | nu
         <form action={action} className="flex flex-col gap-5 rounded-2xl border border-border p-6">
           <h1 className="text-xl font-semibold">Yönetici girişi</h1>
           <input type="hidden" name="returnTo" value="/yonetim" />
-          <Field label="E-posta" type="email" name="email" autoComplete="email" required />
+          <Field label="E-posta" type="email" name="email" autoComplete="email" defaultValue={state?.email} required />
           <Field label="Şifre" type="password" name="password" autoComplete="current-password" required />
+          <div className="flex justify-end">
+            <TextLink href="/sifre-yenile">Şifremi unuttum</TextLink>
+          </div>
           {state?.error ? <FormError>{state.error}</FormError> : null}
           {denied && !state?.error ? <FormError>Bu sayfa yalnızca yöneticiler içindir.</FormError> : null}
           <Button type="submit" disabled={pending}>

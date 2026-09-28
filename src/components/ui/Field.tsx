@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 type FieldWrapperProps = {
   label: string;
@@ -40,7 +41,11 @@ export function Field({
 } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <FieldWrapper label={label} hint={hint} error={error} className={className}>
-      <input className={inputClass} data-error={Boolean(error)} {...rest} />
+      {rest.type === "password" ? (
+        <PasswordInput className={inputClass} data-error={Boolean(error)} {...rest} />
+      ) : (
+        <input className={inputClass} data-error={Boolean(error)} {...rest} />
+      )}
     </FieldWrapper>
   );
 }

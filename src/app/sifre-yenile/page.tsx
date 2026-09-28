@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
         Hesabına kayıtlı e-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
       </p>
       <form action={action} className="mt-6 flex flex-col gap-5">
-        <Field label="E-posta adresi" type="email" name="email" autoComplete="email" required />
+        <Field label="E-posta adresi" type="email" name="email" autoComplete="email" defaultValue={state?.email} required />
         {state?.error ? <FormError>{state.error}</FormError> : null}
         <Button type="submit" disabled={pending}>
           {pending ? "Gönderiliyor…" : "Sıfırlama bağlantısı gönder"}

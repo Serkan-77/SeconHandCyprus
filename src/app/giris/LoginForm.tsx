@@ -66,7 +66,14 @@ export function LoginForm({
       {mode === "email" ? (
         <form action={emailAction} className="mt-5 flex flex-col gap-5">
           <input type="hidden" name="returnTo" value={returnTo} />
-          <Field label="E-posta adresi" type="email" name="email" autoComplete="email" required />
+          <Field
+            label="E-posta adresi"
+            type="email"
+            name="email"
+            autoComplete="email"
+            defaultValue={emailState?.email}
+            required
+          />
           <Field label="Şifre" type="password" name="password" autoComplete="current-password" required />
           <div className="flex items-center justify-end">
             <TextLink href="/sifre-yenile">Şifremi unuttum</TextLink>

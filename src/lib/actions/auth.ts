@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { safeInternalPath } from "@/lib/safeRedirect";
 import { absoluteUrl } from "@/lib/site";
 
-export type FormState = { error?: string; ok?: boolean; message?: string; email?: string } | undefined;
+export type FormState =
+  | { error?: string; ok?: boolean; message?: string; email?: string; values?: Record<string, string> }
+  | undefined;
 
 // Links in auth e-mails and the OAuth return URL are built from the configured
 // site URL (NEXT_PUBLIC_SITE_URL), never from the request's Host or
@@ -19,27 +21,46 @@ function safeReturnTo(value: FormDataEntryValue | null) {
   return safeInternalPath(value);
 }
 
-function translateAuthError(message: string) {
-  const m = message.toLowerCase();
-  if (m.includes("invalid login")) return "E-posta ya da şifre hatalı.";
-  if (m.includes("email not confirmed")) return "E-posta adresin henüz doğrulanmadı. Gelen kutunu kontrol et.";
-  if (m.includes("already registered")) return "Bu e-posta ile kayıtlı bir hesap zaten var.";
-  if (m.includes("password should be")) return "Şifre en az 8 karakter olmalı.";
-  if (m.includes("rate limit")) return "Çok fazla deneme yaptın. Birkaç dakika sonra tekrar dene.";
-  if (m.includes("phone") && m.includes("provider")) return "Telefonla giriş şu anda kullanılamıyor. E-posta ile giriş yap.";
+type AuthErrorLike = { message: string; code?: string; reasons?: string[] };
+
+// Supabase error codes first (stable), message text only as a fallback. The
+// raw error is logged so an unexpected one shows up in the server logs.
+function translateAuthError(error: AuthErrorLike) {
+  const code = error.code ?? "";
+  const m = error.message.toLowerCase();
+  if (code === "same_password" || m.includes("different from the old")) return "Yeni şifre eskisiyle aynı olamaz. Farklı bir şifre seç.";
+  if (code === "weak_password") {
+    const reasons = error.reasons ?? [];
+    if (reasons.includes("pwned")) return "Bu şifre sızdırılmış şifre listelerinde geçiyor. Daha güçlü bir şifre seç.";
+    if (reasons.includes("characters")) return "Şifre büyük harf, küçük harf, rakam ve sembol içermeli.";
+    return "Şifre en az 8 karakter olmalı.";
+  }
+  if (code === "invalid_credentials" || m.includes("invalid login")) return "E-posta ya da şifre hatalı.";
+  if (code === "email_not_confirmed" || m.includes("email not confirmed"))
+    return "E-posta adresin henüz doğrulanmadı. Gelen kutundaki doğrulama bağlantısına tıkla.";
+  if (code === "user_already_exists" || code === "email_exists" || m.includes("already registered"))
+    return "Bu e-posta ile kayıtlı bir hesap zaten var. Giriş yap ya da şifreni sıfırla.";
+  if (code === "user_banned") return "Bu hesap askıya alınmış. Destek ile iletişime geç.";
+  if (code === "email_address_invalid" || m.includes("email address") && m.includes("invalid")) return "Geçerli bir e-posta adresi gir.";
+  if (code === "session_not_found" || code === "session_expired" || m.includes("auth session missing"))
+    return "Oturumun sona ermiş. Şifre sıfırlama bağlantısını yeniden iste.";
+  if (code === "reauthentication_needed") return "Güvenlik için tekrar giriş yapıp yeniden dene.";
+  if (code.startsWith("over_") || m.includes("rate limit")) return "Çok fazla deneme yaptın. Birkaç dakika sonra tekrar dene.";
+  if (code === "phone_provider_disabled" || (m.includes("phone") && m.includes("provider")))
+    return "Telefonla giriş şu anda kullanılamıyor. E-posta ile giriş yap.";
   if (m.includes("sms")) return "SMS gönderilemedi. Telefonla giriş şu anda kullanılamıyor.";
-  if (m.includes("token has expired") || m.includes("invalid")) return "Kodun süresi doldu ya da hatalı.";
-  if (m.includes("same_password") || m.includes("different from the old")) return "Yeni şifre eskisinden farklı olmalı.";
+  if (code === "otp_expired" || m.includes("token has expired")) return "Kodun süresi doldu ya da hatalı.";
+  if (m.includes("password should be")) return "Şifre en az 8 karakter olmalı.";
+  console.error("[auth] unhandled error", code, error.message);
   return "Bir sorun oluştu. Lütfen tekrar dene.";
 }
 
 export async function signIn(_: FormState, formData: FormData): Promise<FormState> {
+  const email = String(formData.get("email") ?? "").trim();
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: String(formData.get("email") ?? "").trim(),
-    password: String(formData.get("password") ?? ""),
-  });
-  if (error) return { error: translateAuthError(error.message) };
+  const { error } = await supabase.auth.signInWithPassword({ email, password: String(formData.get("password") ?? "") });
+  // The e-mail comes back so the form can keep it after React resets the inputs.
+  if (error) return { error: translateAuthError(error), email };
   redirect(safeReturnTo(formData.get("returnTo")));
 }
 
@@ -59,7 +80,7 @@ export async function signInWithPhone(_: FormState, formData: FormData): Promise
   if (!/^\+?\d{10,15}$/.test(phone)) return { error: "Geçerli bir telefon numarası gir." };
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({ phone, options: { shouldCreateUser: false } });
-  if (error) return { error: translateAuthError(error.message) };
+  if (error) return { error: translateAuthError(error) };
   redirect(`/telefon-dogrula?tel=${encodeURIComponent(phone)}`);
 }
 
@@ -70,7 +91,7 @@ export async function verifyPhoneOtp(_: FormState, formData: FormData): Promise<
     token: String(formData.get("token") ?? ""),
     type: "sms",
   });
-  if (error) return { error: translateAuthError(error.message) };
+  if (error) return { error: translateAuthError(error) };
   redirect("/");
 }
 
@@ -79,8 +100,9 @@ export async function signUp(_: FormState, formData: FormData): Promise<FormStat
   const password = String(formData.get("password") ?? "");
   const displayName = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").replace(/\s/g, "");
-  if (password.length < 8) return { error: "Şifre en az 8 karakter olmalı." };
-  if (displayName.length < 2) return { error: "Adını gir." };
+  const values = { name: displayName, email, phone };
+  if (password.length < 8) return { error: "Şifre en az 8 karakter olmalı.", values };
+  if (displayName.length < 2) return { error: "Adını gir.", values };
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -91,10 +113,10 @@ export async function signUp(_: FormState, formData: FormData): Promise<FormStat
       emailRedirectTo: authCallbackUrl("/kurulum"),
     },
   });
-  if (error) return { error: translateAuthError(error.message) };
+  if (error) return { error: translateAuthError(error), values };
   // Supabase returns a user with no identities when the e-mail already exists.
   if (data.user && data.user.identities?.length === 0) {
-    return { error: "Bu e-posta ile kayıtlı bir hesap zaten var." };
+    return { error: "Bu e-posta ile kayıtlı bir hesap zaten var. Giriş yap ya da şifreni sıfırla.", values };
   }
   if (data.session) redirect("/kurulum");
   return { ok: true, email };
@@ -106,7 +128,7 @@ export async function requestPasswordReset(_: FormState, formData: FormData): Pr
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: authCallbackUrl("/yeni-sifre"),
   });
-  if (error) return { error: translateAuthError(error.message) };
+  if (error) return { error: translateAuthError(error), email };
   return { ok: true, email };
 }
 
@@ -117,7 +139,7 @@ export async function updatePassword(_: FormState, formData: FormData): Promise<
   if (password !== confirm) return { error: "Şifreler birbiriyle eşleşmiyor." };
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) return { error: translateAuthError(error.message) };
+  if (error) return { error: translateAuthError(error) };
   return { ok: true };
 }
 
@@ -132,7 +154,7 @@ export async function resendEmailVerification(): Promise<FormState> {
     email: user.email,
     options: { emailRedirectTo: authCallbackUrl("/hesabim/dogrulama") },
   });
-  if (error) return { error: translateAuthError(error.message) };
+  if (error) return { error: translateAuthError(error) };
   return { ok: true, email: user.email };
 }
 

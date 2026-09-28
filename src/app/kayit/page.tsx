@@ -44,14 +44,15 @@ export default function RegisterPage() {
       ) : null}
 
       <form action={action} className="mt-5 flex flex-col gap-5">
-        <Field label="Ad Soyad" name="name" autoComplete="name" required minLength={2} />
-        <Field label="E-posta adresi" type="email" name="email" autoComplete="email" required />
+        <Field label="Ad Soyad" name="name" autoComplete="name" defaultValue={state?.values?.name} required minLength={2} />
+        <Field label="E-posta adresi" type="email" name="email" autoComplete="email" defaultValue={state?.values?.email} required />
         <Field
           label="Telefon numarası (opsiyonel)"
           type="tel"
           name="phone"
           placeholder="+90 5xx xxx xx xx"
           autoComplete="tel"
+          defaultValue={state?.values?.phone}
           hint="Doğrulama rozeti ve WhatsApp iletişimi için kullanılır."
         />
         <Field
