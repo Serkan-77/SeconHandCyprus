@@ -52,6 +52,25 @@
   }
 }
 
+/* Logo variant follows the same theme rules as the colour tokens above. */
+.logo-dark {
+  display: none;
+}
+.dark .logo-light {
+  display: none;
+}
+.dark .logo-dark {
+  display: block;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .logo-light {
+    display: none;
+  }
+  :root:not(.light) .logo-dark {
+    display: block;
+  }
+}
+
 @theme inline {
   --font-sans: var(--font-inter), Arial, Helvetica, sans-serif;
 
