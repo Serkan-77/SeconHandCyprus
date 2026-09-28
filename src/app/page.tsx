@@ -217,22 +217,26 @@ export default async function HomePage() {
         </LinkButton>
       </section>
 
-      <section>
-        <div className="mb-6 flex items-end justify-between gap-5">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight sm:text-[27px]">Sana yakın</h2>
-            <p className="mt-1 text-[13px] text-muted">
-              {nearby.items.length > 0
-                ? `${region ?? "Girne"} ve çevresindeki ilanlar.`
-                : "Bölgende henüz ilan yok; adanın geri kalanından seçtiklerimiz."}
-            </p>
+      {/* While the site has few listings the fallback can be empty; an empty
+          box here would say "no listings" right under the listings above. */}
+      {nearbyItems.length ? (
+        <section>
+          <div className="mb-6 flex items-end justify-between gap-5">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight sm:text-[27px]">Sana yakın</h2>
+              <p className="mt-1 text-[13px] text-muted">
+                {nearby.items.length > 0
+                  ? `${region ?? "Girne"} ve çevresindeki ilanlar.`
+                  : "Bölgende henüz ilan yok; adanın geri kalanından seçtiklerimiz."}
+              </p>
+            </div>
+            <TextLink href="/konum" underline className="flex-shrink-0">
+              Konumu değiştir
+            </TextLink>
           </div>
-          <TextLink href="/konum" underline className="flex-shrink-0">
-            Konumu değiştir
-          </TextLink>
-        </div>
-        <ListingGrid items={nearbyItems} />
-      </section>
+          <ListingGrid items={nearbyItems} />
+        </section>
+      ) : null}
 
       <section className="flex flex-col gap-6 rounded-2xl border border-border bg-bg px-6 py-8 sm:px-9 lg:flex-row lg:items-center lg:gap-10">
         <div className="flex-1">

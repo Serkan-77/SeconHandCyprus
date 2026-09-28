@@ -153,41 +153,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] lg:gap-11">
-        <div className="min-w-0">
+      {/* Phones: photos, then title/price/seller, then the details. Desktop:
+          photos and details on the left, the card beside them. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] lg:gap-x-11 lg:gap-y-0">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           <DetailGallery images={images} alt={listing.title} />
-
-          <section className="mt-9">
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Biraz da hikâyesi.</h2>
-            <p className="mt-4 whitespace-pre-line text-[13px] leading-loose text-muted sm:text-sm">
-              {listing.description || "Satıcı bu ilan için açıklama eklememiş. Merak ettiklerini mesajla sorabilirsin."}
-            </p>
-            <dl className="my-6 grid grid-cols-1 gap-x-7 gap-y-0 sm:grid-cols-2">
-              {[
-                ["Kategori", category?.name ?? "—"],
-                ["Ürün durumu", listing.condition],
-                ["İlan numarası", `#KB${listing.ref_no}`],
-                ["İlan tarihi", formatLongDate(listing.published_at ?? listing.created_at)],
-                ["Görüntülenme", String(listing.view_count)],
-                ["Pazarlık", listing.negotiable ? "Pazarlığa açık" : "Sabit fiyat"],
-                ...detailRows(listing.details as ListingDetails | null),
-              ].map(([term, desc]) => (
-                <div key={term} className="border-b border-border py-3.5">
-                  <dt className="text-[11px] text-muted">{term}</dt>
-                  <dd className="mt-1 text-[13px]">{desc}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-
-          <section className="mt-8">
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{location}</h2>
-            <p className="mb-5 mt-2 text-[13px] text-muted">Yaklaşık konum. Buluşma yerini satıcıyla konuş.</p>
-            <MapPreview label={listing.city} />
-          </section>
         </div>
 
-        <aside>
+        <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <div className="flex flex-col gap-5 rounded-2xl border border-border p-6">
             <div className="flex items-center justify-between">
               <Badge kind="accent">{listing.condition}</Badge>
@@ -246,6 +219,37 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           {isActive ? <AdSlot placement="listing" className="mt-6" /> : null}
         </aside>
+
+        <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+          <section className="lg:mt-9">
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Biraz da hikâyesi.</h2>
+            <p className="mt-4 whitespace-pre-line text-[13px] leading-loose text-muted sm:text-sm">
+              {listing.description || "Satıcı bu ilan için açıklama eklememiş. Merak ettiklerini mesajla sorabilirsin."}
+            </p>
+            <dl className="my-6 grid grid-cols-1 gap-x-7 gap-y-0 sm:grid-cols-2">
+              {[
+                ["Kategori", category?.name ?? "—"],
+                ["Ürün durumu", listing.condition],
+                ["İlan numarası", `#KB${listing.ref_no}`],
+                ["İlan tarihi", formatLongDate(listing.published_at ?? listing.created_at)],
+                ["Görüntülenme", String(listing.view_count)],
+                ["Pazarlık", listing.negotiable ? "Pazarlığa açık" : "Sabit fiyat"],
+                ...detailRows(listing.details as ListingDetails | null),
+              ].map(([term, desc]) => (
+                <div key={term} className="border-b border-border py-3.5">
+                  <dt className="text-[11px] text-muted">{term}</dt>
+                  <dd className="mt-1 text-[13px]">{desc}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section className="mt-8">
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{location}</h2>
+            <p className="mb-5 mt-2 text-[13px] text-muted">Yaklaşık konum. Buluşma yerini satıcıyla konuş.</p>
+            <MapPreview label={listing.city} />
+          </section>
+        </div>
       </div>
 
       {similar.items.length ? (
