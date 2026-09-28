@@ -31,7 +31,7 @@ export function LoginForm({
       <p className="text-sm text-muted">Favorilerin, mesajların ve yeni keşiflerin seni bekliyor.</p>
 
       {linkError ? (
-        <FormError className="mt-5">Bağlantının süresi dolmuş ya da daha önce kullanılmış. Tekrar giriş yap.</FormError>
+        <FormError className="mt-5">Bağlantı bu tarayıcıda açılamadı ya da süresi dolmuş. E-postanı doğruladıysan aşağıdan giriş yapabilirsin.</FormError>
       ) : null}
       {googleError ? (
         <FormError className="mt-5">Google ile giriş şu anda yapılamadı. E-posta ile dene.</FormError>

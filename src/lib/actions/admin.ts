@@ -28,8 +28,12 @@ const DENIED = { error: "Bu işlem için yönetici yetkisi gerekiyor." };
 export async function approveListing(id: string): Promise<Result> {
   const { supabase, ok } = await admin();
   if (!ok) return DENIED;
-  const { error } = await supabase.from("listings").update({ status: "active", reject_reason: null }).eq("id", id);
-  if (error) return { error: "İlan onaylanamadı." };
+  const { data, error } = await supabase
+    .from("listings")
+    .update({ status: "active", reject_reason: null })
+    .eq("id", id)
+    .select("id");
+  if (error || !data?.length) return { error: "İlan onaylanamadı. Sayfayı yenileyip tekrar dene." };
   refresh();
   return { ok: true };
 }
@@ -38,8 +42,12 @@ export async function rejectListing(id: string, reason: string, note: string): P
   const { supabase, ok } = await admin();
   if (!ok) return DENIED;
   const text = note.trim() ? `${reason}. ${note.trim()}` : reason;
-  const { error } = await supabase.from("listings").update({ status: "rejected", reject_reason: text }).eq("id", id);
-  if (error) return { error: "İlan reddedilemedi." };
+  const { data, error } = await supabase
+    .from("listings")
+    .update({ status: "rejected", reject_reason: text })
+    .eq("id", id)
+    .select("id");
+  if (error || !data?.length) return { error: "İlan reddedilemedi. Sayfayı yenileyip tekrar dene." };
   refresh();
   return { ok: true };
 }
@@ -290,6 +298,7 @@ export async function saveCategory(input: { id?: number; name: string; icon: str
     .replace(/[çğıöşü]/g, (c) => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" })[c] ?? c)
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+  if (!input.id && !slug) return { error: "Kategori adında en az bir harf ya da rakam olmalı." };
   const row = { name, icon: input.icon, sort_order: input.sortOrder };
   const { error } = input.id
     ? await supabase.from("categories").update(row).eq("id", input.id)
@@ -314,8 +323,8 @@ export async function deleteCategory(id: number): Promise<Result> {
 export async function setFeatured(id: string, featured: boolean): Promise<Result> {
   const { supabase, ok } = await admin();
   if (!ok) return DENIED;
-  const { error } = await supabase.from("listings").update({ featured }).eq("id", id);
-  if (error) return { error: "Vitrin durumu güncellenemedi." };
+  const { data, error } = await supabase.from("listings").update({ featured }).eq("id", id).select("id");
+  if (error || !data?.length) return { error: "Vitrin durumu güncellenemedi." };
   refresh();
   return { ok: true };
 }

@@ -177,8 +177,13 @@ export async function searchListings(filters: ListingFilters = {}) {
 
   if (filters.q) {
     // Characters that would break the PostgREST or() filter syntax.
-    const term = filters.q.replace(/[%,()"\\*:]/g, " ").trim();
-    query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%`);
+    // Every word must appear (in any order), in the title or the description.
+    const words = filters.q
+      .replace(/[%,()"\\*:]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 6);
+    for (const word of words) query = query.or(`title.ilike.%${word}%,description.ilike.%${word}%`);
   }
   if (categoryId) query = query.eq("category_id", categoryId);
   if (filters.city) query = query.eq("city", filters.city);
