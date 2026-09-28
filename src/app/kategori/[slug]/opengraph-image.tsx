@@ -2,7 +2,7 @@ import { OG_SIZE, brandCard } from "@/lib/ogImage";
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 
-export const alt = "Kıbrıs İkinci El kategori";
+export const alt = "Kıbrıs İkinci Elcim kategori";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

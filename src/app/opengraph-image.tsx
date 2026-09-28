@@ -1,6 +1,6 @@
 import { OG_SIZE, brandCard } from "@/lib/ogImage";
 
-export const alt = "Kıbrıs İkinci El — iyi eşyalara ikinci bir hikâye";
+export const alt = "Kıbrıs İkinci Elcim — iyi eşyalara ikinci bir hikâye";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SITE } from "@/lib/site";
 
 const columns = [
   {
@@ -39,11 +41,8 @@ export function Footer() {
     <footer className="mt-13 border-t border-border bg-bg px-4 pt-10 sm:px-6">
       <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.2fr] lg:gap-12">
         <div className="flex items-center justify-between sm:col-span-2 sm:block lg:col-span-1">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand text-2xl tracking-[-2px] text-on-brand">
-              k.
-            </span>
-            Kıbrıs İkinci El
+          <Link href="/" className="flex items-center">
+            <Logo className="h-8 sm:h-10" />
           </Link>
           <p className="mt-0 text-xs text-muted sm:mt-5 sm:text-lg sm:leading-snug">
             Adadan eşyalara,
@@ -66,7 +65,7 @@ export function Footer() {
         ))}
       </div>
       <div className="mx-auto mt-9 flex max-w-[1280px] flex-wrap items-center gap-3 border-t border-border py-4 text-[10px] text-muted">
-        <span>© 2026 Kıbrıs İkinci El</span>
+        <span>© 2026 {SITE.name}</span>
         <span>Türkçe · TL / EUR</span>
         <ThemeToggle className="ml-auto inline-flex min-h-8 items-center gap-2 text-[11px] text-muted" />
       </div>

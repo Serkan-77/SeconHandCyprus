@@ -12,7 +12,7 @@ assertPublicEnv(
 );
 
 export const SITE = {
-  name: "Kıbrıs İkinci El",
+  name: "Kıbrıs İkinci Elcim",
   tagline: "İyi eşyalara ikinci bir hikâye",
   description:
     "Kıbrıs'ta ikinci el mobilya, elektronik, giyim, bebek ürünleri ve daha fazlası. Ücretsiz ilan ver, satıcıyla doğrudan mesajlaş.",

@@ -34,7 +34,7 @@ const siteSchema = [
     "@type": "Organization",
     name: SITE.name,
     url: absoluteUrl("/"),
-    logo: absoluteUrl("/icon.svg"),
+    logo: absoluteUrl("/brand/icon-512.png"),
     areaServed: "Cyprus",
   },
 ];

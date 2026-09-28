@@ -53,7 +53,7 @@ export function WhatsAppButton({
         ) : (
           <>
             <p className="text-sm text-muted">
-              Kıbrıs İkinci El&apos;den ayrılıp satıcıyla WhatsApp üzerinden{" "}
+              Kıbrıs İkinci Elcim&apos;den ayrılıp satıcıyla WhatsApp üzerinden{" "}
               <b className="text-text">{listingTitle}</b> hakkında konuşacaksın. Ödeme ve buluşma detaylarında
               dikkatli ol.
             </p>

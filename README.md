@@ -1,4 +1,4 @@
-# Kıbrıs İkinci El
+# Kıbrıs İkinci Elcim
 
 Kıbrıs için ikinci el alım-satım pazaryeri. Bu repo bir **Next.js web
 uygulamasıdır** ve mobil tarayıcılar dahil tüm cihazlarda çalışır. Native mobil

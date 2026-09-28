@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icons";
+import { Logo } from "@/components/Logo";
 import { signOut } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/queries";
@@ -20,11 +21,8 @@ export async function AdminShell({ children }: { children: ReactNode }) {
     <div className="mx-auto my-6 max-w-[1440px] overflow-hidden rounded-xl border border-border px-0 sm:px-6">
       <div className="flex min-h-[820px] flex-col sm:flex-row">
         <aside className="flex flex-shrink-0 flex-col gap-5 bg-[#111318] p-4 text-white sm:w-[236px] sm:gap-6 sm:p-7">
-          <div className="hidden items-center gap-2.5 text-[15px] font-bold sm:flex">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white text-2xl tracking-[-2px] text-[#111318]">
-              k.
-            </span>
-            Kıbrıs İkinci El
+          <div className="hidden sm:block">
+            <Logo className="h-auto w-full" />
           </div>
           <span className="hidden text-[9px] tracking-[1.5px] text-white/60 sm:block">YÖNETİM</span>
           <AdminNav

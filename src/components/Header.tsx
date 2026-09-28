@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "@/components/icons";
+import { Logo } from "@/components/Logo";
 import { LinkButton } from "@/components/ui/Button";
 import { signOut } from "@/lib/actions/auth";
 import { useUnreadCounts } from "@/lib/liveCounts";
@@ -70,16 +71,8 @@ export function Header({
   return (
     <header className="relative z-40 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-[1328px] flex-wrap items-center gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6">
-        <Link href="/" className="flex flex-shrink-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand text-2xl tracking-[-2px] text-on-brand">
-            k.
-          </span>
-          <span>
-            <span className="block text-[17px] font-bold tracking-[-0.6px]">Kıbrıs İkinci El</span>
-            <small className="block text-[7px] tracking-[1.1px] text-muted">
-              İYİ EŞYALARA İKİNCİ BİR HİKÂYE.
-            </small>
-          </span>
+        <Link href="/" className="flex flex-shrink-0 items-center">
+          <Logo priority className="h-9 sm:h-11" />
         </Link>
 
         <form

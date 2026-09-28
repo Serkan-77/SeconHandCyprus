@@ -4,6 +4,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SellerHeader } from "@/components/SellerHeader";
 import { ListingGrid } from "@/components/ListingGrid";
 import { getSellerSummary, publicName, searchListings } from "@/lib/queries";
+import { SITE } from "@/lib/site";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const name = publicName(seller);
   return {
     title: seller.accountType === "store" ? `${name} — mağaza` : `${name} — satıcı profili`,
-    description: `${name} kullanıcısının Kıbrıs İkinci El'deki ${seller.activeListings} aktif ilanı ve ${seller.ratingCount} değerlendirmesi.`,
+    description: `${name} kullanıcısının ${SITE.name}'deki ${seller.activeListings} aktif ilanı ve ${seller.ratingCount} değerlendirmesi.`,
     alternates: { canonical: `/satici/${id}` },
   };
 }
