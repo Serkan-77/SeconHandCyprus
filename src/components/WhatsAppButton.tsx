@@ -31,8 +31,12 @@ export function WhatsAppButton({
     setOpen(true);
     if (phone || error) return;
     startTransition(async () => {
-      const result = await getListingWhatsapp(listingId);
+      const result = await getListingWhatsapp(listingId).catch(() => ({
+        phone: undefined,
+        error: "Bağlantı kurulamadı. Tekrar dene.",
+      }));
       if (result.phone) setPhone(result.phone.replace(/\D/g, ""));
+      else if (result.error === "auth") router.push(`/giris-gerekli?returnTo=${encodeURIComponent(pathname)}`);
       else setError(result.error ?? "Numara alınamadı.");
     });
   }
@@ -43,7 +47,7 @@ export function WhatsAppButton({
         WhatsApp ile iletişim
       </Button>
       <Modal title="WhatsApp'a geçiş" open={open} onClose={() => setOpen(false)}>
-        {pending ? (
+        {pending || (!phone && !error) ? (
           <p className="text-sm text-muted">Satıcının iletişim tercihi kontrol ediliyor…</p>
         ) : error ? (
           <div className="flex items-start gap-2.5 rounded-xl bg-brand-soft p-4 text-sm">

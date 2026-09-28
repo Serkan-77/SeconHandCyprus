@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
-import { useWizardDraft } from "@/lib/wizardStore";
+import { getWizardDraft, useWizardDraft } from "@/lib/wizardStore";
 import { removeUploadedImages, uploadImage } from "@/lib/upload";
 import { publicImageUrl } from "@/lib/supabase/env";
 
@@ -24,20 +24,23 @@ export default function AddPhotosPage() {
   const router = useRouter();
 
   async function onFiles(files: FileList | null) {
-    if (!files?.length) return;
+    if (!files?.length || uploading > 0) return;
     const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!list.length) {
+      setError("Yalnızca fotoğraf yükleyebilirsin (JPG, PNG, WEBP).");
+      return;
+    }
     if (draft.photos.length + list.length > MAX_PHOTOS) {
       setError(`En fazla ${MAX_PHOTOS} fotoğraf ekleyebilirsin.`);
       return;
     }
     setError("");
     setUploading(list.length);
-    let photos = [...draft.photos];
     for (const file of list) {
       try {
         const path = await uploadImage("listing-images", file);
-        photos = [...photos, path];
-        setDraft({ photos });
+        // Read the draft again: a photo may have been removed meanwhile.
+        setDraft({ photos: [...getWizardDraft().photos, path] });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Fotoğraf yüklenemedi.");
       } finally {
@@ -69,13 +72,16 @@ export default function AddPhotosPage() {
           setDragging(true);
         }}
         onDragLeave={() => setDragging(false)}
+        onClick={() => {
+          if (uploading === 0 && draft.photos.length < MAX_PHOTOS) inputRef.current?.click();
+        }}
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
           onFiles(e.dataTransfer.files);
         }}
         className={cn(
-          "flex flex-col items-center gap-3 rounded-2xl border-[1.5px] border-dashed bg-surface p-8 text-center transition",
+          "flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-[1.5px] border-dashed bg-surface p-8 text-center transition",
           dragging ? "border-accent bg-accent-soft" : "border-border",
         )}
       >
@@ -88,6 +94,7 @@ export default function AddPhotosPage() {
           accept="image/jpeg,image/png,image/webp"
           multiple
           className="hidden"
+          onClick={(e) => e.stopPropagation()}
           onChange={(e) => onFiles(e.target.files)}
         />
         <Button
@@ -95,7 +102,6 @@ export default function AddPhotosPage() {
           variant="outline"
           full={false}
           disabled={uploading > 0 || draft.photos.length >= MAX_PHOTOS}
-          onClick={() => inputRef.current?.click()}
         >
           {uploading > 0 ? `${uploading} fotoğraf yükleniyor…` : "Fotoğraf seç"}
         </Button>

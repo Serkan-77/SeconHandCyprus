@@ -104,6 +104,11 @@ export function setWizardDraft(patch: Partial<ListingDraft>) {
   notify();
 }
 
+/** The current draft, for async code that must not work from a stale render. */
+export function getWizardDraft() {
+  return getSnapshot();
+}
+
 export function resetWizardDraft() {
   snapshot = emptyDraft;
   try {

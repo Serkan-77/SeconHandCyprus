@@ -182,7 +182,11 @@ export function ChatView({
     setOlderError("");
     const list = listRef.current;
     const heightBefore = list?.scrollHeight ?? 0;
-    const result = await loadOlderMessages(active.id, { created_at: first.created_at, id: first.id });
+    const result = await loadOlderMessages(active.id, { created_at: first.created_at, id: first.id }).catch(() => ({
+      error: "Eski mesajlar yüklenemedi.",
+      messages: undefined,
+      hasMore: undefined,
+    }));
     setLoadingOlder(false);
     if (result.error || !result.messages) {
       setOlderError(result.error ?? "Eski mesajlar yüklenemedi.");
@@ -236,6 +240,10 @@ export function ChatView({
             ? "Mesaj gönderilemedi. Bu kullanıcıyla artık mesajlaşamazsın ya da hesabın kısıtlı."
             : (result.error ?? "Mesaj gönderilemedi."),
         );
+      } catch {
+        // Connection dropped: keep the text and say so instead of crashing the page.
+        if (typed && inputRef.current && !inputRef.current.value) inputRef.current.value = text;
+        setSendError("Mesaj gönderilemedi. Bağlantını kontrol edip tekrar dene.");
       } finally {
         sendingRef.current = false;
       }

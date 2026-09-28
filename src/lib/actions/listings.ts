@@ -212,7 +212,7 @@ export async function startConversation(listingId: string): Promise<{ error?: st
   const { supabase, user } = await requireUser();
   if (!user) redirect(`/giris-gerekli?returnTo=${encodeURIComponent("/mesajlar")}`);
 
-  const { data: listing } = await supabase.from("listings").select("seller_id, slug").eq("id", listingId).single();
+  const { data: listing } = await supabase.from("listings").select("seller_id, status").eq("id", listingId).single();
   if (!listing) redirect("/ilanlar");
   if (listing.seller_id === user.id) redirect("/mesajlar");
 
@@ -224,6 +224,8 @@ export async function startConversation(listingId: string): Promise<{ error?: st
     .maybeSingle();
   if (existing) redirect(`/mesajlar?c=${existing.id}`);
 
+  if (listing.status !== "active") return { error: "Bu ilan artık yayında değil, yeni konuşma başlatılamaz." };
+
   const { data: created, error } = await supabase
     .from("conversations")
     .insert({ listing_id: listingId, buyer_id: user.id, seller_id: listing.seller_id })
@@ -231,7 +233,18 @@ export async function startConversation(listingId: string): Promise<{ error?: st
     .single();
   const limited = rateLimitMessage(error);
   if (limited) return { error: limited };
-  if (error || !created) redirect("/hesap-kisitlandi");
+  if (error?.code === "23505") {
+    // Opened twice at once (double tap, two tabs): use the one that won.
+    const { data: again } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("listing_id", listingId)
+      .eq("buyer_id", user.id)
+      .maybeSingle();
+    if (again) redirect(`/mesajlar?c=${again.id}`);
+  }
+  if (error?.message.includes("row-level security")) redirect("/hesap-kisitlandi");
+  if (error || !created) return { error: "Konuşma başlatılamadı. İlan artık yayında olmayabilir; sayfayı yenileyip tekrar dene." };
   redirect(`/mesajlar?c=${created.id}`);
 }
 

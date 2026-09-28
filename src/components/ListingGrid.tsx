@@ -8,19 +8,24 @@ export function ListingGrid({
   items,
   columns = 4,
   empty = "Şu an burada gösterilecek ilan yok.",
+  emptyAction = true,
 }: {
   items: ListingCardData[];
   columns?: 3 | 4;
   empty?: string;
+  /** Show the "post a listing" button when there is nothing to list. */
+  emptyAction?: boolean;
 }) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border px-6 py-14 text-center">
         <Icon name="bag" className="h-8 w-8 text-muted" />
         <p className="max-w-xs text-sm text-muted">{empty}</p>
-        <LinkButton href="/ilan-ver/fotograflar" full={false} variant="secondary" className="mt-1 min-w-[180px]">
-          İlk ilanı sen ver
-        </LinkButton>
+        {emptyAction ? (
+          <LinkButton href="/ilan-ver/fotograflar" full={false} variant="secondary" className="mt-1 min-w-[180px]">
+            İlk ilanı sen ver
+          </LinkButton>
+        ) : null}
       </div>
     );
   }

@@ -19,8 +19,10 @@ async function compress(file: File, maxEdge: number): Promise<Blob> {
       canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("encode"))), "image/jpeg", 0.85),
     );
   } catch {
-    // Formats the browser cannot decode (e.g. some HEIC files) are sent as-is.
-    return file;
+    // Formats the browser cannot decode are sent as-is when the bucket takes
+    // them; anything else (e.g. HEIC on desktop) gets a clear message.
+    if (["image/jpeg", "image/png", "image/webp"].includes(file.type)) return file;
+    throw new Error("Bu fotoğraf biçimi desteklenmiyor. JPG, PNG ya da WEBP seç.");
   }
 }
 

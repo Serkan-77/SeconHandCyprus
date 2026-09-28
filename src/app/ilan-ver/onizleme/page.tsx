@@ -33,6 +33,8 @@ export default function AddPreviewPage() {
     const submissionKey = draft.submissionKey || crypto.randomUUID();
     if (!draft.submissionKey) setDraft({ submissionKey });
     startTransition(async () => {
+      // A dropped connection throws; the draft and its key stay, so the same
+      // button retries safely.
       const result = await createListing({
         title: draft.title,
         categorySlug: draft.category,
@@ -46,7 +48,7 @@ export default function AddPreviewPage() {
         photos: draft.photos,
         details: draft.details,
         submissionKey,
-      });
+      }).catch(() => ({ error: "Bağlantı kesildi. İnternetini kontrol edip tekrar gönder.", id: undefined }));
       if (result.error) {
         setError(result.error);
         return;

@@ -45,7 +45,7 @@ export function FavoritesProvider({
         return next;
       });
       startTransition(async () => {
-        const result = await toggleFavoriteAction(id);
+        const result = await toggleFavoriteAction(id).catch(() => ({ error: "network" as const }));
         if (result.error) {
           setIds((prev) => {
             const next = new Set(prev);
@@ -54,7 +54,9 @@ export function FavoritesProvider({
             return next;
           });
           if (result.error === "auth") router.push(`/giris-gerekli?returnTo=${encodeURIComponent(pathname)}`);
-          else router.push("/hesap-kisitlandi");
+          // Only an RLS refusal means a restricted account; anything else
+          // (dropped connection, removed listing) just rolls back.
+          else if (result.error.includes("kısıtlı")) router.push("/hesap-kisitlandi");
         }
       });
     },

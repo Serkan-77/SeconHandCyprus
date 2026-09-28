@@ -12,7 +12,7 @@ export function MapPreview({
 }) {
   return (
     <div className={cn("relative overflow-hidden rounded-2xl bg-[#e5e9ef] text-[#344154] grayscale", height, className)}>
-      <svg viewBox="0 0 350 220" className="h-full w-full" aria-hidden="true">
+      <svg viewBox="0 0 350 220" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden="true">
         <rect width="350" height="220" fill="#e8ebef" />
         <path d="M0 10L110 25 175 0 250 25 350 0V70L290 65 210 80 145 60 80 90 0 70Z" fill="#cbd3df" />
         <path

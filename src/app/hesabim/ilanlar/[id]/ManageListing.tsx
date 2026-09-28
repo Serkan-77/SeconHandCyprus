@@ -18,7 +18,7 @@ import {
   setListingStatus,
   updateListing,
 } from "@/lib/actions/listings";
-import { uploadImage } from "@/lib/upload";
+import { removeUploadedImages, uploadImage } from "@/lib/upload";
 import { regionNames } from "@/lib/regions";
 import type { ListingStatus } from "@/lib/queries";
 
@@ -73,14 +73,18 @@ export function ManageListing({ listing, images }: Props) {
     }
     setUploading(true);
     setMessage({});
+    const paths: string[] = [];
     try {
-      const paths: string[] = [];
       for (const file of Array.from(files)) paths.push(await uploadImage("listing-images", file));
       const result = await addListingImages(listing.id, paths);
-      if (result.error) setMessage({ error: result.error });
-      else if (result.review) setMessage({ ok: REVIEW_TEXT });
+      if (result.error) {
+        setMessage({ error: result.error });
+        await removeUploadedImages("listing-images", paths);
+      } else if (result.review) setMessage({ ok: REVIEW_TEXT });
     } catch (e) {
       setMessage({ error: e instanceof Error ? e.message : "Fotoğraf yüklenemedi." });
+      // Files uploaded before the failure would otherwise stay in Storage unused.
+      await removeUploadedImages("listing-images", paths).catch(() => {});
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";

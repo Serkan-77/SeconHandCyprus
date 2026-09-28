@@ -88,11 +88,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     .sort((a, b) => a.position - b.position)
     .map((i) => publicImageUrl(i.path));
 
-  const [seller, similar, acceptsWhatsapp] = await Promise.all([
+  const [seller, sameCategory, acceptsWhatsapp] = await Promise.all([
     getSellerSummary(listing.seller_id),
     searchListings({ category: category?.slug, excludeId: listing.id, pageSize: 4 }),
     sellerAcceptsWhatsapp(listing.id),
   ]);
+  // Nothing else in this category yet: suggest the newest listings instead.
+  const similar = sameCategory.items.length
+    ? sameCategory
+    : await searchListings({ excludeId: listing.id, pageSize: 4 });
 
   if (isActive && !isOwner) {
     // Request APIs are unavailable inside after() in Server Components, so the
@@ -244,15 +248,17 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         </aside>
       </div>
 
-      <section className="mt-16">
-        <div className="mb-6 flex items-end justify-between gap-5">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight sm:text-[27px]">Bunlar da ilgini çekebilir</h2>
-            <p className="mt-1 text-[13px] text-muted">Yeni bir hikâye arayan başka eşyalar.</p>
+      {similar.items.length ? (
+        <section className="mt-16">
+          <div className="mb-6 flex items-end justify-between gap-5">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight sm:text-[27px]">Bunlar da ilgini çekebilir</h2>
+              <p className="mt-1 text-[13px] text-muted">Yeni bir hikâye arayan başka eşyalar.</p>
+            </div>
           </div>
-        </div>
-        <ListingGrid items={similar.items} empty="Bu kategoride başka ilan yok." />
-      </section>
+          <ListingGrid items={similar.items} />
+        </section>
+      ) : null}
 
       {!isOwner ? (
         <div className="sticky bottom-0 z-30 mt-6 flex items-center gap-5 border-t border-border bg-surface py-3 lg:hidden">

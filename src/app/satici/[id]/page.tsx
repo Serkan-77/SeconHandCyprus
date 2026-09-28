@@ -34,7 +34,7 @@ export default async function SellerProfilePage({ params }: { params: Promise<{ 
       />
       <SellerHeader seller={seller} active="profil" />
       <h2 className="mb-5 text-lg font-semibold">{seller.accountType === "store" ? "Mağazanın ürünleri" : "Aktif ilanları"}</h2>
-      <ListingGrid items={items} columns={3} empty={`${publicName(seller)} şu an aktif bir ilan yayınlamıyor.`} />
+      <ListingGrid items={items} columns={3} emptyAction={false} empty={`${publicName(seller)} şu an aktif bir ilan yayınlamıyor.`} />
     </div>
   );
 }
