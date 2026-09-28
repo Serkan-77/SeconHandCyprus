@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { requestPasswordReset } from "@/lib/actions/auth";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 export default function ResetPasswordPage() {
   const [state, action, pending] = useActionState(requestPasswordReset, undefined);
@@ -35,13 +36,13 @@ export default function ResetPasswordPage() {
       <p className="text-sm text-muted">
         Hesabına kayıtlı e-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
       </p>
-      <form action={action} className="mt-6 flex flex-col gap-5">
+      <ActionForm action={action} className="mt-6 flex flex-col gap-5">
         <Field label="E-posta adresi" type="email" name="email" autoComplete="email" defaultValue={state?.email} required />
         {state?.error ? <FormError>{state.error}</FormError> : null}
         <Button type="submit" disabled={pending}>
           {pending ? "Gönderiliyor…" : "Sıfırlama bağlantısı gönder"}
         </Button>
-      </form>
+      </ActionForm>
     </AuthLayout>
   );
 }

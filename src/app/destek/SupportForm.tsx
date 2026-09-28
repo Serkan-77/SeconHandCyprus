@@ -7,6 +7,7 @@ import { Field, SelectField, TextareaField } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { createSupportTicket } from "@/lib/actions/account";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 const topics = ["İlan sorunu", "Hesap ve doğrulama", "Şikayet ve güvenlik", "Kısıtlamaya itiraz", "Diğer"];
 
@@ -33,7 +34,7 @@ export function SupportForm({ defaultEmail }: { defaultEmail: string }) {
       <Breadcrumbs items={["Destek talebi"]} />
       <h1 className="mb-2 text-2xl font-semibold tracking-tight sm:text-[32px]">Destek talebi oluştur</h1>
       <p className="mb-6 text-[13px] text-muted">Sana en hızlı şekilde dönüş yapabilmemiz için birkaç detay paylaş.</p>
-      <form action={action} className="flex flex-col gap-5 rounded-2xl border border-border p-6">
+      <ActionForm action={action} className="flex flex-col gap-5 rounded-2xl border border-border p-6">
         <SelectField label="Konu" name="topic" options={topics} />
         <Field label="E-posta adresin" type="email" name="email" defaultValue={defaultEmail} required />
         <TextareaField
@@ -55,7 +56,7 @@ export function SupportForm({ defaultEmail }: { defaultEmail: string }) {
         <Button type="submit" disabled={pending}>
           {pending ? "Gönderiliyor…" : "Talebi gönder"}
         </Button>
-      </form>
+      </ActionForm>
     </div>
   );
 }

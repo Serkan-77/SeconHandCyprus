@@ -10,6 +10,7 @@ import { uploadImage } from "@/lib/upload";
 import { initials } from "@/lib/format";
 import { publicImageUrl } from "@/lib/supabase/env";
 import { regionNames } from "@/lib/regions";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 export function ProfileForm({
   profile,
@@ -42,7 +43,7 @@ export function ProfileForm({
   }
 
   return (
-    <form action={action} className="flex max-w-[560px] flex-col gap-5">
+    <ActionForm action={action} className="flex max-w-[560px] flex-col gap-5">
       <input type="hidden" name="avatar" value={avatarPath} />
       {mode === "setup" ? <input type="hidden" name="next" value="/" /> : null}
       <div className="flex items-center gap-4">
@@ -112,6 +113,6 @@ export function ProfileForm({
           {pending ? "Kaydediliyor…" : mode === "setup" ? "Devam et" : "Kaydet"}
         </Button>
       </div>
-    </form>
+    </ActionForm>
   );
 }

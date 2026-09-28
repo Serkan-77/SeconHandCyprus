@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { updatePassword } from "@/lib/actions/auth";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 export function NewPasswordForm({ valid }: { valid: boolean }) {
   const [state, action, pending] = useActionState(updatePassword, undefined);
@@ -48,7 +49,7 @@ export function NewPasswordForm({ valid }: { valid: boolean }) {
   return (
     <AuthLayout title="Yeni şifre belirle." backHref="/giris" backLabel="Girişe dön">
       <p className="text-sm text-muted">Hesabın için yeni ve güvenli bir şifre oluştur.</p>
-      <form action={action} className="mt-6 flex flex-col gap-5">
+      <ActionForm action={action} className="mt-6 flex flex-col gap-5">
         <Field
           label="Yeni şifre"
           type="password"
@@ -63,7 +64,7 @@ export function NewPasswordForm({ valid }: { valid: boolean }) {
         <Button type="submit" disabled={pending}>
           {pending ? "Kaydediliyor…" : "Şifreyi güncelle"}
         </Button>
-      </form>
+      </ActionForm>
     </AuthLayout>
   );
 }

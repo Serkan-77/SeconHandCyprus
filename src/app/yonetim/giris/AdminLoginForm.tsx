@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/FormError";
 import { TextLink } from "@/components/ui/TextLink";
 import { signIn, signOut } from "@/lib/actions/auth";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 export function AdminLoginForm({ signedInAs, denied }: { signedInAs: string | null; denied: boolean }) {
   const [state, action, pending] = useActionState(signIn, undefined);
@@ -32,7 +33,7 @@ export function AdminLoginForm({ signedInAs, denied }: { signedInAs: string | nu
           </form>
         </div>
       ) : (
-        <form action={action} className="flex flex-col gap-5 rounded-2xl border border-border p-6">
+        <ActionForm action={action} className="flex flex-col gap-5 rounded-2xl border border-border p-6">
           <h1 className="text-xl font-semibold">Yönetici girişi</h1>
           <input type="hidden" name="returnTo" value="/yonetim" />
           <Field label="E-posta" type="email" name="email" autoComplete="email" defaultValue={state?.email} required />
@@ -48,7 +49,7 @@ export function AdminLoginForm({ signedInAs, denied }: { signedInAs: string | nu
           <p className="text-center text-[11px] text-muted">
             Yetki sunucu tarafında doğrulanır; yönetici rolü olmayan hesaplar paneli göremez.
           </p>
-        </form>
+        </ActionForm>
       )}
     </div>
   );

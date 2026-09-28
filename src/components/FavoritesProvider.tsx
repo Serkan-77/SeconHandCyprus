@@ -12,8 +12,24 @@ type FavoritesContextValue = {
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
-export function FavoritesProvider({ initialIds, children }: { initialIds: string[]; children: ReactNode }) {
+export function FavoritesProvider({
+  userKey,
+  initialIds,
+  children,
+}: {
+  userKey: string;
+  initialIds: string[];
+  children: ReactNode;
+}) {
   const [ids, setIds] = useState(() => new Set(initialIds));
+  // A different user (sign-in, sign-out) starts from their own favourites.
+  // Reset here instead of re-keying the provider: a key change would remount
+  // <main> and the whole page tree under it.
+  const [forUser, setForUser] = useState(userKey);
+  if (forUser !== userKey) {
+    setForUser(userKey);
+    setIds(new Set(initialIds));
+  }
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const pathname = usePathname();

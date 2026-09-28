@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/Field";
 import { FormError, FormSuccess } from "@/components/ui/FormError";
 import { Modal } from "@/components/ui/Modal";
 import { closeStore, updateStore } from "@/lib/actions/account";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 export type StoreValues = { storeName: string; address: string; phone: string; website: string; hours: string };
 
@@ -17,7 +18,7 @@ export function StoreForm({ userId, isStore, initial }: { userId: string; isStor
 
   return (
     <>
-      <form action={action} className="flex flex-col gap-4 rounded-2xl border border-border p-5 sm:p-7">
+      <ActionForm action={action} className="flex flex-col gap-4 rounded-2xl border border-border p-5 sm:p-7">
         <Field label="Mağaza adı" name="storeName" defaultValue={initial.storeName} required minLength={2} maxLength={60} placeholder="Örn. Girne Mobilya Evi" />
         <Field label="Adres (opsiyonel)" name="address" defaultValue={initial.address} maxLength={160} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -44,7 +45,7 @@ export function StoreForm({ userId, isStore, initial }: { userId: string; isStor
             </LinkButton>
           ) : null}
         </div>
-      </form>
+      </ActionForm>
 
       {isStore ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-5 text-xs">

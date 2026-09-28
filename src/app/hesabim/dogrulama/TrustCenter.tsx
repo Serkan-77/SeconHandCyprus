@@ -8,6 +8,7 @@ import { FormError } from "@/components/ui/FormError";
 import { Modal } from "@/components/ui/Modal";
 import { requestPhoneVerification } from "@/lib/actions/account";
 import { resendEmailVerification } from "@/lib/actions/auth";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 function Done({ label = "Doğrulandı" }: { label?: string }) {
   return (
@@ -143,7 +144,7 @@ export function TrustCenter({
             Talebin alındı. Ekibimiz numaranı elle inceleyecek; sonucu bildirim olarak göreceksin.
           </p>
         ) : (
-          <form action={phoneAction} className="flex flex-col gap-5">
+          <ActionForm action={phoneAction} className="flex flex-col gap-5">
             <Field
               label="Telefon numarası"
               type="tel"
@@ -156,7 +157,7 @@ export function TrustCenter({
             <Button type="submit" disabled={phonePending}>
               {phonePending ? "Gönderiliyor…" : "İnceleme talebi gönder"}
             </Button>
-          </form>
+          </ActionForm>
         )}
       </Modal>
     </div>

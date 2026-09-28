@@ -10,6 +10,7 @@ import { Icon } from "@/components/icons";
 import { signUp } from "@/lib/actions/auth";
 import { GoogleButton, OrDivider } from "@/components/GoogleButton";
 import { AUTH_METHODS } from "@/lib/site";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 export default function RegisterPage() {
   const [state, action, pending] = useActionState(signUp, undefined);
@@ -43,7 +44,7 @@ export default function RegisterPage() {
         </div>
       ) : null}
 
-      <form action={action} className="mt-5 flex flex-col gap-5">
+      <ActionForm action={action} className="mt-5 flex flex-col gap-5">
         <Field label="Ad Soyad" name="name" autoComplete="name" defaultValue={state?.values?.name} required minLength={2} />
         <Field label="E-posta adresi" type="email" name="email" autoComplete="email" defaultValue={state?.values?.email} required />
         <Field
@@ -93,7 +94,7 @@ export default function RegisterPage() {
         <p className="text-center text-sm text-muted">
           Zaten hesabın var mı? <TextLink href="/giris">Giriş yap</TextLink>
         </p>
-      </form>
+      </ActionForm>
     </AuthLayout>
   );
 }

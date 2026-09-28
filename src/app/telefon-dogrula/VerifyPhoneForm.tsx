@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { signInWithPhone, verifyPhoneOtp } from "@/lib/actions/auth";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 const CODE_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -84,7 +85,7 @@ export function VerifyPhoneForm({ phone }: { phone: string }) {
   return (
     <AuthLayout title="Telefonunu doğrula." backHref="/giris" backLabel="Girişe dön">
       <p className="text-sm text-muted">{maskPhone(phone)} numarasına gönderilen 6 haneli kodu gir.</p>
-      <form action={action} className="mt-6 flex flex-col gap-6">
+      <ActionForm action={action} className="mt-6 flex flex-col gap-6">
         <input type="hidden" name="phone" value={phone} />
         <input type="hidden" name="token" value={digits.join("")} />
         <div className="flex gap-2">
@@ -119,7 +120,7 @@ export function VerifyPhoneForm({ phone }: { phone: string }) {
             </button>
           )}
         </p>
-      </form>
+      </ActionForm>
     </AuthLayout>
   );
 }

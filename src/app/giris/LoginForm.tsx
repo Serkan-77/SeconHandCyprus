@@ -10,6 +10,7 @@ import { FormError } from "@/components/ui/FormError";
 import { signIn, signInWithPhone } from "@/lib/actions/auth";
 import { GoogleButton, OrDivider } from "@/components/GoogleButton";
 import { AUTH_METHODS } from "@/lib/site";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 export function LoginForm({
   returnTo,
@@ -64,7 +65,7 @@ export function LoginForm({
       ) : null}
 
       {mode === "email" ? (
-        <form action={emailAction} className="mt-5 flex flex-col gap-5">
+        <ActionForm action={emailAction} className="mt-5 flex flex-col gap-5">
           <input type="hidden" name="returnTo" value={returnTo} />
           <Field
             label="E-posta adresi"
@@ -82,9 +83,9 @@ export function LoginForm({
           <Button type="submit" disabled={emailPending}>
             {emailPending ? "Giriş yapılıyor…" : "Giriş yap"}
           </Button>
-        </form>
+        </ActionForm>
       ) : (
-        <form action={phoneAction} className="mt-5 flex flex-col gap-5">
+        <ActionForm action={phoneAction} className="mt-5 flex flex-col gap-5">
           <Field
             label="Telefon numarası"
             type="tel"
@@ -98,7 +99,7 @@ export function LoginForm({
           <Button type="submit" disabled={phonePending}>
             {phonePending ? "Kod gönderiliyor…" : "Giriş kodu gönder"}
           </Button>
-        </form>
+        </ActionForm>
       )}
 
       <div className="mt-5 flex items-center gap-2.5 rounded-xl bg-brand-soft p-3.5 text-xs leading-relaxed">

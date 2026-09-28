@@ -95,7 +95,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           region={region}
           unread={unread}
         />
-        <FavoritesProvider key={viewer?.user.id ?? "guest"} initialIds={favoriteIds}>
+        <FavoritesProvider userKey={viewer?.user.id ?? "guest"} initialIds={favoriteIds}>
           <main id="main-content" tabIndex={-1} className="flex-1">
             {children}
           </main>

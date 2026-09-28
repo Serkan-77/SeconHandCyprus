@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/Switch";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { deleteAccount, updateContact, updateSettings } from "@/lib/actions/account";
 import { updatePassword } from "@/lib/actions/auth";
+import { ActionForm } from "@/components/ui/ActionForm";
 
 const defaults: Record<string, boolean | string> = {
   notify_messages: true,
@@ -89,7 +90,7 @@ export function SettingsView({
 
       <section>
         <h2 className="mb-2 text-base font-semibold">İletişim</h2>
-        <form action={contactAction} className="flex flex-col gap-4 rounded-xl border border-border p-5">
+        <ActionForm action={contactAction} className="flex flex-col gap-4 rounded-xl border border-border p-5">
           <Field
             label="Telefon numarası"
             type="tel"
@@ -122,7 +123,7 @@ export function SettingsView({
           <Button type="submit" full={false} disabled={contactPending} className="sm:min-w-[180px]">
             Kaydet
           </Button>
-        </form>
+        </ActionForm>
       </section>
 
       <section>
@@ -154,7 +155,7 @@ export function SettingsView({
 
       <section>
         <h2 className="mb-2 text-base font-semibold">Güvenlik</h2>
-        <form action={passwordAction} className="flex flex-col gap-4 rounded-xl border border-border p-5">
+        <ActionForm action={passwordAction} className="flex flex-col gap-4 rounded-xl border border-border p-5">
           <Field label="Yeni şifre" type="password" name="password" autoComplete="new-password" minLength={8} required />
           <Field label="Yeni şifre (tekrar)" type="password" name="password2" autoComplete="new-password" required />
           {passwordState?.error ? <FormError>{passwordState.error}</FormError> : null}
@@ -162,7 +163,7 @@ export function SettingsView({
           <Button type="submit" full={false} disabled={passwordPending} className="sm:min-w-[180px]">
             Şifreyi güncelle
           </Button>
-        </form>
+        </ActionForm>
       </section>
 
       <section>
