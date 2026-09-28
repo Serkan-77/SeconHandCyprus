@@ -52,6 +52,9 @@ test("AdSense hosts appear only when ads are enabled", () => {
   assert.ok(!off.includes("googlesyndication"));
   assert.ok(on["script-src"].includes("https://pagead2.googlesyndication.com"));
   assert.ok(on["frame-src"].includes("https://googleads.g.doubleclick.net"));
+  assert.ok(on["frame-src"].includes("https://fundingchoicesmessages.google.com"));
+  assert.ok(on["connect-src"].includes("https://fundingchoicesmessages.google.com"));
+  assert.ok(!off.includes("fundingchoices"));
 });
 
 test("nonces are random, base64 and 128-bit", () => {

@@ -12,7 +12,8 @@
 // - Supabase: REST/Auth/Storage over https and Realtime over wss.
 // - Google OAuth: a no-JS form post is redirected to Supabase and then to
 //   accounts.google.com, and Chrome applies form-action to that chain.
-// - AdSense hosts are only added when ads are enabled (not yet).
+// - AdSense hosts are only added when ads are enabled. That includes Google's
+//   consent message (fundingchoicesmessages), which AdSense injects for EEA/UK visitors.
 
 export type CspOptions = {
   nonce: string;
@@ -23,9 +24,25 @@ export type CspOptions = {
 };
 
 const ADSENSE = {
-  script: ["https://pagead2.googlesyndication.com", "https://*.googlesyndication.com", "https://*.adtrafficquality.google"],
-  frame: ["https://googleads.g.doubleclick.net", "https://tpc.googlesyndication.com", "https://*.googlesyndication.com", "https://www.google.com"],
-  connect: ["https://*.googlesyndication.com", "https://*.doubleclick.net", "https://*.adtrafficquality.google"],
+  script: [
+    "https://pagead2.googlesyndication.com",
+    "https://*.googlesyndication.com",
+    "https://*.adtrafficquality.google",
+    "https://fundingchoicesmessages.google.com",
+  ],
+  frame: [
+    "https://googleads.g.doubleclick.net",
+    "https://tpc.googlesyndication.com",
+    "https://*.googlesyndication.com",
+    "https://www.google.com",
+    "https://fundingchoicesmessages.google.com",
+  ],
+  connect: [
+    "https://*.googlesyndication.com",
+    "https://*.doubleclick.net",
+    "https://*.adtrafficquality.google",
+    "https://fundingchoicesmessages.google.com",
+  ],
   img: ["https://*.googlesyndication.com", "https://*.doubleclick.net", "https://*.google.com", "https://*.gstatic.com"],
 };
 
