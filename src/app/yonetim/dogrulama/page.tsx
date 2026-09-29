@@ -1,9 +1,9 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Icon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/queries";
-import { formatDate } from "@/lib/format";
 import { VerificationActions } from "./VerificationActions";
 
 export const metadata = { title: "Yönetim · Telefon incelemesi", robots: { index: false } };
@@ -27,20 +27,20 @@ async function Verifications() {
   return (
     <>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Manuel telefon incelemesi</h1>
-        <p className="mt-1.5 text-xs text-muted">
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Manuel telefon incelemesi</I18n.h1>
+        <I18n.p className="mt-1.5 text-xs text-muted">
           {requests?.length ?? 0} kullanıcının inceleme talebi bekliyor. Onay SMS doğrulaması değildir ve profillerde
           rozet olarak gösterilmez.
-        </p>
+        </I18n.p>
       </div>
 
       {!requests || requests.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted">
+        <I18n.div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted">
           <Icon name="check" className="h-8 w-8 text-accent" />
           Bekleyen inceleme talebi yok.
-        </div>
+        </I18n.div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <I18n.div className="overflow-hidden rounded-xl border border-border bg-surface">
           {requests.map((v) => {
             const user = one(v.user) as { id: string; display_name: string } | null;
             return (
@@ -48,24 +48,24 @@ async function Verifications() {
                 <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
                   <Icon name={v.kind === "phone" ? "phone" : "mail"} className="h-[18px] w-[18px]" />
                 </span>
-                <div className="min-w-0 flex-1">
+                <I18n.div className="min-w-0 flex-1">
                   {user ? (
-                    <Link href={`/yonetim/kullanicilar/${user.id}`} className="text-sm font-semibold hover:text-accent">
-                      {user.display_name}
-                    </Link>
+                    <I18n.Link href={`/yonetim/kullanicilar/${user.id}`} className="text-sm font-semibold hover:text-accent">
+                      <I18n.Raw>{user.display_name}</I18n.Raw>
+                    </I18n.Link>
                   ) : (
-                    <b className="text-sm">Silinmiş kullanıcı</b>
+                    <I18n.b className="text-sm">Silinmiş kullanıcı</I18n.b>
                   )}
-                  <p className="mt-0.5 text-xs text-muted">
+                  <I18n.p className="mt-0.5 text-xs text-muted">
                     {v.kind === "phone" ? "Telefon incelemesi" : "E-posta incelemesi"} · {v.detail}
-                  </p>
-                  <span className="text-[10px] text-muted">{formatDate(v.created_at)}</span>
-                </div>
+                  </I18n.p>
+                  <I18n.span className="text-[10px] text-muted"><I18n.Formatted kind="formatDate" args={[v.created_at]} /></I18n.span>
+                </I18n.div>
                 <VerificationActions id={v.id} />
               </div>
             );
           })}
-        </div>
+        </I18n.div>
       )}
     </>
   );

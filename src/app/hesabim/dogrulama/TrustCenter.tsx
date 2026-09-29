@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState, useState, useTransition } from "react";
 import { Icon, type IconName } from "@/components/icons";
@@ -12,10 +14,10 @@ import { ActionForm } from "@/components/ui/ActionForm";
 
 function Done({ label = "Doğrulandı" }: { label?: string }) {
   return (
-    <span className="flex items-center gap-1.5 text-xs font-medium text-accent">
+    <I18n.span className="flex items-center gap-1.5 text-xs font-medium text-accent">
       <Icon name="check" className="h-4 w-4" />
       {label}
-    </span>
+    </I18n.span>
   );
 }
 
@@ -79,49 +81,49 @@ export function TrustCenter({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Doğrulama merkezi</h1>
-        <p className="mt-2 text-[13px] text-muted">
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Doğrulama merkezi</I18n.h1>
+        <I18n.p className="mt-2 text-[13px] text-muted">
           Bu adımlar profilinde rozet olarak gösterilmez. Telefon numaran SMS ile doğrulanmaz; ekibimiz tarafından
           elle incelenir. Numaranı değiştirirsen inceleme sıfırlanır.
-        </p>
+        </I18n.p>
       </div>
 
       <div className="rounded-xl bg-bg p-4">
         <div className="mb-2 flex justify-between text-xs">
-          <b>Profil güveni</b>
-          <span className="text-muted">{done}/3 adım</span>
+          <I18n.b>Profil güveni</I18n.b>
+          <I18n.span className="text-muted">{done}/3 adım</I18n.span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-border">
           <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(done / 3) * 100}%` }} />
         </div>
       </div>
 
-      <div className="flex flex-col gap-0 overflow-hidden rounded-xl border border-border">
+      <I18n.div className="flex flex-col gap-0 overflow-hidden rounded-xl border border-border">
         {rows.map((item) => (
-          <div key={item.title} className="flex flex-wrap items-center gap-3.5 border-b border-border p-5 last:border-0">
+          <I18n.div key={item.title} className="flex flex-wrap items-center gap-3.5 border-b border-border p-5 last:border-0">
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
               <Icon name={item.icon} className="h-5 w-5" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">{item.title}</span>
-              <span className="block truncate text-xs text-muted">{item.sub}</span>
+              <I18n.span className="block text-sm font-medium">{item.title}</I18n.span>
+              <I18n.span className="block truncate text-xs text-muted">{item.sub}</I18n.span>
             </span>
             {item.action}
-          </div>
+          </I18n.div>
         ))}
-      </div>
+      </I18n.div>
 
       <Modal title="E-postanı doğrula" open={modal === "email"} onClose={() => setModal(null)}>
         {emailResult.ok ? (
-          <p className="text-sm text-muted">
-            <b className="text-text">{email}</b> adresine yeni bir doğrulama bağlantısı gönderdik. Bağlantıya tıkladıktan
+          <I18n.p className="text-sm text-muted">
+            <I18n.b className="text-text">{email}</I18n.b> adresine yeni bir doğrulama bağlantısı gönderdik. Bağlantıya tıkladıktan
             sonra bu sayfayı yenile.
-          </p>
+          </I18n.p>
         ) : (
-          <div className="flex flex-col gap-5">
-            <p className="text-sm text-muted">
-              <b className="text-text">{email}</b> adresine bir doğrulama bağlantısı göndereceğiz.
-            </p>
+          <I18n.div className="flex flex-col gap-5">
+            <I18n.p className="text-sm text-muted">
+              <I18n.b className="text-text">{email}</I18n.b> adresine bir doğrulama bağlantısı göndereceğiz.
+            </I18n.p>
             {emailResult.error ? <FormError>{emailResult.error}</FormError> : null}
             <Button
               disabled={emailPending}
@@ -134,15 +136,15 @@ export function TrustCenter({
             >
               {emailPending ? "Gönderiliyor…" : "Doğrulama bağlantısı gönder"}
             </Button>
-          </div>
+          </I18n.div>
         )}
       </Modal>
 
       <Modal title="Telefon incelemesi" open={modal === "phone"} onClose={() => setModal(null)}>
         {phoneState?.ok ? (
-          <p className="text-sm text-muted">
+          <I18n.p className="text-sm text-muted">
             Talebin alındı. Ekibimiz numaranı elle inceleyecek; sonucu bildirim olarak göreceksin.
-          </p>
+          </I18n.p>
         ) : (
           <ActionForm action={phoneAction} className="flex flex-col gap-5">
             <Field

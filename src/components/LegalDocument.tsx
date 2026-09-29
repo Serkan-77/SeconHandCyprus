@@ -1,5 +1,6 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SITE } from "@/lib/site";
 
@@ -29,40 +30,40 @@ export function LegalDocument({
       <Breadcrumbs items={[title]} />
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside className="hidden lg:block">
-          <nav aria-label="İçindekiler" className="sticky top-6 flex flex-col gap-1 text-xs">
-            <span className="mb-2 text-[10px] font-semibold uppercase tracking-[1.4px] text-muted">İçindekiler</span>
+          <I18n.nav aria-label="İçindekiler" className="sticky top-6 flex flex-col gap-1 text-xs">
+            <I18n.span className="mb-2 text-[10px] font-semibold uppercase tracking-[1.4px] text-muted">İçindekiler</I18n.span>
             {sections.map((s, i) => (
-              <a key={s.id} href={`#${s.id}`} className="rounded-md px-2 py-1.5 text-muted hover:bg-bg hover:text-text">
+              <I18n.a key={s.id} href={`#${s.id}`} className="rounded-md px-2 py-1.5 text-muted hover:bg-bg hover:text-text">
                 {i + 1}. {s.title}
-              </a>
+              </I18n.a>
             ))}
-            <span className="mb-2 mt-6 text-[10px] font-semibold uppercase tracking-[1.4px] text-muted">Diğer metinler</span>
+            <I18n.span className="mb-2 mt-6 text-[10px] font-semibold uppercase tracking-[1.4px] text-muted">Diğer metinler</I18n.span>
             {related
               .filter((r) => r.href !== current)
               .map((r) => (
-                <Link key={r.href} href={r.href} className="rounded-md px-2 py-1.5 text-accent hover:bg-bg">
+                <I18n.Link key={r.href} href={r.href} className="rounded-md px-2 py-1.5 text-accent hover:bg-bg">
                   {r.label}
-                </Link>
+                </I18n.Link>
               ))}
-          </nav>
+          </I18n.nav>
         </aside>
 
         <article className="min-w-0 max-w-[720px]">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-[32px]">{title}</h1>
-          <p className="mt-2 text-xs text-muted">Son güncelleme: {SITE.legalUpdated}</p>
-          <div className="mt-6 text-[14px] leading-relaxed text-muted [&_b]:text-text">{intro}</div>
-          <div className="mt-10 flex flex-col gap-9">
+          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[32px]">{title}</I18n.h1>
+          <I18n.p className="mt-2 text-xs text-muted">Son güncelleme: {SITE.legalUpdated}</I18n.p>
+          <I18n.div className="mt-6 text-[14px] leading-relaxed text-muted [&_b]:text-text">{intro}</I18n.div>
+          <I18n.div className="mt-10 flex flex-col gap-9">
             {sections.map((s, i) => (
               <section key={s.id} id={s.id} className="scroll-mt-6">
-                <h2 className="mb-3 text-lg font-semibold text-text">
+                <I18n.h2 className="mb-3 text-lg font-semibold text-text">
                   {i + 1}. {s.title}
-                </h2>
-                <div className="flex flex-col gap-3 text-[14px] leading-relaxed text-muted [&_b]:text-text [&_li]:ml-5 [&_li]:list-disc [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1.5 [&_a]:text-accent [&_a]:underline">
+                </I18n.h2>
+                <I18n.div className="flex flex-col gap-3 text-[14px] leading-relaxed text-muted [&_b]:text-text [&_li]:ml-5 [&_li]:list-disc [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1.5 [&_a]:text-accent [&_a]:underline">
                   {s.body}
-                </div>
+                </I18n.div>
               </section>
             ))}
-          </div>
+          </I18n.div>
         </article>
       </div>
     </div>
@@ -71,14 +72,14 @@ export function LegalDocument({
 
 export function ContactLine() {
   return SITE.contactEmail ? (
-    <>
-      <b>{SITE.contactEmail}</b> adresine e-posta gönderebilir ya da <Link href="/destek">destek formunu</Link>{" "}
+    <I18n.Text>
+      <I18n.b>{SITE.contactEmail}</I18n.b> adresine e-posta gönderebilir ya da <I18n.Link href="/destek">destek formunu</I18n.Link>{" "}
       kullanabilirsin.
-    </>
+    </I18n.Text>
   ) : (
-    <>
-      <Link href="/destek">Destek formu</Link> üzerinden bize ulaşabilirsin; talebine kayıtlı e-posta adresinden
+    <I18n.Text>
+      <I18n.Link href="/destek">Destek formu</I18n.Link> üzerinden bize ulaşabilirsin; talebine kayıtlı e-posta adresinden
       dönüş yapılır.
-    </>
+    </I18n.Text>
   );
 }

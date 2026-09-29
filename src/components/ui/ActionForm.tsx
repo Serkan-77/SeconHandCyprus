@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { startTransition, type FormEvent, type FormHTMLAttributes } from "react";
 
@@ -16,5 +18,5 @@ export function ActionForm({
     const formData = new FormData(event.currentTarget, submitter);
     startTransition(() => action(formData));
   }
-  return <form {...rest} onSubmit={onSubmit} />;
+  return <I18n.form {...rest} onSubmit={onSubmit} />;
 }

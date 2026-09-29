@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { LinkButton } from "@/components/ui/Button";
@@ -32,15 +34,15 @@ async function Editor({ id }: { id: string }) {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">İlan düzenleme</h1>
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">İlan düzenleme</I18n.h1>
         <LinkButton href={`/yonetim/ilanlar/${id}`} variant="outline" full={false} className="min-h-10 text-xs">
           İncelemeye dön
         </LinkButton>
       </div>
-      <p className="text-xs text-muted">
+      <I18n.p className="text-xs text-muted">
         Yönetici olarak ilanın her alanını, durumunu ve fotoğraflarını değiştirebilir ya da ilanı silebilirsin. Yönetici
         düzenlemesi ilanı yeniden incelemeye düşürmez.
-      </p>
+      </I18n.p>
       <AdminEditForm
         listing={{
           id: listing.id,

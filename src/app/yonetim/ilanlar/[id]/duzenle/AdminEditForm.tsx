@@ -1,6 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Image from "next/image";
+
 import { useState, useTransition } from "react";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Checkbox, Field, SelectField, TextareaField } from "@/components/ui/Field";
@@ -59,14 +60,14 @@ export function AdminEditForm({
 
   return (
     <div className="flex max-w-[720px] flex-col gap-6">
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-3 text-sm font-semibold">Fotoğraflar ({images.length})</h2>
+      <I18n.section className="rounded-xl border border-border bg-surface p-5">
+        <I18n.h2 className="mb-3 text-sm font-semibold">Fotoğraflar ({images.length})</I18n.h2>
         {images.length ? (
-          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
+          <I18n.div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
             {images.map((img, i) => (
               <div key={img.id} className="relative aspect-square overflow-hidden rounded-xl bg-bg">
-                <Image src={img.url} alt={`Fotoğraf ${i + 1}`} fill sizes="140px" className="object-cover" />
-                <button
+                <I18n.Image src={img.url} alt={`Fotoğraf ${i + 1}`} fill sizes="140px" className="object-cover" />
+                <I18n.button
                   type="button"
                   aria-label={`${i + 1}. fotoğrafı kaldır`}
                   disabled={pending}
@@ -78,17 +79,17 @@ export function AdminEditForm({
                   className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-white/90 text-[#111318]"
                 >
                   <Icon name="close" className="h-4 w-4" />
-                </button>
+                </I18n.button>
               </div>
             ))}
-          </div>
+          </I18n.div>
         ) : (
-          <p className="text-xs text-muted">Bu ilanda fotoğraf yok.</p>
+          <I18n.p className="text-xs text-muted">Bu ilanda fotoğraf yok.</I18n.p>
         )}
-        <p className="mt-3 text-[11px] text-muted">Uygunsuz bir fotoğrafı kaldırabilirsin; kaldırılan dosya depodan da silinir.</p>
-      </section>
+        <I18n.p className="mt-3 text-[11px] text-muted">Uygunsuz bir fotoğrafı kaldırabilirsin; kaldırılan dosya depodan da silinir.</I18n.p>
+      </I18n.section>
 
-      <form
+      <I18n.form
         onSubmit={(e) => {
           e.preventDefault();
           const form = new FormData(e.currentTarget);
@@ -112,28 +113,28 @@ export function AdminEditForm({
         }}
         className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5"
       >
-        <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+        <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
           İlan durumu
-          <select name="status" defaultValue={listing.status} className={selectClass}>
+          <I18n.select name="status" defaultValue={listing.status} className={selectClass}>
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
+              <I18n.option key={o.value} value={o.value}>
                 {o.label}
-              </option>
+              </I18n.option>
             ))}
-          </select>
-        </label>
+          </I18n.select>
+        </I18n.label>
         <Field label="Başlık" name="title" defaultValue={listing.title} required minLength={3} maxLength={120} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+          <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
             Kategori
-            <select name="category" defaultValue={listing.categoryId} className={selectClass}>
+            <I18n.select name="category" defaultValue={listing.categoryId} className={selectClass}>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>
+                <I18n.option key={c.id} value={c.id}>
                   {c.name}
-                </option>
+                </I18n.option>
               ))}
-            </select>
-          </label>
+            </I18n.select>
+          </I18n.label>
           <SelectField label="Ürün durumu" name="condition" options={CONDITIONS} defaultValue={listing.condition} />
         </div>
         <div className="grid grid-cols-[1fr_110px] gap-4">
@@ -157,23 +158,23 @@ export function AdminEditForm({
             İncelemeye dön
           </LinkButton>
         </div>
-      </form>
+      </I18n.form>
 
       <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="text-sm font-semibold">İlanı sil</h2>
-        <p className="mt-1.5 text-xs text-muted">
+        <I18n.h2 className="text-sm font-semibold">İlanı sil</I18n.h2>
+        <I18n.p className="mt-1.5 text-xs text-muted">
           İlan ve fotoğrafları kalıcı olarak silinir. Bu ilan hakkındaki konuşmalar taraflarda kalır. Sadece gizlemek
           istiyorsan durumu &quot;Yayından kaldırıldı&quot; yap.
-        </p>
+        </I18n.p>
         <Button variant="danger" full={false} className="mt-4" onClick={() => setConfirmDelete(true)}>
           İlanı kalıcı olarak sil
         </Button>
       </section>
 
       <Modal title="İlanı sil" open={confirmDelete} onClose={() => setConfirmDelete(false)}>
-        <p className="text-sm text-muted">
-          <b className="text-text">{listing.title}</b> kalıcı olarak silinecek. Bu işlem geri alınamaz.
-        </p>
+        <I18n.p className="text-sm text-muted">
+          <I18n.b className="text-text"><I18n.Raw>{listing.title}</I18n.Raw></I18n.b> kalıcı olarak silinecek. Bu işlem geri alınamaz.
+        </I18n.p>
         {result.error ? <FormError>{result.error}</FormError> : null}
         <div className="flex gap-3">
           <Button variant="outline" full={false} onClick={() => setConfirmDelete(false)}>

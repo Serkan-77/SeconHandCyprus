@@ -1,7 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Image from "next/image";
-import Link from "next/link";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { WizardLayout } from "@/components/WizardLayout";
@@ -10,7 +10,6 @@ import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { useWizardDraft } from "@/lib/wizardStore";
 import { publicImageUrl } from "@/lib/supabase/env";
-import { formatPrice } from "@/lib/format";
 import { detailRows } from "@/lib/listingDetails";
 import { createListing } from "@/lib/actions/listings";
 
@@ -61,70 +60,70 @@ export default function AddPreviewPage() {
   return (
     <WizardLayout active={3}>
       <div>
-        <h2 className="text-xl font-semibold">Son bir kontrol</h2>
-        <p className="mt-2 text-[13px] text-muted">
+        <I18n.h2 className="text-xl font-semibold">Son bir kontrol</I18n.h2>
+        <I18n.p className="mt-2 text-[13px] text-muted">
           İlanını yayına göndermeden önce her şeyin doğru olduğundan emin ol.
-        </p>
+        </I18n.p>
       </div>
 
       <article className="overflow-hidden rounded-2xl border border-border">
-        <div className="relative aspect-[1.8] w-full bg-bg">
+        <I18n.div className="relative aspect-[1.8] w-full bg-bg">
           {draft.photos[0] ? (
-            <Image src={publicImageUrl(draft.photos[0])} alt="" fill sizes="600px" className="object-cover" />
+            <I18n.Image src={publicImageUrl(draft.photos[0])} alt="" fill sizes="600px" className="object-cover" />
           ) : (
             <div className="grid h-full place-items-center text-muted">
               <Icon name="image" className="h-8 w-8" />
             </div>
           )}
           {draft.photos.length > 1 ? (
-            <span className="absolute bottom-3 right-3 rounded-lg bg-white/93 px-2.5 py-1.5 text-[11px] text-[#111318]">
+            <I18n.span className="absolute bottom-3 right-3 rounded-lg bg-white/93 px-2.5 py-1.5 text-[11px] text-[#111318]">
               {draft.photos.length} fotoğraf
-            </span>
+            </I18n.span>
           ) : null}
-        </div>
-        <div className="p-5">
-          <span className="text-[11px] text-muted">
+        </I18n.div>
+        <I18n.div className="p-5">
+          <I18n.span className="text-[11px] text-muted">
             {draft.categoryName || "Kategori seçilmedi"} · {draft.condition}
-          </span>
-          <h3 className="mt-1.5 text-lg font-semibold">{draft.title || "İlan başlığı"}</h3>
-          <strong className="mt-1 block text-2xl tracking-tight">
-            {draft.price ? formatPrice(draft.price, draft.currency) : "Fiyat girilmedi"}
-          </strong>
-          <p className="mt-3 whitespace-pre-line text-[13px] text-muted">{draft.description || "Açıklama eklenmedi."}</p>
+          </I18n.span>
+          <I18n.h3 className="mt-1.5 text-lg font-semibold">{draft.title ? <I18n.Raw>{draft.title}</I18n.Raw> : "İlan başlığı"}</I18n.h3>
+          <I18n.strong className="mt-1 block text-2xl tracking-tight">
+            {draft.price ? <I18n.Formatted kind="formatPrice" args={[draft.price, draft.currency]} /> : "Fiyat girilmedi"}
+          </I18n.strong>
+          <I18n.p className="mt-3 whitespace-pre-line text-[13px] text-muted">{draft.description ? <I18n.Raw>{draft.description}</I18n.Raw> : "Açıklama eklenmedi."}</I18n.p>
           {detailRows(draft.details).length ? (
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
+            <I18n.dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
               {detailRows(draft.details).map(([term, desc]) => (
                 <div key={term}>
-                  <dt className="text-[10px] text-muted">{term}</dt>
-                  <dd>{desc}</dd>
+                  <I18n.dt className="text-[10px] text-muted">{term}</I18n.dt>
+                  <I18n.dd>{desc}</I18n.dd>
                 </div>
               ))}
-            </dl>
+            </I18n.dl>
           ) : null}
-          <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-muted">
-            <span>{[draft.city, draft.district].filter(Boolean).join(", ")}</span>
-            {draft.negotiable ? <span>· Pazarlığa açık</span> : null}
-          </div>
-        </div>
+          <I18n.div className="mt-4 flex flex-wrap gap-2 text-[11px] text-muted">
+            <I18n.span>{[draft.city, draft.district].filter(Boolean).join(", ")}</I18n.span>
+            {draft.negotiable ? <I18n.span>· Pazarlığa açık</I18n.span> : null}
+          </I18n.div>
+        </I18n.div>
       </article>
 
       {missing.length ? (
         <FormError>
           Göndermeden önce tamamla:{" "}
           {missing.map((m, i) => (
-            <span key={m.label}>
+            <I18n.span key={m.label}>
               {i > 0 ? ", " : ""}
-              <Link href={m.href} className="font-semibold text-accent underline">
+              <I18n.Link href={m.href} className="font-semibold text-accent underline">
                 {m.label}
-              </Link>
-            </span>
+              </I18n.Link>
+            </I18n.span>
           ))}
         </FormError>
       ) : (
-        <div className="flex items-start gap-2.5 rounded-xl bg-brand-soft p-4 text-xs leading-relaxed">
+        <I18n.div className="flex items-start gap-2.5 rounded-xl bg-brand-soft p-4 text-xs leading-relaxed">
           <Icon name="info" className="h-[18px] w-[18px] flex-shrink-0 text-accent" />
           İlanın yayınlanmadan önce kısa bir incelemeden geçer, genellikle birkaç saat içinde sonuçlanır.
-        </div>
+        </I18n.div>
       )}
 
       {error ? <FormError>{error}</FormError> : null}

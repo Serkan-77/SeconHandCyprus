@@ -1,4 +1,5 @@
-import Image from "next/image";
+
+import * as I18n from "@/components/i18n/Localized";
 import { SITE } from "@/lib/site";
 import { cn } from "@/lib/cn";
 
@@ -17,7 +18,7 @@ export function Logo({
   tone?: "auto" | "dark";
 }) {
   const img = (src: string, extra?: string) => (
-    <Image
+    <I18n.Image
       src={src}
       alt={SITE.name}
       width={538}

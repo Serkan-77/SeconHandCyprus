@@ -1,7 +1,8 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
-import Image from "next/image";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Avatar } from "@/components/ui/Avatar";
@@ -11,7 +12,7 @@ import { SelectField, TextareaField } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/FormError";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
-import { chatTime, clockTime, initials } from "@/lib/format";
+import { initials } from "@/lib/format";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { MEETING_TEXT, meetingActions, meetingStage, type MeetingState } from "@/lib/meeting";
 import { fetchLatestMessages, mergeMessages } from "@/lib/chat";
@@ -51,14 +52,15 @@ const quickReplies = {
 
 const reportReasons = ["Dolandırıcılık şüphesi", "Taciz ya da hakaret", "Fiyat dışı ödeme talebi", "Spam", "Diğer"];
 
-function dayLabel(value: string) {
+function dayLabel(value: string, locale: 'tr' | 'en') {
   const d = new Date(value);
   const today = new Date();
   const start = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diff = Math.round((start(today) - start(d)) / 86400000);
   if (diff === 0) return "BUGÜN";
   if (diff === 1) return "DÜN";
-  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" }).toLocaleUpperCase("tr-TR");
+  const language = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  return d.toLocaleDateString(language, { day: "numeric", month: "long", year: "numeric" }).toLocaleUpperCase(language);
 }
 
 export function ChatView({
@@ -79,6 +81,7 @@ export function ChatView({
 }) {
   const active = conversations.find((c) => c.id === activeId) ?? null;
   const router = useRouter();
+  const { t, locale } = useLocale();
   const [messages, setMessages] = useState(initialMessages);
   const [hasOlder, setHasOlder] = useState(initialHasOlder);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -262,24 +265,24 @@ export function ChatView({
   const unreadTotal = conversations.reduce((sum, c) => sum + (c.id === active?.id ? 0 : c.unread), 0);
 
   return (
-    <div className="mx-auto max-w-[1328px] px-4 pb-10 sm:px-6">
-      <nav aria-label="İçerik yolu" className="hidden py-4 text-[11px] text-muted sm:block">
-        <Link href="/">Ana sayfa</Link> <span>/</span> <span className="text-text">Mesajlar</span>
-      </nav>
+    <I18n.div className="mx-auto max-w-[1328px] px-4 pb-10 sm:px-6">
+      <I18n.nav aria-label="İçerik yolu" className="hidden py-4 text-[11px] text-muted sm:block">
+        <I18n.Link href="/">Ana sayfa</I18n.Link> <I18n.span>/</I18n.span> <I18n.span className="text-text">Mesajlar</I18n.span>
+      </I18n.nav>
 
-      <div className="mt-4 grid h-[calc(100dvh-220px)] min-h-[560px] grid-cols-1 overflow-hidden rounded-2xl border border-border sm:mt-0 sm:h-[700px] lg:grid-cols-[320px_minmax(0,1fr)]">
+      <I18n.div className="mt-4 grid h-[calc(100dvh-220px)] min-h-[560px] grid-cols-1 overflow-hidden rounded-2xl border border-border sm:mt-0 sm:h-[700px] lg:grid-cols-[320px_minmax(0,1fr)]">
         <aside className={cn("min-h-0 flex-col border-border bg-surface lg:flex lg:border-r", active ? "hidden" : "flex")}>
-          <div className="flex items-center gap-2 px-5 pb-4 pt-6">
-            <h1 className="text-xl font-semibold tracking-tight">Mesajlar</h1>
+          <I18n.div className="flex items-center gap-2 px-5 pb-4 pt-6">
+            <I18n.h1 className="text-xl font-semibold tracking-tight">Mesajlar</I18n.h1>
             {unreadTotal ? (
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent-soft px-1 text-[10px] text-accent">
+              <I18n.span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent-soft px-1 text-[10px] text-accent">
                 {unreadTotal}
-              </span>
+              </I18n.span>
             ) : null}
-          </div>
+          </I18n.div>
           <label className="mx-5 mb-4 flex min-h-[42px] items-center gap-2 rounded-field border border-border px-3.5 text-muted">
             <Icon name="search" className="h-4 w-4" />
-            <input
+            <I18n.input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Konuşma ara"
@@ -287,9 +290,9 @@ export function ChatView({
               className="w-full bg-transparent text-xs text-text outline-none"
             />
           </label>
-          <div className="min-h-0 flex-1 overflow-auto">
+          <I18n.div className="min-h-0 flex-1 overflow-auto">
             {visibleConversations.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 px-6 py-12 text-center text-xs text-muted">
+              <I18n.div className="flex flex-col items-center gap-3 px-6 py-12 text-center text-xs text-muted">
                 <Icon name="chat" className="h-8 w-8" />
                 {conversations.length === 0
                   ? "Henüz bir konuşman yok. Beğendiğin bir ilanda “Satıcıya mesaj gönder”e dokun."
@@ -299,10 +302,10 @@ export function ChatView({
                     İlanları keşfet
                   </LinkButton>
                 ) : null}
-              </div>
+              </I18n.div>
             ) : (
               visibleConversations.map((c) => (
-                <Link
+                <I18n.Link
                   key={c.id}
                   href={`/mesajlar?c=${c.id}`}
                   aria-current={active?.id === c.id ? "page" : undefined}
@@ -311,67 +314,67 @@ export function ChatView({
                     active?.id === c.id && "border-l-[3px] border-l-accent bg-bg pl-[17px]",
                   )}
                 >
-                  <span className="relative">
+                  <I18n.span className="relative">
                     <Avatar initials={initials(c.other.name)} src={c.other.avatarUrl} />
                     {c.unread && c.id !== active?.id ? (
                       <i className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-surface bg-accent" />
                     ) : null}
-                  </span>
+                  </I18n.span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between gap-2">
-                      <b className="truncate text-[13px]">{c.other.name}</b>
-                      <small className="flex-shrink-0 text-[9px] text-muted">{chatTime(c.lastAt)}</small>
+                      <I18n.b className="truncate text-[13px]"><I18n.Raw>{c.other.name}</I18n.Raw></I18n.b>
+                      <I18n.small className="flex-shrink-0 text-[9px] text-muted"><I18n.Formatted kind="chatTime" args={[c.lastAt]} /></I18n.small>
                     </span>
-                    <strong className="mt-1 block truncate text-[10px] font-medium">{c.listing.title}</strong>
-                    <p className={cn("mt-0.5 truncate text-[11px]", c.unread && c.id !== active?.id ? "text-text" : "text-muted")}>
-                      {c.lastMessage}
-                    </p>
+                    <I18n.strong className="mt-1 block truncate text-[10px] font-medium"><I18n.Raw>{c.listing.title}</I18n.Raw></I18n.strong>
+                    <I18n.p className={cn("mt-0.5 truncate text-[11px]", c.unread && c.id !== active?.id ? "text-text" : "text-muted")}>
+                      <I18n.Raw>{c.lastMessage}</I18n.Raw>
+                    </I18n.p>
                   </span>
-                </Link>
+                </I18n.Link>
               ))
             )}
-          </div>
-          <div className="mt-auto flex gap-2.5 p-5 text-[10px] leading-relaxed text-muted">
+          </I18n.div>
+          <I18n.div className="mt-auto flex gap-2.5 p-5 text-[10px] leading-relaxed text-muted">
             <Icon name="shield" className="h-[18px] w-[18px] flex-shrink-0" />
             İletişimini uygulama içinde tutmak, konuşmalarını takip etmeyi kolaylaştırır.
-          </div>
+          </I18n.div>
         </aside>
 
         {active ? (
-          <section className="flex min-h-0 flex-col bg-surface">
-            <div className="flex h-[72px] items-center gap-3 border-b border-border px-4 sm:h-20 sm:px-6">
-              <Link href="/mesajlar" aria-label="Konuşmalara dön" className="grid h-10 w-10 place-items-center rounded-full lg:hidden">
+          <I18n.section className="flex min-h-0 flex-col bg-surface">
+            <I18n.div className="flex h-[72px] items-center gap-3 border-b border-border px-4 sm:h-20 sm:px-6">
+              <I18n.Link href="/mesajlar" aria-label="Konuşmalara dön" className="grid h-10 w-10 place-items-center rounded-full lg:hidden">
                 <Icon name="back" className="h-4 w-4" />
-              </Link>
+              </I18n.Link>
               {otherGone ? (
                 <span className="flex min-w-0 flex-1 items-center gap-3">
                   <Avatar initials={initials(active.other.name)} src={null} />
-                  <span className="block truncate text-sm font-semibold">{active.other.name}</span>
+                  <I18n.span className="block truncate text-sm font-semibold"><I18n.Raw>{active.other.name}</I18n.Raw></I18n.span>
                 </span>
               ) : (
                 <>
-                  <Link href={`/satici/${active.other.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                  <I18n.Link href={`/satici/${active.other.id}`} className="flex min-w-0 flex-1 items-center gap-3">
                     <Avatar initials={initials(active.other.name)} src={active.other.avatarUrl} />
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold">{active.other.name}</span>
-                      <span className="text-[10px] text-muted">
+                      <I18n.span className="block truncate text-sm font-semibold"><I18n.Raw>{active.other.name}</I18n.Raw></I18n.span>
+                      <I18n.span className="text-[10px] text-muted">
                         {blocked ? "Engellendi" : active.role === "buyer" ? "Satıcı" : "Alıcı"}
-                      </span>
+                      </I18n.span>
                     </span>
-                  </Link>
-                  <button
+                  </I18n.Link>
+                  <I18n.button
                     onClick={() => setModal(blocked ? "unblock" : "options")}
                     aria-label="Sohbet seçenekleri"
                     className="grid h-10 w-10 place-items-center rounded-full"
                   >
                     <Icon name="more" className="h-4 w-4" />
-                  </button>
+                  </I18n.button>
                 </>
               )}
-            </div>
+            </I18n.div>
 
-            <div className="flex items-center gap-3 border-b border-border bg-bg px-4 py-3 sm:px-6">
-              <Image
+            <I18n.div className="flex items-center gap-3 border-b border-border bg-bg px-4 py-3 sm:px-6">
+              <I18n.Image
                 src={active.listing.image}
                 alt={active.listing.title}
                 width={43}
@@ -379,42 +382,42 @@ export function ChatView({
                 className="h-[43px] w-[43px] rounded-lg object-cover"
               />
               <div className="min-w-0 flex-1">
-                <strong className="block truncate text-xs">{active.listing.title}</strong>
-                <span className="text-[10px] text-muted">{active.role === "buyer" ? "İlgilendiğin ilan" : "Senin ilanın"}</span>
+                <I18n.strong className="block truncate text-xs"><I18n.Raw>{active.listing.title}</I18n.Raw></I18n.strong>
+                <I18n.span className="text-[10px] text-muted">{active.role === "buyer" ? "İlgilendiğin ilan" : "Senin ilanın"}</I18n.span>
               </div>
               {active.listing.slug ? (
-                <Link href={`/ilan/${active.listing.slug}`} className="text-[11px] font-medium text-accent">
+                <I18n.Link href={`/ilan/${active.listing.slug}`} className="text-[11px] font-medium text-accent">
                   İlanı gör
-                </Link>
+                </I18n.Link>
               ) : (
-                <span className="text-[11px] text-muted">Yayında değil</span>
+                <I18n.span className="text-[11px] text-muted">Yayında değil</I18n.span>
               )}
-            </div>
+            </I18n.div>
 
-            <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4 sm:p-7" aria-live="polite">
-              <div className="mx-auto flex max-w-[600px] items-center gap-2.5 rounded-xl bg-brand-soft p-3 text-[11px]">
+            <I18n.div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4 sm:p-7" aria-live="polite">
+              <I18n.div className="mx-auto flex max-w-[600px] items-center gap-2.5 rounded-xl bg-brand-soft p-3 text-[11px]">
                 <Icon name="shield" className="h-4 w-4 flex-shrink-0 text-accent" />
                 Ürünü görmeden ödeme yapma. Güvenli ve kalabalık bir yerde buluş.
-              </div>
+              </I18n.div>
               {hasOlder ? (
-                <button
+                <I18n.button
                   type="button"
                   onClick={showOlder}
                   disabled={loadingOlder}
                   className="self-center text-[11px] font-medium text-accent"
                 >
                   {loadingOlder ? "Yükleniyor…" : "Daha eski mesajları göster"}
-                </button>
+                </I18n.button>
               ) : null}
-              {olderError ? <p className="self-center text-[11px] text-danger">{olderError}</p> : null}
+              {olderError ? <I18n.p className="self-center text-[11px] text-danger">{olderError}</I18n.p> : null}
               {messages.map((m, i) => {
-                const label = dayLabel(m.created_at);
-                const showDay = i === 0 || dayLabel(messages[i - 1].created_at) !== label;
+                const label = dayLabel(m.created_at, locale);
+                const showDay = i === 0 || dayLabel(messages[i - 1].created_at, locale) !== label;
                 const mine = m.sender_id === me;
                 return (
-                  <div key={m.id} className="contents">
-                    {showDay ? <p className="text-center text-[11px] text-muted">{label}</p> : null}
-                    <div
+                  <I18n.div key={m.id} className="contents">
+                    {showDay ? <I18n.p className="text-center text-[11px] text-muted">{label}</I18n.p> : null}
+                    <I18n.div
                       className={cn(
                         "max-w-[85%] whitespace-pre-line break-words rounded-2xl border px-4 py-3 text-[13px] leading-relaxed sm:max-w-[76%]",
                         mine
@@ -422,62 +425,62 @@ export function ChatView({
                           : "self-start rounded-bl-md border-border bg-bg",
                       )}
                     >
-                      {m.body}
-                      <small className="mt-1.5 block text-[9px] opacity-65">
-                        {clockTime(m.created_at)}
+                      <I18n.Raw>{m.body}</I18n.Raw>
+                      <I18n.small className="mt-1.5 block text-[9px] opacity-65">
+                        <I18n.Formatted kind="clockTime" args={[m.created_at]} />
                         {mine ? (m.read_at ? " · Okundu" : " · Gönderildi") : ""}
-                      </small>
-                    </div>
-                  </div>
+                      </I18n.small>
+                    </I18n.div>
+                  </I18n.div>
                 );
               })}
               {messages.length === 0 ? (
-                <p className="py-6 text-center text-xs text-muted">
-                  {active.other.name} ile ilk mesajını gönder. Hazır sorulardan birini de seçebilirsin.
-                </p>
+                <I18n.p className="py-6 text-center text-xs text-muted">
+                  <I18n.Raw>{active.other.name}</I18n.Raw> ile ilk mesajını gönder. Hazır sorulardan birini de seçebilirsin.
+                </I18n.p>
               ) : null}
-              <div ref={bottomRef} className="mt-auto flex flex-wrap items-center gap-2.5">
+              <I18n.div ref={bottomRef} className="mt-auto flex flex-wrap items-center gap-2.5">
                 {otherGone ? null : quickReplies[active.role].map((q) => (
-                  <button
+                  <I18n.button
                     key={q}
-                    onClick={() => send(q)}
+                    onClick={() => send(t(q))}
                     disabled={pending}
                     className="min-h-9 rounded-full border border-border px-3.5 text-[10px]"
                   >
                     {q}
-                  </button>
+                  </I18n.button>
                 ))}
                 {messages.length > 0 && !otherGone ? (
-                  <span className="flex flex-wrap items-center gap-2.5 text-[10px]" aria-live="polite">
-                    {meetingStep !== "none" ? <span className="text-muted">{MEETING_TEXT[meetingStep]}</span> : null}
+                  <I18n.span className="flex flex-wrap items-center gap-2.5 text-[10px]" aria-live="polite">
+                    {meetingStep !== "none" ? <I18n.span className="text-muted">{MEETING_TEXT[meetingStep]}</I18n.span> : null}
                     {canConfirm ? (
-                      <button onClick={() => setModal("meeting")} className="font-medium text-accent">
+                      <I18n.button onClick={() => setModal("meeting")} className="font-medium text-accent">
                         Buluşmayı onayla
-                      </button>
+                      </I18n.button>
                     ) : null}
                     {canRate && !ratingDone ? (
-                      <button onClick={() => setModal("rating")} className="font-medium text-accent">
+                      <I18n.button onClick={() => setModal("rating")} className="font-medium text-accent">
                         Değerlendirme bırak
-                      </button>
+                      </I18n.button>
                     ) : null}
-                  </span>
+                  </I18n.span>
                 ) : null}
-              </div>
-            </div>
+              </I18n.div>
+            </I18n.div>
 
             {sendError ? (
               <div className="mx-4 mb-3 flex items-center gap-2.5 rounded-xl bg-brand-soft px-4 py-3 text-xs sm:mx-5">
                 <Icon name="info" className="h-4 w-4 flex-shrink-0 text-accent" />
-                <span className="flex-1">{sendError}</span>
-                <button type="button" onClick={() => setSendError("")} aria-label="Kapat" className="flex-shrink-0">
+                <I18n.span className="flex-1">{sendError}</I18n.span>
+                <I18n.button type="button" onClick={() => setSendError("")} aria-label="Kapat" className="flex-shrink-0">
                   <Icon name="close" className="h-4 w-4" />
-                </button>
+                </I18n.button>
               </div>
             ) : null}
             {otherGone ? (
-              <p className="border-t border-border p-4 text-center text-xs text-muted sm:p-5">
+              <I18n.p className="border-t border-border p-4 text-center text-xs text-muted sm:p-5">
                 Bu kullanıcı hesabını sildi. Konuşma geçmişi duruyor ama yeni mesaj gönderemezsin.
-              </p>
+              </I18n.p>
             ) : (
               <form
                 onSubmit={(e) => {
@@ -486,7 +489,7 @@ export function ChatView({
                 }}
                 className="flex gap-2.5 border-t border-border p-4 sm:p-5"
               >
-                <input
+                <I18n.input
                   ref={inputRef}
                   placeholder={blocked ? "Bu kullanıcıyı engelledin" : "Mesajını yaz…"}
                   aria-label="Mesaj"
@@ -495,34 +498,34 @@ export function ChatView({
                   className="min-w-0 flex-1 rounded-field border border-border bg-bg px-3.5 py-3 text-base text-text outline-none"
                 />
                 <Button type="submit" full={false} disabled={pending} icon={<Icon name="send" className="h-4 w-4" />}>
-                  <span className="hidden sm:inline">Gönder</span>
+                  <I18n.span className="hidden sm:inline">Gönder</I18n.span>
                 </Button>
               </form>
             )}
-          </section>
+          </I18n.section>
         ) : (
           <section className="hidden flex-col items-center justify-center gap-4 bg-surface p-10 text-center lg:flex">
             <span className="flex h-[100px] w-[100px] -rotate-6 items-center justify-center rounded-[35px] bg-brand-soft text-brand">
               <Icon name="chat" className="h-11 w-11 rotate-6" />
             </span>
-            <h2 className="text-xl font-semibold">Bir konuşma seç.</h2>
-            <p className="max-w-xs text-sm text-muted">Soldaki listeden bir konuşma seçerek mesajlaşmaya devam et.</p>
+            <I18n.h2 className="text-xl font-semibold">Bir konuşma seç.</I18n.h2>
+            <I18n.p className="max-w-xs text-sm text-muted">Soldaki listeden bir konuşma seçerek mesajlaşmaya devam et.</I18n.p>
           </section>
         )}
-      </div>
+      </I18n.div>
 
       {active ? (
         <>
           <Modal title="Sohbet seçenekleri" open={modal === "options"} onClose={closeModal}>
-            <div className="flex flex-col gap-1">
-              <button
+            <I18n.div className="flex flex-col gap-1">
+              <I18n.button
                 onClick={() => setModal("report")}
                 className="flex items-center gap-3 border-b border-border py-4 text-left text-sm"
               >
                 <Icon name="flag" className="h-[18px] w-[18px] text-muted" />
-                {active.other.name} kullanıcısını şikayet et
-              </button>
-              <button
+                <I18n.Raw>{active.other.name}</I18n.Raw> kullanıcısını şikayet et
+              </I18n.button>
+              <I18n.button
                 disabled={pending}
                 onClick={() =>
                   startTransition(async () => {
@@ -537,17 +540,17 @@ export function ChatView({
                 className="flex items-center gap-3 py-4 text-left text-sm text-danger"
               >
                 <Icon name="close" className="h-[18px] w-[18px]" />
-                {active.other.name} kullanıcısını engelle
-              </button>
+                <I18n.Raw>{active.other.name}</I18n.Raw> kullanıcısını engelle
+              </I18n.button>
               {modalError ? <FormError>{modalError}</FormError> : null}
-            </div>
+            </I18n.div>
           </Modal>
 
           <Modal title={reportSent ? "Şikayet alındı" : "Kullanıcıyı şikayet et"} open={modal === "report"} onClose={closeModal}>
             {reportSent ? (
-              <p className="text-sm text-muted">Teşekkürler. Moderasyon ekibimiz şikayetini 24 saat içinde inceleyecek.</p>
+              <I18n.p className="text-sm text-muted">Teşekkürler. Moderasyon ekibimiz şikayetini 24 saat içinde inceleyecek.</I18n.p>
             ) : (
-              <form
+              <I18n.form
                 onSubmit={(e) => {
                   e.preventDefault();
                   const form = new FormData(e.currentTarget);
@@ -565,15 +568,15 @@ export function ChatView({
                 <Button type="submit" disabled={pending}>
                   Şikayeti gönder
                 </Button>
-              </form>
+              </I18n.form>
             )}
           </Modal>
 
           <Modal title="Engeli kaldır" open={modal === "unblock"} onClose={closeModal}>
-            <p className="text-sm text-muted">
-              {active.other.name} kullanıcısının engelini kaldırmak istediğine emin misin? Engeli kaldırdığında tekrar
+            <I18n.p className="text-sm text-muted">
+              <I18n.Raw>{active.other.name}</I18n.Raw> kullanıcısının engelini kaldırmak istediğine emin misin? Engeli kaldırdığında tekrar
               mesajlaşabilirsiniz.
-            </p>
+            </I18n.p>
             <div className="mt-5 flex gap-3">
               <Button variant="outline" full={false} onClick={closeModal}>
                 Vazgeç
@@ -596,10 +599,10 @@ export function ChatView({
           </Modal>
 
           <Modal title="Buluşmayı onayla" open={modal === "meeting"} onClose={closeModal}>
-            <p className="text-sm text-muted">
-              {active.other.name} ile buluşmayı tamamladığını onaylıyor musun? İkiniz de onayladığınızda kısa bir
+            <I18n.p className="text-sm text-muted">
+              <I18n.Raw>{active.other.name}</I18n.Raw> ile buluşmayı tamamladığını onaylıyor musun? İkiniz de onayladığınızda kısa bir
               değerlendirme bırakabilirsin.
-            </p>
+            </I18n.p>
             {modalError ? <FormError className="mt-4">{modalError}</FormError> : null}
             <Button
               className="mt-5"
@@ -633,15 +636,15 @@ export function ChatView({
                 <span className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-accent">
                   <Icon name="check" className="h-7 w-7" />
                 </span>
-                <p className="text-sm text-muted">
-                  Değerlendirmen gönderildi ve {active.other.name} kullanıcısının profilinde görünecek.
-                </p>
+                <I18n.p className="text-sm text-muted">
+                  Değerlendirmen gönderildi ve <I18n.Raw>{active.other.name}</I18n.Raw> kullanıcısının profilinde görünecek.
+                </I18n.p>
                 <Button full={false} onClick={closeModal}>
                   Tamam
                 </Button>
               </div>
             ) : (
-              <form
+              <I18n.form
                 onSubmit={(e) => {
                   e.preventDefault();
                   startTransition(async () => {
@@ -655,9 +658,9 @@ export function ChatView({
                 }}
                 className="flex flex-col gap-4"
               >
-                <div className="flex justify-center gap-1.5" role="radiogroup" aria-label="Puan">
+                <I18n.div className="flex justify-center gap-1.5" role="radiogroup" aria-label="Puan">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <button
+                    <I18n.button
                       key={n}
                       type="button"
                       role="radio"
@@ -667,9 +670,9 @@ export function ChatView({
                       className="text-[34px] text-accent"
                     >
                       {n <= rating ? "★" : "☆"}
-                    </button>
+                    </I18n.button>
                   ))}
-                </div>
+                </I18n.div>
                 <TextareaField
                   label="Yorum (opsiyonel)"
                   value={ratingComment}
@@ -677,18 +680,18 @@ export function ChatView({
                   maxLength={500}
                   placeholder="Buluşma nasıl geçti?"
                 />
-                <p className="text-center text-xs text-muted">
+                <I18n.p className="text-center text-xs text-muted">
                   Değerlendirmen, kullanıcının profilinde görünür ve gelecekteki alıcılara yardımcı olur.
-                </p>
+                </I18n.p>
                 {modalError ? <FormError>{modalError}</FormError> : null}
                 <Button type="submit" disabled={pending}>
                   Değerlendirmeyi gönder
                 </Button>
-              </form>
+              </I18n.form>
             )}
           </Modal>
         </>
       ) : null}
-    </div>
+    </I18n.div>
   );
 }

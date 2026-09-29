@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -20,8 +22,8 @@ export function SupportForm({ defaultEmail }: { defaultEmail: string }) {
         <span className="grid h-[85px] w-[85px] place-items-center rounded-full bg-accent-soft text-accent">
           <Icon name="check" className="h-9 w-9" />
         </span>
-        <h1 className="text-2xl font-semibold">Destek talebin alındı.</h1>
-        <p className="max-w-xs text-sm text-muted">Ekibimiz genellikle 24 saat içinde e-posta ile dönüş yapıyor.</p>
+        <I18n.h1 className="text-2xl font-semibold">Destek talebin alındı.</I18n.h1>
+        <I18n.p className="max-w-xs text-sm text-muted">Ekibimiz genellikle 24 saat içinde e-posta ile dönüş yapıyor.</I18n.p>
         <LinkButton href="/" full={false} className="min-w-[200px]">
           Ana sayfaya dön
         </LinkButton>
@@ -32,8 +34,8 @@ export function SupportForm({ defaultEmail }: { defaultEmail: string }) {
   return (
     <div className="mx-auto max-w-[640px] px-4 pb-16 sm:px-6">
       <Breadcrumbs items={["Destek talebi"]} />
-      <h1 className="mb-2 text-2xl font-semibold tracking-tight sm:text-[32px]">Destek talebi oluştur</h1>
-      <p className="mb-6 text-[13px] text-muted">Sana en hızlı şekilde dönüş yapabilmemiz için birkaç detay paylaş.</p>
+      <I18n.h1 className="mb-2 text-2xl font-semibold tracking-tight sm:text-[32px]">Destek talebi oluştur</I18n.h1>
+      <I18n.p className="mb-6 text-[13px] text-muted">Sana en hızlı şekilde dönüş yapabilmemiz için birkaç detay paylaş.</I18n.p>
       <ActionForm action={action} className="flex flex-col gap-5 rounded-2xl border border-border p-6">
         <SelectField label="Konu" name="topic" options={topics} />
         <Field label="E-posta adresin" type="email" name="email" defaultValue={defaultEmail} required />
@@ -47,10 +49,10 @@ export function SupportForm({ defaultEmail }: { defaultEmail: string }) {
         />
         {/* Honeypot (P1-07): hidden from people, filled in by form bots. */}
         <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
-          <label>
+          <I18n.label>
             Web sitesi
             <input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
-          </label>
+          </I18n.label>
         </div>
         {state?.error ? <FormError>{state.error}</FormError> : null}
         <Button type="submit" disabled={pending}>

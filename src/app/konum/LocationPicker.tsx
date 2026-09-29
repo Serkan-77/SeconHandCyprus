@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -40,22 +42,22 @@ export function LocationPicker({ current }: { current: string | null }) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 sm:p-7">
+    <I18n.div className="rounded-2xl border border-border bg-surface p-5 sm:p-7">
       {geo === "denied" || geo === "unavailable" ? (
         <div className="mb-6 flex items-start gap-3 rounded-xl bg-brand-soft p-4 text-xs leading-relaxed">
           <Icon name="info" className="h-[18px] w-[18px] flex-shrink-0 text-accent" />
-          <span>
+          <I18n.span>
             {geo === "denied"
               ? "Konum izni verilmedi. Bölgeni aşağıdan elle seçebilirsin; istersen tarayıcı ayarlarından konum iznini tekrar açabilirsin."
               : "Konumun şu anda alınamadı. Bölgeni aşağıdan elle seçebilirsin."}
-          </span>
+          </I18n.span>
         </div>
       ) : geo === "found" ? (
         <div className="mb-6 flex items-start gap-3 rounded-xl bg-accent-soft p-4 text-xs leading-relaxed text-accent">
           <Icon name="check" className="h-[18px] w-[18px] flex-shrink-0" />
-          <span>
-            Konumuna en yakın bölge: <b>{selected}</b>
-          </span>
+          <I18n.span>
+            Konumuna en yakın bölge: <I18n.b>{selected}</I18n.b>
+          </I18n.span>
         </div>
       ) : (
         <Button
@@ -71,10 +73,10 @@ export function LocationPicker({ current }: { current: string | null }) {
 
       <MapPreview label={selected ?? "Kıbrıs"} />
 
-      <fieldset className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <legend className="mb-3 text-[13px] font-medium">Bölge seç</legend>
+      <I18n.fieldset className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <I18n.legend className="mb-3 text-[13px] font-medium">Bölge seç</I18n.legend>
         {regionNames.map((region) => (
-          <button
+          <I18n.button
             key={region}
             type="button"
             aria-pressed={selected === region}
@@ -85,11 +87,11 @@ export function LocationPicker({ current }: { current: string | null }) {
             }
           >
             {region}
-          </button>
+          </I18n.button>
         ))}
-      </fieldset>
+      </I18n.fieldset>
 
-      <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+      <I18n.div className="mt-7 flex flex-col gap-3 sm:flex-row">
         <Button onClick={() => apply(selected)} disabled={!selected || pending}>
           {selected ? `${selected} ilanlarını göster` : "Bir bölge seç"}
         </Button>
@@ -98,7 +100,7 @@ export function LocationPicker({ current }: { current: string | null }) {
             Tüm Kıbrıs
           </Button>
         ) : null}
-      </div>
-    </div>
+      </I18n.div>
+    </I18n.div>
   );
 }

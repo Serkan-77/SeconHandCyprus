@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
@@ -9,7 +11,7 @@ export function FavoriteButton({ listingId, className }: { listingId: string; cl
   const active = favoriteIds.has(listingId);
 
   return (
-    <button
+    <I18n.button
       type="button"
       onClick={() => toggleFavorite(listingId)}
       aria-label="Favoriye ekle"
@@ -21,6 +23,6 @@ export function FavoriteButton({ listingId, className }: { listingId: string; cl
       )}
     >
       <Icon name="heart" className="h-5 w-5" fill={active ? "currentColor" : "none"} />
-    </button>
+    </I18n.button>
   );
 }

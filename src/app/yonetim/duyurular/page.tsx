@@ -1,6 +1,7 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { createClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/format";
 import { AnnouncementComposer } from "./AnnouncementComposer";
 
 export const metadata = { title: "Yönetim · Duyurular", robots: { index: false } };
@@ -24,26 +25,26 @@ async function Announcements() {
   return (
     <div className="grid grid-cols-1 gap-8 xl:grid-cols-[520px_1fr]">
       <AnnouncementComposer />
-      <section>
-        <h2 className="mb-3 text-base font-semibold">Gönderilmiş duyurular</h2>
+      <I18n.section>
+        <I18n.h2 className="mb-3 text-base font-semibold">Gönderilmiş duyurular</I18n.h2>
         {history && history.length ? (
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
+          <I18n.div className="overflow-hidden rounded-xl border border-border bg-surface">
             {history.map((a) => (
               <article key={a.id} className="border-b border-border p-4 last:border-0">
-                <span className="text-[10px] text-muted">
-                  {a.audience} · {a.recipients} kişi · {formatDate(a.created_at)}
-                </span>
-                <h3 className="mt-1 text-sm font-semibold">{a.title}</h3>
-                <p className="mt-1 text-xs text-muted">{a.body}</p>
+                <I18n.span className="text-[10px] text-muted">
+                  {a.audience} · {a.recipients} kişi · <I18n.Formatted kind="formatDate" args={[a.created_at]} />
+                </I18n.span>
+                <I18n.h3 className="mt-1 text-sm font-semibold">{a.title}</I18n.h3>
+                <I18n.p className="mt-1 text-xs text-muted">{a.body}</I18n.p>
               </article>
             ))}
-          </div>
+          </I18n.div>
         ) : (
-          <p className="rounded-xl border border-dashed border-border py-10 text-center text-xs text-muted">
+          <I18n.p className="rounded-xl border border-dashed border-border py-10 text-center text-xs text-muted">
             Henüz duyuru gönderilmedi.
-          </p>
+          </I18n.p>
         )}
-      </section>
+      </I18n.section>
     </div>
   );
 }

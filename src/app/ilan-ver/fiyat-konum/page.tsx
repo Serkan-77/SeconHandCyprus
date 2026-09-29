@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useRouter } from "next/navigation";
 import { WizardLayout } from "@/components/WizardLayout";
@@ -23,10 +25,10 @@ export default function AddPricePage() {
         className="flex flex-col gap-6"
       >
         <div>
-          <h2 className="text-xl font-semibold">Fiyat ve konum</h2>
-          <p className="mt-2 text-[13px] text-muted">
+          <I18n.h2 className="text-xl font-semibold">Fiyat ve konum</I18n.h2>
+          <I18n.p className="mt-2 text-[13px] text-muted">
             Adil bir fiyat ve doğru konum, ilanının daha hızlı bulunmasını sağlar.
-          </p>
+          </I18n.p>
         </div>
 
         <div className="grid grid-cols-[1fr_100px] gap-3">

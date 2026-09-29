@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import { Fragment } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Icon } from "@/components/icons";
@@ -119,10 +120,10 @@ export async function ListingsResults({ params: input, category }: { params: Res
       <Breadcrumbs items={category ? [{ label: "Kategoriler", href: "/kategori" }, category.name] : ["İlanlar"]} />
       <div className="mb-7 flex flex-wrap items-center justify-between gap-5">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-[32px]">{title}</h1>
-          <p className="mt-2 text-[13px] text-muted">
+          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[32px]">{title}</I18n.h1>
+          <I18n.p className="mt-2 text-[13px] text-muted">
             {total} ilan bulundu{filters.city ? ` · ${filters.city}` : ""}.
-          </p>
+          </I18n.p>
         </div>
       </div>
 
@@ -145,31 +146,31 @@ export async function ListingsResults({ params: input, category }: { params: Res
           activeCount={chips.length}
         />
 
-        <section className="min-w-0">
+        <I18n.section className="min-w-0">
           <div className="mb-6 flex min-h-12 flex-wrap items-center justify-between gap-4">
-            <div className="hidden flex-wrap gap-2 lg:flex">
+            <I18n.div className="hidden flex-wrap gap-2 lg:flex">
               {chips.map((chip) => (
-                <span
+                <I18n.span
                   key={chip.key}
                   className="flex items-center gap-2 rounded-md border border-border py-1 pl-3 pr-1 text-[10px]"
                 >
                   {chip.label}
-                  <Link
+                  <I18n.Link
                     href={withoutHref(chip.key)}
                     aria-label={`${chip.label} filtresini kaldır`}
                     className="grid h-[26px] w-[22px] place-items-center text-lg"
                   >
                     ×
-                  </Link>
-                </span>
+                  </I18n.Link>
+                </I18n.span>
               ))}
-            </div>
+            </I18n.div>
             <SortSelect value={params.sirala ?? ""} />
           </div>
 
           {items.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
+              <I18n.div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
                 {items.map((listing, i) => (
                   <Fragment key={listing.id}>
                     <ListingCard listing={listing} priority={i < 3} />
@@ -177,11 +178,11 @@ export async function ListingsResults({ params: input, category }: { params: Res
                     {i === 5 && items.length > 6 ? <AdSlot placement="results" className="col-span-full" /> : null}
                   </Fragment>
                 ))}
-              </div>
+              </I18n.div>
 
               {pageCount > 1 ? (
-                <nav aria-label="Sonuç sayfaları" className="mt-10 flex flex-wrap items-center justify-center gap-2">
-                  <Link
+                <I18n.nav aria-label="Sonuç sayfaları" className="mt-10 flex flex-wrap items-center justify-center gap-2">
+                  <I18n.Link
                     aria-label="Önceki sayfa"
                     aria-disabled={page === 1}
                     href={pageHref(Math.max(1, page - 1))}
@@ -191,11 +192,11 @@ export async function ListingsResults({ params: input, category }: { params: Res
                     )}
                   >
                     <Icon name="back" className="h-4 w-4" />
-                  </Link>
+                  </I18n.Link>
                   {pages.map((p, i) => (
-                    <span key={p} className="flex items-center gap-2">
-                      {i > 0 && p - pages[i - 1] > 1 ? <span className="px-1 text-xs text-muted">…</span> : null}
-                      <Link
+                    <I18n.span key={p} className="flex items-center gap-2">
+                      {i > 0 && p - pages[i - 1] > 1 ? <I18n.span className="px-1 text-xs text-muted">…</I18n.span> : null}
+                      <I18n.Link
                         href={pageHref(p)}
                         aria-current={p === page ? "page" : undefined}
                         className={cn(
@@ -204,10 +205,10 @@ export async function ListingsResults({ params: input, category }: { params: Res
                         )}
                       >
                         {p}
-                      </Link>
-                    </span>
+                      </I18n.Link>
+                    </I18n.span>
                   ))}
-                  <Link
+                  <I18n.Link
                     aria-label="Sonraki sayfa"
                     aria-disabled={page === pageCount}
                     href={pageHref(Math.min(pageCount, page + 1))}
@@ -217,8 +218,8 @@ export async function ListingsResults({ params: input, category }: { params: Res
                     )}
                   >
                     <Icon name="chevron" className="h-4 w-4" />
-                  </Link>
-                </nav>
+                  </I18n.Link>
+                </I18n.nav>
               ) : null}
             </>
           ) : (
@@ -226,14 +227,14 @@ export async function ListingsResults({ params: input, category }: { params: Res
               <span className="flex h-[100px] w-[100px] -rotate-6 items-center justify-center rounded-[35px] bg-brand-soft text-brand">
                 <Icon name="search" className="h-11 w-11 rotate-6" />
               </span>
-              <h2 className="text-xl font-semibold">Sonuç bulunamadı.</h2>
-              <p className="max-w-xs text-sm text-muted">Farklı bir arama terimi dene ya da filtreleri değiştir.</p>
+              <I18n.h2 className="text-xl font-semibold">Sonuç bulunamadı.</I18n.h2>
+              <I18n.p className="max-w-xs text-sm text-muted">Farklı bir arama terimi dene ya da filtreleri değiştir.</I18n.p>
               <LinkButton href="/ilanlar" full={false} variant="secondary" className="min-w-[200px]">
                 Tüm ilanları gör
               </LinkButton>
             </div>
           )}
-        </section>
+        </I18n.section>
       </div>
     </div>
   );

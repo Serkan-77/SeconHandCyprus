@@ -1,6 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Image from "next/image";
+
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icons";
 import { Modal } from "@/components/ui/Modal";
@@ -23,13 +24,13 @@ export function DetailGallery({ images, alt }: { images: string[]; alt: string }
   }, [open, count]);
 
   return (
-    <section>
-      <button
+    <I18n.section>
+      <I18n.button
         onClick={() => setOpen(true)}
         aria-label="Ürün fotoğrafını büyüt"
         className="relative block h-[340px] w-full overflow-hidden rounded-2xl bg-bg sm:h-[470px] lg:h-[520px]"
       >
-        <Image
+        <I18n.Image
           src={photos[active]}
           alt={`${alt} — fotoğraf ${active + 1}`}
           fill
@@ -37,15 +38,15 @@ export function DetailGallery({ images, alt }: { images: string[]; alt: string }
           className="object-cover"
           sizes="(min-width: 1024px) 60vw, 100vw"
         />
-        <span className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-lg bg-white/93 px-3 py-2 text-[11px] text-[#111318]">
+        <I18n.span className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-lg bg-white/93 px-3 py-2 text-[11px] text-[#111318]">
           <Icon name="image" className="h-[17px] w-[17px]" />
           {active + 1} / {count} fotoğraf
-        </span>
-      </button>
+        </I18n.span>
+      </I18n.button>
       {count > 1 ? (
-        <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto sm:gap-3">
+        <I18n.div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto sm:gap-3">
           {photos.map((src, i) => (
-            <button
+            <I18n.button
               key={src + i}
               onClick={() => setActive(i)}
               className={cn(
@@ -55,45 +56,45 @@ export function DetailGallery({ images, alt }: { images: string[]; alt: string }
               aria-label={`${i + 1}. ürün fotoğrafını göster`}
               aria-pressed={active === i}
             >
-              <Image src={src} alt="" fill className="object-cover" sizes="200px" />
-            </button>
+              <I18n.Image src={src} alt="" fill className="object-cover" sizes="200px" />
+            </I18n.button>
           ))}
-        </div>
+        </I18n.div>
       ) : null}
 
       <Modal title={`Fotoğraf ${active + 1} / ${count}`} open={open} onClose={() => setOpen(false)}>
-        <div className="relative h-[60vh] w-full overflow-hidden rounded-xl bg-bg">
-          <Image src={photos[active]} alt={alt} fill className="object-contain" sizes="90vw" />
+        <I18n.div className="relative h-[60vh] w-full overflow-hidden rounded-xl bg-bg">
+          <I18n.Image src={photos[active]} alt={alt} fill className="object-contain" sizes="90vw" />
           {count > 1 ? (
             <>
-              <button
+              <I18n.button
                 onClick={() => setActive((i) => (i - 1 + count) % count)}
                 aria-label="Önceki fotoğraf"
                 className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[#111318]"
               >
                 <Icon name="back" className="h-4 w-4" />
-              </button>
-              <button
+              </I18n.button>
+              <I18n.button
                 onClick={() => setActive((i) => (i + 1) % count)}
                 aria-label="Sonraki fotoğraf"
                 className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[#111318]"
               >
                 <Icon name="chevron" className="h-4 w-4" />
-              </button>
+              </I18n.button>
             </>
           ) : null}
-        </div>
-        <div className="flex justify-center gap-2">
+        </I18n.div>
+        <I18n.div className="flex justify-center gap-2">
           {photos.map((_, i) => (
-            <button
+            <I18n.button
               key={i}
               onClick={() => setActive(i)}
               aria-label={`${i + 1}. fotoğrafa git`}
               className={cn("h-2 w-2 rounded-full", active === i ? "bg-text" : "bg-border")}
             />
           ))}
-        </div>
+        </I18n.div>
       </Modal>
-    </section>
+    </I18n.section>
   );
 }

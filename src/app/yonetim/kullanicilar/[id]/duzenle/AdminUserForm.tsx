@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -30,8 +32,8 @@ export function AdminUserForm({
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="flex max-w-[720px] flex-col gap-6">
-      <form
+    <I18n.div className="flex max-w-[720px] flex-col gap-6">
+      <I18n.form
         onSubmit={(e) => {
           e.preventDefault();
           const form = new FormData(e.currentTarget);
@@ -60,35 +62,35 @@ export function AdminUserForm({
         }}
         className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5"
       >
-        <h2 className="text-sm font-semibold">Profil</h2>
+        <I18n.h2 className="text-sm font-semibold">Profil</I18n.h2>
         <Field label="Görünen ad" name="name" defaultValue={initial.name} required minLength={2} maxLength={40} />
-        <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+        <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
           Bölge
-          <select name="region" defaultValue={initial.region} className={selectClass}>
-            <option value="">Belirtilmemiş</option>
+          <I18n.select name="region" defaultValue={initial.region} className={selectClass}>
+            <I18n.option value="">Belirtilmemiş</I18n.option>
             {regionNames.map((r) => (
-              <option key={r}>{r}</option>
+              <I18n.option key={r}>{r}</I18n.option>
             ))}
-          </select>
-        </label>
+          </I18n.select>
+        </I18n.label>
         <TextareaField label="Hakkında" name="bio" defaultValue={initial.bio} maxLength={500} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Telefon (gizli)" name="phone" type="tel" defaultValue={initial.phone} placeholder="+905331234567" />
-          <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+          <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
             Rol
             <select name="role" defaultValue={initial.role} disabled={isSelf} className={selectClass}>
-              <option value="user">Kullanıcı</option>
-              <option value="admin">Yönetici</option>
+              <I18n.option value="user">Kullanıcı</I18n.option>
+              <I18n.option value="admin">Yönetici</I18n.option>
             </select>
             {isSelf ? <input type="hidden" name="role" value="admin" /> : null}
-          </label>
+          </I18n.label>
         </div>
         <Checkbox label="Telefon elle incelendi (rozet)" name="phoneVerified" defaultChecked={initial.phoneVerified} />
 
-        <h2 className="mt-3 text-sm font-semibold">Hesap türü</h2>
-        <div className="flex gap-2">
+        <I18n.h2 className="mt-3 text-sm font-semibold">Hesap türü</I18n.h2>
+        <I18n.div className="flex gap-2">
           {(["personal", "store"] as const).map((t) => (
-            <button
+            <I18n.button
               key={t}
               type="button"
               aria-pressed={accountType === t}
@@ -100,9 +102,9 @@ export function AdminUserForm({
               }
             >
               {t === "store" ? "Mağaza" : "Bireysel"}
-            </button>
+            </I18n.button>
           ))}
-        </div>
+        </I18n.div>
         {accountType === "store" ? (
           <div className="flex flex-col gap-4 rounded-xl bg-bg p-4">
             <Field label="Mağaza adı" name="storeName" defaultValue={initial.store.storeName} required minLength={2} maxLength={60} />
@@ -126,29 +128,29 @@ export function AdminUserForm({
             Kullanıcıya dön
           </LinkButton>
         </div>
-      </form>
+      </I18n.form>
 
       {!isSelf ? (
-        <section className="rounded-xl border border-border bg-surface p-5">
-          <h2 className="text-sm font-semibold">Hesabı sil</h2>
-          <p className="mt-1.5 text-xs text-muted">
+        <I18n.section className="rounded-xl border border-border bg-surface p-5">
+          <I18n.h2 className="text-sm font-semibold">Hesabı sil</I18n.h2>
+          <I18n.p className="mt-1.5 text-xs text-muted">
             Profil, ilanlar, fotoğraflar, favoriler ve bildirimler kalıcı olarak silinir. Konuşmalar karşı tarafta
             &quot;Silinmiş kullanıcı&quot; olarak kalır; şikayet ve yaptırım kayıtları korunur.
-          </p>
+          </I18n.p>
           {canDelete ? (
             <Button variant="danger" full={false} className="mt-4" onClick={() => setDeleteOpen(true)}>
               Hesabı kalıcı olarak sil
             </Button>
           ) : (
-            <p className="mt-3 text-xs text-muted">Yönetici hesapları silinemez; önce rolünü &quot;Kullanıcı&quot; yap.</p>
+            <I18n.p className="mt-3 text-xs text-muted">Yönetici hesapları silinemez; önce rolünü &quot;Kullanıcı&quot; yap.</I18n.p>
           )}
-        </section>
+        </I18n.section>
       ) : null}
 
       <Modal title="Hesabı sil" open={deleteOpen} onClose={() => setDeleteOpen(false)}>
-        <p className="text-sm text-muted">
-          <b className="text-text">{initial.name}</b> hesabı ve tüm içeriği kalıcı olarak silinecek. Bu işlem geri alınamaz.
-        </p>
+        <I18n.p className="text-sm text-muted">
+          <I18n.b className="text-text">{initial.name}</I18n.b> hesabı ve tüm içeriği kalıcı olarak silinecek. Bu işlem geri alınamaz.
+        </I18n.p>
         {deleteError ? <FormError>{deleteError}</FormError> : null}
         <div className="flex gap-3">
           <Button variant="outline" full={false} onClick={() => setDeleteOpen(false)}>
@@ -169,6 +171,6 @@ export function AdminUserForm({
           </Button>
         </div>
       </Modal>
-    </div>
+    </I18n.div>
   );
 }

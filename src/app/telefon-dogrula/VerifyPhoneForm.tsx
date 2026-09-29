@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
@@ -66,31 +68,31 @@ export function VerifyPhoneForm({ phone }: { phone: string }) {
   if (expired) {
     return (
       <AuthLayout title="Kodun süresi doldu." backHref="/giris" backLabel="Girişe dön">
-        <div className="flex flex-col items-center gap-5 py-6 text-center">
+        <I18n.div className="flex flex-col items-center gap-5 py-6 text-center">
           <span className="flex h-[85px] w-[85px] items-center justify-center rounded-full bg-brand-soft text-brand">
             <Icon name="clock" className="h-9 w-9" />
           </span>
-          <p className="max-w-xs text-sm text-muted">
+          <I18n.p className="max-w-xs text-sm text-muted">
             Girdiğin kodun süresi doldu ya da hatalıydı. Yeni bir doğrulama kodu isteyebilirsin.
-          </p>
+          </I18n.p>
           {resendError ? <FormError>{resendError}</FormError> : null}
           <Button onClick={resend} disabled={resending} full={false} className="min-w-[220px]">
             {resending ? "Gönderiliyor…" : "Yeni kod gönder"}
           </Button>
-        </div>
+        </I18n.div>
       </AuthLayout>
     );
   }
 
   return (
     <AuthLayout title="Telefonunu doğrula." backHref="/giris" backLabel="Girişe dön">
-      <p className="text-sm text-muted">{maskPhone(phone)} numarasına gönderilen 6 haneli kodu gir.</p>
+      <I18n.p className="text-sm text-muted">{maskPhone(phone)} numarasına gönderilen 6 haneli kodu gir.</I18n.p>
       <ActionForm action={action} className="mt-6 flex flex-col gap-6">
         <input type="hidden" name="phone" value={phone} />
         <input type="hidden" name="token" value={digits.join("")} />
-        <div className="flex gap-2">
+        <I18n.div className="flex gap-2">
           {digits.map((digit, i) => (
-            <input
+            <I18n.input
               key={i}
               ref={(el) => {
                 inputs.current[i] = el;
@@ -106,20 +108,20 @@ export function VerifyPhoneForm({ phone }: { phone: string }) {
               className="h-[59px] w-full min-w-0 rounded-field border border-border bg-surface text-center text-xl text-text focus:outline-none"
             />
           ))}
-        </div>
+        </I18n.div>
         {state?.error ? <FormError>{state.error}</FormError> : null}
         <Button type="submit" disabled={pending || digits.some((d) => !d)}>
           {pending ? "Doğrulanıyor…" : "Doğrula"}
         </Button>
-        <p className="text-center text-xs text-muted">
+        <I18n.p className="text-center text-xs text-muted">
           {seconds > 0 ? (
             `Kodu ${seconds} saniye içinde tekrar gönderebilirsin.`
           ) : (
-            <button type="button" onClick={resend} disabled={resending} className="font-semibold text-accent">
+            <I18n.button type="button" onClick={resend} disabled={resending} className="font-semibold text-accent">
               Kodu tekrar gönder
-            </button>
+            </I18n.button>
           )}
-        </p>
+        </I18n.p>
       </ActionForm>
     </AuthLayout>
   );

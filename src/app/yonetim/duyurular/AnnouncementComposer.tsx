@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
@@ -21,8 +23,8 @@ export function AnnouncementComposer() {
         <span className="grid h-16 w-16 place-items-center rounded-full bg-accent-soft text-accent">
           <Icon name="check" className="h-7 w-7" />
         </span>
-        <h1 className="text-xl font-semibold">Duyuru gönderildi.</h1>
-        <p className="text-sm text-muted">{sent} kullanıcının bildirim merkezine iletildi.</p>
+        <I18n.h1 className="text-xl font-semibold">Duyuru gönderildi.</I18n.h1>
+        <I18n.p className="text-sm text-muted">{sent} kullanıcının bildirim merkezine iletildi.</I18n.p>
         <Button
           full={false}
           onClick={() => {
@@ -39,12 +41,12 @@ export function AnnouncementComposer() {
 
   if (preview) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Duyuru gönderim onayı</h1>
+      <I18n.div className="flex flex-col gap-4">
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Duyuru gönderim onayı</I18n.h1>
         <div className="rounded-xl border border-border bg-surface p-5">
-          <span className="text-[10px] text-muted">{preview.audience}</span>
-          <h2 className="mt-1.5 text-base font-semibold">{preview.title}</h2>
-          <p className="mt-2 whitespace-pre-line text-xs text-muted">{preview.body}</p>
+          <I18n.span className="text-[10px] text-muted">{preview.audience}</I18n.span>
+          <I18n.h2 className="mt-1.5 text-base font-semibold">{preview.title}</I18n.h2>
+          <I18n.p className="mt-2 whitespace-pre-line text-xs text-muted">{preview.body}</I18n.p>
         </div>
         {error ? <FormError>{error}</FormError> : null}
         <div className="flex gap-3">
@@ -65,13 +67,13 @@ export function AnnouncementComposer() {
             {pending ? "Gönderiliyor…" : "Duyuruyu gönder"}
           </Button>
         </div>
-      </div>
+      </I18n.div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Duyuru oluştur</h1>
+      <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Duyuru oluştur</I18n.h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();

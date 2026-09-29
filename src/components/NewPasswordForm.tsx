@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
@@ -19,9 +21,9 @@ export function NewPasswordForm({ valid }: { valid: boolean }) {
           <span className="flex h-[85px] w-[85px] items-center justify-center rounded-full bg-brand-soft text-brand">
             <Icon name="clock" className="h-9 w-9" />
           </span>
-          <p className="max-w-xs text-sm text-muted">
+          <I18n.p className="max-w-xs text-sm text-muted">
             Bu şifre sıfırlama bağlantısının süresi dolmuş ya da daha önce kullanılmış. Yeni bir bağlantı isteyebilirsin.
-          </p>
+          </I18n.p>
           <LinkButton href="/sifre-yenile" full={false} className="min-w-[220px]">
             Yeni bağlantı iste
           </LinkButton>
@@ -37,7 +39,7 @@ export function NewPasswordForm({ valid }: { valid: boolean }) {
           <span className="flex h-[85px] w-[85px] items-center justify-center rounded-full bg-accent-soft text-accent">
             <Icon name="check" className="h-9 w-9" />
           </span>
-          <p className="max-w-xs text-sm text-muted">Yeni şifren kaydedildi. Hesabınla devam edebilirsin.</p>
+          <I18n.p className="max-w-xs text-sm text-muted">Yeni şifren kaydedildi. Hesabınla devam edebilirsin.</I18n.p>
           <LinkButton href="/hesabim" full={false} className="min-w-[220px]">
             Hesabıma git
           </LinkButton>
@@ -48,7 +50,7 @@ export function NewPasswordForm({ valid }: { valid: boolean }) {
 
   return (
     <AuthLayout title="Yeni şifre belirle." backHref="/giris" backLabel="Girişe dön">
-      <p className="text-sm text-muted">Hesabın için yeni ve güvenli bir şifre oluştur.</p>
+      <I18n.p className="text-sm text-muted">Hesabın için yeni ve güvenli bir şifre oluştur.</I18n.p>
       <ActionForm action={action} className="mt-6 flex flex-col gap-5">
         <Field
           label="Yeni şifre"

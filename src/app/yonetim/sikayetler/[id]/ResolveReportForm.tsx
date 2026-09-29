@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +13,7 @@ export function ResolveReportForm({ id, status }: { id: string; status: string }
   const [pending, startTransition] = useTransition();
 
   return (
-    <form
+    <I18n.form
       onSubmit={(e) => {
         e.preventDefault();
         const note = String(new FormData(e.currentTarget).get("note") ?? "");
@@ -42,6 +44,6 @@ export function ResolveReportForm({ id, status }: { id: string; status: string }
           İncelemeye al
         </Button>
       ) : null}
-    </form>
+    </I18n.form>
   );
 }

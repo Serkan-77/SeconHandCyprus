@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -33,7 +35,7 @@ export default async function SellerProfilePage({ params }: { params: Promise<{ 
         items={seller.accountType === "store" ? [{ label: "Mağazalar", href: "/magazalar" }, publicName(seller)] : [publicName(seller)]}
       />
       <SellerHeader seller={seller} active="profil" />
-      <h2 className="mb-5 text-lg font-semibold">{seller.accountType === "store" ? "Mağazanın ürünleri" : "Aktif ilanları"}</h2>
+      <I18n.h2 className="mb-5 text-lg font-semibold">{seller.accountType === "store" ? "Mağazanın ürünleri" : "Aktif ilanları"}</I18n.h2>
       <ListingGrid items={items} columns={3} emptyAction={false} empty={`${publicName(seller)} şu an aktif bir ilan yayınlamıyor.`} />
     </div>
   );

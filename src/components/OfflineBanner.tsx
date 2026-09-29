@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useSyncExternalStore } from "react";
 import { Icon } from "@/components/icons";
@@ -26,9 +28,9 @@ export function OfflineBanner() {
   if (online) return null;
 
   return (
-    <div className="flex items-center justify-center gap-2 bg-text px-4 py-2.5 text-center text-xs text-surface">
+    <I18n.div className="flex items-center justify-center gap-2 bg-text px-4 py-2.5 text-center text-xs text-surface">
       <Icon name="wifi" className="h-4 w-4 flex-shrink-0" />
       Bağlantın yok. Bazı içerikler güncel olmayabilir.
-    </div>
+    </I18n.div>
   );
 }

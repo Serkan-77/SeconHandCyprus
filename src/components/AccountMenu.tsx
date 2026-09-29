@@ -1,6 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Link from "next/link";
+
 import { usePathname } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
 import { Icon, type IconName } from "@/components/icons";
@@ -34,20 +35,20 @@ export function AccountMenu({
       <div className="hidden items-center gap-2.5 border-b border-border pb-5 sm:flex">
         <Avatar initials={initials(profile.displayName)} src={profile.avatarUrl} />
         <div className="min-w-0">
-          <h3 className="truncate text-[15px] font-semibold">{profile.displayName}</h3>
-          <span className="text-[10px] text-muted">
+          <I18n.h3 className="truncate text-[15px] font-semibold"><I18n.Raw>{profile.displayName}</I18n.Raw></I18n.h3>
+          <I18n.span className="text-[10px] text-muted">
             {[profile.region, `${new Date(profile.createdAt).getFullYear()} üyesi`].filter(Boolean).join(" · ")}
-          </span>
+          </I18n.span>
         </div>
       </div>
-      <nav
+      <I18n.nav
         aria-label="Hesap menüsü"
         className="flex gap-2 overflow-x-auto py-2 sm:flex-col sm:overflow-visible sm:py-5"
       >
         {items.map((item) => {
           const active = item.href === "/hesabim" ? pathname === item.href : pathname.startsWith(item.href);
           return (
-            <Link
+            <I18n.Link
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
@@ -59,19 +60,19 @@ export function AccountMenu({
               <Icon name={item.icon} className="h-[18px] w-[18px] flex-shrink-0" />
               {item.label}
               {item.count ? (
-                <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-accent-soft px-1 text-[10px] text-accent">
+                <I18n.span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-accent-soft px-1 text-[10px] text-accent">
                   {item.count}
-                </span>
+                </I18n.span>
               ) : null}
-            </Link>
+            </I18n.Link>
           );
         })}
-      </nav>
+      </I18n.nav>
       <form action={signOut} className="hidden sm:block">
-        <button type="submit" className="inline-flex items-center gap-2 text-[11px] text-muted hover:text-text">
+        <I18n.button type="submit" className="inline-flex items-center gap-2 text-[11px] text-muted hover:text-text">
           <Icon name="logout" className="h-4 w-4" />
           Çıkış yap
-        </button>
+        </I18n.button>
       </form>
     </aside>
   );

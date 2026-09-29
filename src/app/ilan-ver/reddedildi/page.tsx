@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { redirect } from "next/navigation";
 import { LinkButton } from "@/components/ui/Button";
 import { Icon } from "@/components/icons";
@@ -23,15 +25,15 @@ export default async function ListingRejectedPage({ searchParams }: { searchPara
       <span className="grid h-[85px] w-[85px] place-items-center rounded-full bg-brand-soft text-brand">
         <Icon name="flag" className="h-9 w-9" />
       </span>
-      <h1 className="text-2xl font-semibold">
+      <I18n.h1 className="text-2xl font-semibold">
         {listing.status === "rejected" ? "İlanın yayınlanamadı." : "İlanın durumu güncellendi."}
-      </h1>
-      <p className="max-w-xs text-sm text-muted">
-        <b className="text-text">{listing.title}</b>
+      </I18n.h1>
+      <I18n.p className="max-w-xs text-sm text-muted">
+        <I18n.b className="text-text"><I18n.Raw>{listing.title}</I18n.Raw></I18n.b>
         {listing.status === "rejected"
           ? ` kullanım koşullarımıza uymadığı için yayınlanamadı: ${listing.reject_reason ?? "kurallara uygun bulunmadı."} Düzenleyip tekrar gönderebilirsin.`
           : " için ret kararı artık geçerli değil."}
-      </p>
+      </I18n.p>
       <div className="flex w-full max-w-xs flex-col gap-3">
         <LinkButton href={`/hesabim/ilanlar/${listing.id}`}>İlanı düzenle</LinkButton>
         <LinkButton href="/yardim" variant="outline">

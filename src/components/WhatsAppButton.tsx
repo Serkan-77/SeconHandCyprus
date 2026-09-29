@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -6,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Icon } from "@/components/icons";
 import { getListingWhatsapp } from "@/lib/actions/listings";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 export function WhatsAppButton({
   listingId,
@@ -17,6 +20,7 @@ export function WhatsAppButton({
   loggedIn: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLocale();
   const [phone, setPhone] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
@@ -48,27 +52,27 @@ export function WhatsAppButton({
       </Button>
       <Modal title="WhatsApp'a geçiş" open={open} onClose={() => setOpen(false)}>
         {pending || (!phone && !error) ? (
-          <p className="text-sm text-muted">Satıcının iletişim tercihi kontrol ediliyor…</p>
+          <I18n.p className="text-sm text-muted">Satıcının iletişim tercihi kontrol ediliyor…</I18n.p>
         ) : error ? (
-          <div className="flex items-start gap-2.5 rounded-xl bg-brand-soft p-4 text-sm">
+          <I18n.div className="flex items-start gap-2.5 rounded-xl bg-brand-soft p-4 text-sm">
             <Icon name="info" className="h-4 w-4 flex-shrink-0 text-accent" />
             {error}
-          </div>
+          </I18n.div>
         ) : (
           <>
-            <p className="text-sm text-muted">
+            <I18n.p className="text-sm text-muted">
               Kıbrıs İkinci Elcim&apos;den ayrılıp satıcıyla WhatsApp üzerinden{" "}
-              <b className="text-text">{listingTitle}</b> hakkında konuşacaksın. Ödeme ve buluşma detaylarında
+              <I18n.b className="text-text">{listingTitle}</I18n.b> hakkında konuşacaksın. Ödeme ve buluşma detaylarında
               dikkatli ol.
-            </p>
-            <a
-              href={`https://wa.me/${phone}?text=${encodeURIComponent(`Merhaba, "${listingTitle}" ilanınız hâlâ satılık mı?`)}`}
+            </I18n.p>
+            <I18n.a
+              href={`https://wa.me/${phone}?text=${encodeURIComponent(t(`Merhaba, "${listingTitle}" ilanınız hâlâ satılık mı?`))}`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-button bg-brand text-sm font-semibold text-on-brand"
             >
               WhatsApp&apos;ı aç
-            </a>
+            </I18n.a>
           </>
         )}
       </Modal>

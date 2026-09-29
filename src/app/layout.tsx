@@ -1,5 +1,6 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
 import Script from "next/script";
 import { cookies, headers } from "next/headers";
 import { Inter } from "next/font/google";
@@ -14,6 +15,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { REGION_COOKIE } from "@/lib/regions";
 import { ADSENSE_CLIENT, adsEnabled, adsenseConfigured } from "@/lib/ads";
 import { SITE } from "@/lib/site";
+import { LocaleProvider } from "@/components/i18n/LocaleProvider";
+import { LOCALE_COOKIE, parseLocale } from "@/lib/i18n/translate";
 import "./globals.css";
 
 const inter = Inter({
@@ -62,33 +65,35 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // class; without one, CSS follows prefers-color-scheme.
   const theme = cookieStore.get("theme")?.value;
   const themeClass = theme === "dark" || theme === "light" ? theme : "";
+  const locale = parseLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   const restricted =
     viewer &&
     (viewer.profile.status === "restricted" || viewer.profile.status === "suspended") &&
     (!viewer.profile.statusUntil || new Date(viewer.profile.statusUntil) > new Date());
 
   return (
-    <html lang="tr" className={`${inter.variable} antialiased ${themeClass}`}>
+    <html lang={locale} className={`${inter.variable} antialiased ${themeClass}`}>
       <body className="flex min-h-screen flex-col bg-surface font-sans text-text">
-        <a
+        <LocaleProvider initialLocale={locale}>
+        <I18n.a
           href="#main-content"
           className="fixed left-4 top-[-100px] z-[100] rounded bg-brand px-3 py-2 text-on-brand focus:top-3"
         >
           İçeriğe atla
-        </a>
+        </I18n.a>
         <OfflineBanner />
         {!isSupabaseConfigured ? (
-          <div className="bg-accent-soft px-4 py-2 text-center text-xs text-accent">
-            Veritabanı bağlantısı yapılandırılmadı: <code>.env.local</code> içine Supabase anahtarlarını ekle.
-          </div>
+          <I18n.div className="bg-accent-soft px-4 py-2 text-center text-xs text-accent">
+            Veritabanı bağlantısı yapılandırılmadı: <I18n.code>.env.local</I18n.code> içine Supabase anahtarlarını ekle.
+          </I18n.div>
         ) : null}
         {restricted ? (
-          <div className="bg-brand-soft px-4 py-2 text-center text-xs">
+          <I18n.div className="bg-brand-soft px-4 py-2 text-center text-xs">
             Hesabın kısıtlı. İlan verme ve mesajlaşma geçici olarak kapalı.{" "}
-            <Link href="/hesap-kisitlandi" className="font-semibold text-accent">
+            <I18n.Link href="/hesap-kisitlandi" className="font-semibold text-accent">
               Ayrıntılar
-            </Link>
-          </div>
+            </I18n.Link>
+          </I18n.div>
         ) : null}
         <Header
           viewer={viewer ? { name: viewer.profile.displayName, isAdmin: viewer.profile.role === "admin" } : null}
@@ -97,9 +102,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           unread={unread}
         />
         <FavoritesProvider userKey={viewer?.user.id ?? "guest"} initialIds={favoriteIds}>
-          <main id="main-content" tabIndex={-1} className="flex-1">
+          <I18n.main id="main-content" tabIndex={-1} className="flex-1">
             {children}
-          </main>
+          </I18n.main>
         </FavoritesProvider>
         <Footer />
         {viewer ? <LiveUpdates key={viewer.user.id} userId={viewer.user.id} /> : null}
@@ -114,6 +119,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           />
         ) : null}
         <Analytics />
+        </LocaleProvider>
       </body>
     </html>
   );

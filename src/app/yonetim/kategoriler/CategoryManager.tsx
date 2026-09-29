@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
@@ -21,8 +23,8 @@ export function CategoryManager({ categories }: { categories: Row[] }) {
     <>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kategori yönetimi</h1>
-          <p className="mt-1.5 text-xs text-muted">{categories.length} kategori.</p>
+          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kategori yönetimi</I18n.h1>
+          <I18n.p className="mt-1.5 text-xs text-muted">{categories.length} kategori.</I18n.p>
         </div>
         <Button
           full={false}
@@ -42,28 +44,28 @@ export function CategoryManager({ categories }: { categories: Row[] }) {
         <table className="w-full min-w-[520px] text-left text-xs">
           <thead>
             <tr className="bg-bg text-[10px] text-muted">
-              <th className="p-3 font-medium">Sıra</th>
-              <th className="p-3 font-medium">Ad</th>
-              <th className="p-3 font-medium">Adres</th>
-              <th className="p-3 font-medium">İlan sayısı</th>
+              <I18n.th className="p-3 font-medium">Sıra</I18n.th>
+              <I18n.th className="p-3 font-medium">Ad</I18n.th>
+              <I18n.th className="p-3 font-medium">Adres</I18n.th>
+              <I18n.th className="p-3 font-medium">İlan sayısı</I18n.th>
               <th className="p-3 font-medium" />
             </tr>
           </thead>
-          <tbody>
+          <I18n.tbody>
             {categories.map((cat) => (
               <tr key={cat.id} className="border-b border-border last:border-0">
-                <td className="p-3">{cat.sortOrder}</td>
+                <I18n.td className="p-3">{cat.sortOrder}</I18n.td>
                 <td className="p-3 font-medium">
-                  <span className="flex items-center gap-2">
+                  <I18n.span className="flex items-center gap-2">
                     <Icon name={cat.icon} className="h-4 w-4 text-muted" />
                     {cat.name}
-                  </span>
+                  </I18n.span>
                 </td>
-                <td className="p-3 text-muted">/{cat.slug}</td>
-                <td className="p-3 text-muted">{cat.listings}</td>
+                <I18n.td className="p-3 text-muted">/{cat.slug}</I18n.td>
+                <I18n.td className="p-3 text-muted">{cat.listings}</I18n.td>
                 <td className="p-3">
                   <span className="flex gap-3">
-                    <button
+                    <I18n.button
                       onClick={() => {
                         setError("");
                         setEditing({ id: cat.id, name: cat.name, icon: cat.icon, sortOrder: cat.sortOrder });
@@ -71,8 +73,8 @@ export function CategoryManager({ categories }: { categories: Row[] }) {
                       className="text-[11px] font-medium text-accent"
                     >
                       Düzenle
-                    </button>
-                    <button
+                    </I18n.button>
+                    <I18n.button
                       disabled={pending}
                       onClick={() =>
                         startTransition(async () => {
@@ -83,18 +85,18 @@ export function CategoryManager({ categories }: { categories: Row[] }) {
                       className="text-[11px] font-medium text-muted hover:text-danger"
                     >
                       Sil
-                    </button>
+                    </I18n.button>
                   </span>
                 </td>
               </tr>
             ))}
-          </tbody>
+          </I18n.tbody>
         </table>
       </div>
 
       <Modal title={editing?.id ? "Kategori düzenle" : "Kategori ekle"} open={editing !== null} onClose={() => setEditing(null)}>
         {editing ? (
-          <form
+          <I18n.form
             onSubmit={(e) => {
               e.preventDefault();
               const form = new FormData(e.currentTarget);
@@ -117,10 +119,10 @@ export function CategoryManager({ categories }: { categories: Row[] }) {
             <Field label="Kategori adı" name="name" defaultValue={editing.name} required minLength={2} />
             <Field label="Sıra" name="order" type="number" defaultValue={editing.sortOrder} />
             <fieldset>
-              <legend className="mb-2 text-[13px] font-semibold">İkon</legend>
-              <div className="grid grid-cols-6 gap-2">
+              <I18n.legend className="mb-2 text-[13px] font-semibold">İkon</I18n.legend>
+              <I18n.div className="grid grid-cols-6 gap-2">
                 {iconChoices.map((icon) => (
-                  <button
+                  <I18n.button
                     key={icon}
                     type="button"
                     aria-label={icon}
@@ -132,15 +134,15 @@ export function CategoryManager({ categories }: { categories: Row[] }) {
                     }
                   >
                     <Icon name={icon} className="h-5 w-5" />
-                  </button>
+                  </I18n.button>
                 ))}
-              </div>
+              </I18n.div>
             </fieldset>
             {error ? <FormError>{error}</FormError> : null}
             <Button type="submit" disabled={pending}>
               Kaydet
             </Button>
-          </form>
+          </I18n.form>
         ) : null}
       </Modal>
     </>

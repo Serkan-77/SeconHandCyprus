@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useId, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -22,7 +24,7 @@ export function Switch({
   }
 
   return (
-    <button
+    <I18n.button
       id={id}
       type="button"
       role="switch"
@@ -40,6 +42,6 @@ export function Switch({
           checked ? "left-[21px]" : "left-[3px]",
         )}
       />
-    </button>
+    </I18n.button>
   );
 }

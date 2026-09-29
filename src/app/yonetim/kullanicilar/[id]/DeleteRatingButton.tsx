@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { adminDeleteRating } from "@/lib/actions/admin";
@@ -9,10 +11,10 @@ export function DeleteRatingButton({ id }: { id: string }) {
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
-  if (error) return <span className="flex-shrink-0 text-[11px] text-danger">{error}</span>;
+  if (error) return <I18n.span className="flex-shrink-0 text-[11px] text-danger">{error}</I18n.span>;
 
   return (
-    <button
+    <I18n.button
       type="button"
       disabled={pending}
       onClick={() => {
@@ -29,6 +31,6 @@ export function DeleteRatingButton({ id }: { id: string }) {
       className="flex-shrink-0 text-[11px] font-medium text-accent disabled:opacity-50"
     >
       {pending ? "Siliniyor…" : confirming ? "Emin misin? Sil" : "Sil"}
-    </button>
+    </I18n.button>
   );
 }

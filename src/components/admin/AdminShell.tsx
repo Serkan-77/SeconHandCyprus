@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icons";
 import { Logo } from "@/components/Logo";
@@ -24,7 +26,7 @@ export async function AdminShell({ children }: { children: ReactNode }) {
           <div className="hidden sm:block">
             <Logo tone="dark" className="h-auto w-full" />
           </div>
-          <span className="hidden text-[9px] tracking-[1.5px] text-white/60 sm:block">YÖNETİM</span>
+          <I18n.span className="hidden text-[9px] tracking-[1.5px] text-white/60 sm:block">YÖNETİM</I18n.span>
           <AdminNav
             counts={{
               "/yonetim/ilanlar": pendingListings ?? 0,
@@ -34,19 +36,19 @@ export async function AdminShell({ children }: { children: ReactNode }) {
             }}
           />
           <form action={signOut} className="mt-auto hidden sm:block">
-            <button type="submit" className="flex items-center gap-2.5 text-[11px] text-white/70 hover:text-white">
+            <I18n.button type="submit" className="flex items-center gap-2.5 text-[11px] text-white/70 hover:text-white">
               <Icon name="logout" className="h-4 w-4" />
               Çıkış yap
-            </button>
+            </I18n.button>
           </form>
         </aside>
 
         <div className="min-w-0 flex-1 overflow-auto bg-bg">
           <div className="flex h-[76px] items-center justify-between gap-3 border-b border-border bg-surface px-5 text-xs sm:px-8">
-            <span className="font-medium">Yönetim paneli</span>
-            <span className="truncate text-muted">{viewer.user.email}</span>
+            <I18n.span className="font-medium">Yönetim paneli</I18n.span>
+            <I18n.span className="truncate text-muted">{viewer.user.email}</I18n.span>
           </div>
-          <div className="flex flex-col gap-6 p-5 sm:p-8">{children}</div>
+          <I18n.div className="flex flex-col gap-6 p-5 sm:p-8">{children}</I18n.div>
         </div>
       </div>
     </div>

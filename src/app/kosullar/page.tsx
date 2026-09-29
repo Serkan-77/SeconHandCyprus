@@ -1,5 +1,6 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ContactLine, LegalDocument, type LegalSection } from "@/components/LegalDocument";
 import { SITE } from "@/lib/site";
 
@@ -15,15 +16,15 @@ const sections: LegalSection[] = [
     title: "Hizmetin kapsamı",
     body: (
       <>
-        <p>
+        <I18n.p>
           {SITE.name}, Kıbrıs genelindeki kullanıcıların ikinci el eşyalarını ilan olarak yayınlamasını ve ilgilenen
           kişilerle doğrudan iletişim kurmasını sağlayan ücretsiz bir ilan platformudur.
-        </p>
-        <p>
-          <b>Platform alım satımın tarafı değildir.</b> Ürünün teslimi, ödemesi ve durumu tamamen alıcı ile satıcı
+        </I18n.p>
+        <I18n.p>
+          <I18n.b>Platform alım satımın tarafı değildir.</I18n.b> Ürünün teslimi, ödemesi ve durumu tamamen alıcı ile satıcı
           arasındadır. {SITE.name} ödeme almaz, aracılık etmez, ürün garantisi vermez ve kargo hizmeti sunmaz. Sitede
           gösterilen reklamlar üçüncü taraflarca (Google AdSense) sunulur.
-        </p>
+        </I18n.p>
       </>
     ),
   },
@@ -32,13 +33,13 @@ const sections: LegalSection[] = [
     title: "Hesap açma ve güvenliği",
     body: (
       <ul>
-        <li>Hesap açmak için 18 yaşını doldurmuş olmalı ve doğru bilgi vermelisin.</li>
-        <li>Bir kişi yalnızca bir hesap kullanabilir; hesap devredilemez veya satılamaz.</li>
-        <li>Şifrenin gizliliğinden sen sorumlusun. Hesabının izinsiz kullanıldığını fark edersen hemen bize bildir.</li>
-        <li>
+        <I18n.li>Hesap açmak için 18 yaşını doldurmuş olmalı ve doğru bilgi vermelisin.</I18n.li>
+        <I18n.li>Bir kişi yalnızca bir hesap kullanabilir; hesap devredilemez veya satılamaz.</I18n.li>
+        <I18n.li>Şifrenin gizliliğinden sen sorumlusun. Hesabının izinsiz kullanıldığını fark edersen hemen bize bildir.</I18n.li>
+        <I18n.li>
           Doğrulama rozeti yalnızca e-posta veya telefon numarasının doğrulandığını gösterir; kimlik, güvenilirlik ya da
           ürün garantisi anlamına gelmez.
-        </li>
+        </I18n.li>
       </ul>
     ),
   },
@@ -47,15 +48,15 @@ const sections: LegalSection[] = [
     title: "İlan kuralları",
     body: (
       <>
-        <p>Her ilan yayına alınmadan önce moderasyon ekibi tarafından incelenir. İlanlarında:</p>
+        <I18n.p>Her ilan yayına alınmadan önce moderasyon ekibi tarafından incelenir. İlanlarında:</I18n.p>
         <ul>
-          <li>Satılan ürünün sana ait, gerçek ve satışa hazır olması,</li>
-          <li>Fotoğrafların ürünün kendisine ait olması (katalog veya başka ilandan kopya olmaması),</li>
-          <li>Başlık, fiyat, kategori ve ürün durumunun doğru girilmesi,</li>
-          <li>Her ürün için tek ilan verilmesi, aynı ilanın tekrar tekrar yayınlanmaması,</li>
-          <li>İlan metnine başka sitelerin bağlantıları, reklam veya iletişim dışı içerik eklenmemesi</li>
+          <I18n.li>Satılan ürünün sana ait, gerçek ve satışa hazır olması,</I18n.li>
+          <I18n.li>Fotoğrafların ürünün kendisine ait olması (katalog veya başka ilandan kopya olmaması),</I18n.li>
+          <I18n.li>Başlık, fiyat, kategori ve ürün durumunun doğru girilmesi,</I18n.li>
+          <I18n.li>Her ürün için tek ilan verilmesi, aynı ilanın tekrar tekrar yayınlanmaması,</I18n.li>
+          <I18n.li>İlan metnine başka sitelerin bağlantıları, reklam veya iletişim dışı içerik eklenmemesi</I18n.li>
         </ul>
-        <p>gerekir. Satılan ürünü “Satıldı” olarak işaretlemek satıcının sorumluluğundadır.</p>
+        <I18n.p>gerekir. Satılan ürünü “Satıldı” olarak işaretlemek satıcının sorumluluğundadır.</I18n.p>
       </>
     ),
   },
@@ -64,16 +65,16 @@ const sections: LegalSection[] = [
     title: "Yasaklı ürünler ve içerikler",
     body: (
       <>
-        <p>Aşağıdakilerin ilanı kesinlikle yasaktır ve bu tür ilanlar uyarı yapılmadan kaldırılır:</p>
+        <I18n.p>Aşağıdakilerin ilanı kesinlikle yasaktır ve bu tür ilanlar uyarı yapılmadan kaldırılır:</I18n.p>
         <ul>
-          <li>Silah, mermi, patlayıcı ve bunların parçaları; av tüfeği dahil ruhsata tabi ürünler</li>
-          <li>Uyuşturucu, reçeteli ilaç, tıbbi cihaz ve takviyeler, alkol ve tütün ürünleri</li>
-          <li>Canlı hayvan ve nesli koruma altındaki türlerden yapılmış ürünler</li>
-          <li>Sahte, taklit veya çalıntı ürünler; seri numarası silinmiş cihazlar</li>
-          <li>Kimlik belgesi, plaka, resmi evrak, banka ve hat kartları</li>
-          <li>Yetişkin içerik, nefret söylemi, şiddet veya ayrımcılık içeren her türlü içerik</li>
-          <li>Hizmet, iş ilanı, emlak, kiralama ve dijital hesap/lisans satışları</li>
-          <li>Kıbrıs&apos;ta yürürlükteki mevzuata aykırı diğer tüm ürünler</li>
+          <I18n.li>Silah, mermi, patlayıcı ve bunların parçaları; av tüfeği dahil ruhsata tabi ürünler</I18n.li>
+          <I18n.li>Uyuşturucu, reçeteli ilaç, tıbbi cihaz ve takviyeler, alkol ve tütün ürünleri</I18n.li>
+          <I18n.li>Canlı hayvan ve nesli koruma altındaki türlerden yapılmış ürünler</I18n.li>
+          <I18n.li>Sahte, taklit veya çalıntı ürünler; seri numarası silinmiş cihazlar</I18n.li>
+          <I18n.li>Kimlik belgesi, plaka, resmi evrak, banka ve hat kartları</I18n.li>
+          <I18n.li>Yetişkin içerik, nefret söylemi, şiddet veya ayrımcılık içeren her türlü içerik</I18n.li>
+          <I18n.li>Hizmet, iş ilanı, emlak, kiralama ve dijital hesap/lisans satışları</I18n.li>
+          <I18n.li>Kıbrıs&apos;ta yürürlükteki mevzuata aykırı diğer tüm ürünler</I18n.li>
         </ul>
       </>
     ),
@@ -83,13 +84,13 @@ const sections: LegalSection[] = [
     title: "Mesajlaşma ve iletişim",
     body: (
       <ul>
-        <li>Mesajlaşma yalnızca ilanla ilgili iletişim içindir; spam, taciz ve reklam yasaktır.</li>
-        <li>Görmeden kapora veya ön ödeme istemek ya da göndermek güvenli değildir ve şikayet nedenidir.</li>
-        <li>Rahatsız olduğun kullanıcıyı engelleyebilir ve konuşma menüsünden şikayet edebilirsin.</li>
-        <li>
+        <I18n.li>Mesajlaşma yalnızca ilanla ilgili iletişim içindir; spam, taciz ve reklam yasaktır.</I18n.li>
+        <I18n.li>Görmeden kapora veya ön ödeme istemek ya da göndermek güvenli değildir ve şikayet nedenidir.</I18n.li>
+        <I18n.li>Rahatsız olduğun kullanıcıyı engelleyebilir ve konuşma menüsünden şikayet edebilirsin.</I18n.li>
+        <I18n.li>
           Satıcı izin verdiyse WhatsApp üzerinden de iletişim kurulabilir; bu durumda iletişim platform dışında sürer ve
           {` ${SITE.name}`} bu yazışmaları göremez.
-        </li>
+        </I18n.li>
       </ul>
     ),
   },
@@ -97,11 +98,11 @@ const sections: LegalSection[] = [
     id: "guvenli-alisveris",
     title: "Güvenli alışveriş",
     body: (
-      <p>
+      <I18n.p>
         Ürünü görmeden ödeme yapma, gündüz ve kalabalık bir yerde buluş, elektronik ürünleri çalışır halde kontrol et.
         Şüpheli bir durumda ilanı veya kullanıcıyı şikayet et. Ayrıntılı ipuçları için{" "}
-        <Link href="/yardim#guvenlik">Yardım &amp; güvenlik</Link> sayfasına bakabilirsin.
-      </p>
+        <I18n.Link href="/yardim#guvenlik">Yardım &amp; güvenlik</I18n.Link> sayfasına bakabilirsin.
+      </I18n.p>
     ),
   },
   {
@@ -109,14 +110,14 @@ const sections: LegalSection[] = [
     title: "Moderasyon ve yaptırımlar",
     body: (
       <>
-        <p>
+        <I18n.p>
           Kurallara aykırı ilanlar reddedilir veya yayından kaldırılır; ret gerekçesi satıcıya bildirilir. Tekrarlayan
           veya ağır ihlallerde hesaba uyarı verilebilir, hesap geçici olarak kısıtlanabilir ya da askıya alınabilir.
-        </p>
-        <p>
+        </I18n.p>
+        <I18n.p>
           Kısıtlama süresince ilan verme, mesajlaşma ve favorileme kapalıdır. Karara itiraz etmek için{" "}
-          <Link href="/destek">destek formunu</Link> kullanabilirsin.
-        </p>
+          <I18n.Link href="/destek">destek formunu</I18n.Link> kullanabilirsin.
+        </I18n.p>
       </>
     ),
   },
@@ -124,56 +125,56 @@ const sections: LegalSection[] = [
     id: "icerik-haklari",
     title: "İçerik hakları",
     body: (
-      <p>
+      <I18n.p>
         İlanlarına eklediğin fotoğraf ve metinlerin hakları sende kalır. Bu içerikleri ilanın yayında olduğu süre
         boyunca platformda göstermemiz, arama motorlarında listelenmesini sağlamamız ve paylaşım önizlemelerinde
         kullanmamız için {SITE.name}&apos;e ücretsiz ve devredilemez bir kullanım izni vermiş olursun. İlanı sildiğinde bu
         izin sona erer.
-      </p>
+      </I18n.p>
     ),
   },
   {
     id: "sorumluluk",
     title: "Sorumluluğun sınırlandırılması",
     body: (
-      <p>
+      <I18n.p>
         {SITE.name} ilanların doğruluğunu, ürünlerin kalitesini, kullanıcıların kimliğini veya alım satımın
         gerçekleşmesini garanti etmez. Kullanıcılar arasındaki anlaşmazlıklardan, ürün kusurlarından ve platform
         dışında yapılan ödemelerden doğan zararlardan sorumlu tutulamaz. Hizmet “olduğu gibi” sunulur ve bakım
         nedeniyle geçici olarak kesintiye uğrayabilir.
-      </p>
+      </I18n.p>
     ),
   },
   {
     id: "hesap-kapatma",
     title: "Hesabın kapatılması",
     body: (
-      <p>
-        Hesabını dilediğin zaman <Link href="/hesabim/ayarlar">Hesabım › Ayarlar</Link> bölümünden kalıcı olarak
+      <I18n.p>
+        Hesabını dilediğin zaman <I18n.Link href="/hesabim/ayarlar">Hesabım › Ayarlar</I18n.Link> bölümünden kalıcı olarak
         silebilirsin; profil bilgilerin, ilanların ve fotoğrafların da silinir. Gönderdiğin mesajlar karşı tarafın konuşma
         geçmişinde hesabınla ilişkisi kaldırılmış olarak kalır. Hesabın kısıtlıyken silme işlemi yapılamaz; bu durumda
         destek talebi oluşturabilirsin. Kuralları ağır biçimde ihlal eden hesaplar
         bizim tarafımızdan kapatılabilir.
-      </p>
+      </I18n.p>
     ),
   },
   {
     id: "degisiklikler",
     title: "Koşullardaki değişiklikler",
     body: (
-      <p>
+      <I18n.p>
         Bu koşulları zaman zaman güncelleyebiliriz. Önemli değişiklikleri site içi bildirimle duyururuz; güncellemeden
         sonra siteyi kullanmaya devam etmen yeni koşulları kabul ettiğin anlamına gelir.
-      </p>
+      </I18n.p>
     ),
   },
   {
     id: "iletisim",
     title: "İletişim",
     body: (
-      <p>
+      <I18n.p>
         Bu koşullarla ilgili soruların için <ContactLine />
-      </p>
+      </I18n.p>
     ),
   },
 ];
@@ -185,12 +186,12 @@ export default function TermsPage() {
       current="/kosullar"
       sections={sections}
       intro={
-        <p>
-          Bu koşullar, <b>{SITE.name}</b> web sitesini ve hizmetlerini kullanan herkes için geçerlidir. Siteye kayıt
+        <I18n.p>
+          Bu koşullar, <I18n.b>{SITE.name}</I18n.b> web sitesini ve hizmetlerini kullanan herkes için geçerlidir. Siteye kayıt
           olarak veya siteyi kullanarak bu koşulları kabul etmiş olursun. Kişisel verilerinin nasıl işlendiğini{" "}
-          <Link href="/gizlilik">Gizlilik bildirimi</Link>, çerezleri ise{" "}
-          <Link href="/cerez-politikasi">Çerez politikası</Link> anlatır.
-        </p>
+          <I18n.Link href="/gizlilik">Gizlilik bildirimi</I18n.Link>, çerezleri ise{" "}
+          <I18n.Link href="/cerez-politikasi">Çerez politikası</I18n.Link> anlatır.
+        </I18n.p>
       }
     />
   );

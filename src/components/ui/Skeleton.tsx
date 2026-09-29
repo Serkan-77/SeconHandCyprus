@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { cn } from "@/lib/cn";
 
 export function Skeleton({ className }: { className?: string }) {
@@ -20,11 +22,11 @@ export function ListingCardSkeleton() {
 
 export function ListingGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
+    <I18n.div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
       {Array.from({ length: count }).map((_, i) => (
         <ListingCardSkeleton key={i} />
       ))}
-    </div>
+    </I18n.div>
   );
 }
 

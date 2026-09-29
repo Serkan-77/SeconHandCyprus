@@ -1,8 +1,10 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { ListingGridSkeleton, Skeleton } from "@/components/ui/Skeleton";
 
 export default function ResultsLoading() {
   return (
-    <div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6" aria-busy="true" aria-label="İlanlar yükleniyor">
+    <I18n.div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6" aria-busy="true" aria-label="İlanlar yükleniyor">
       <div className="py-5">
         <Skeleton className="h-3 w-32" />
       </div>
@@ -15,6 +17,6 @@ export default function ResultsLoading() {
           <ListingGridSkeleton count={6} />
         </div>
       </div>
-    </div>
+    </I18n.div>
   );
 }

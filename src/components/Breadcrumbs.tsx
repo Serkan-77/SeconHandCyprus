@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import { JsonLd } from "@/components/JsonLd";
 import { absoluteUrl } from "@/lib/site";
 
@@ -19,23 +20,23 @@ export function Breadcrumbs({ items }: { items: Crumb[] }) {
   };
 
   return (
-    <nav aria-label="İçerik yolu" className="flex flex-wrap items-center gap-2.5 py-5 text-[11px] text-muted">
+    <I18n.nav aria-label="İçerik yolu" className="flex flex-wrap items-center gap-2.5 py-5 text-[11px] text-muted">
       <JsonLd data={structured} />
-      <Link href="/">Ana sayfa</Link>
+      <I18n.Link href="/">Ana sayfa</I18n.Link>
       {crumbs.map((item, i) => (
-        <span key={`${item.label}-${i}`} className="flex items-center gap-2.5">
-          <span>/</span>
+        <I18n.span key={`${item.label}-${i}`} className="flex items-center gap-2.5">
+          <I18n.span>/</I18n.span>
           {item.href && i < crumbs.length - 1 ? (
-            <Link href={item.href} className="hover:text-text">
+            <I18n.Link href={item.href} className="hover:text-text">
               {item.label}
-            </Link>
+            </I18n.Link>
           ) : (
-            <span className={i === crumbs.length - 1 ? "text-text" : ""} aria-current={i === crumbs.length - 1 ? "page" : undefined}>
+            <I18n.span className={i === crumbs.length - 1 ? "text-text" : ""} aria-current={i === crumbs.length - 1 ? "page" : undefined}>
               {item.label}
-            </span>
+            </I18n.span>
           )}
-        </span>
+        </I18n.span>
       ))}
-    </nav>
+    </I18n.nav>
   );
 }

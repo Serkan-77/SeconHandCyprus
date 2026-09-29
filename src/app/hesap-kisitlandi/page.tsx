@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { LinkButton } from "@/components/ui/Button";
 import { Icon } from "@/components/icons";
 
@@ -7,11 +9,11 @@ export default function AccountSuspendedPage() {
       <span className="grid h-24 w-24 -rotate-6 items-center justify-center rounded-[28px] bg-brand-soft text-brand">
         <Icon name="shield" className="h-10 w-10 rotate-6" />
       </span>
-      <h1 className="text-2xl font-semibold">Hesabın geçici olarak kısıtlandı.</h1>
-      <p className="max-w-xs text-sm text-muted">
+      <I18n.h1 className="text-2xl font-semibold">Hesabın geçici olarak kısıtlandı.</I18n.h1>
+      <I18n.p className="max-w-xs text-sm text-muted">
         Kullanım koşullarımıza aykırı bir işlem tespit edildiği için hesabın kısıtlandı. İlan
         verme, mesajlaşma ve favorileme geçici olarak devre dışı.
-      </p>
+      </I18n.p>
       <div className="flex w-full max-w-xs flex-col gap-3">
         <LinkButton href="/destek">İtiraz et / destek al</LinkButton>
         <LinkButton href="/kosullar" variant="outline">

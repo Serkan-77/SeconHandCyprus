@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
@@ -16,14 +18,14 @@ export function SanctionButton({ userId, status }: { userId: string; status: str
 
   return (
     <>
-      <div className="mt-5 flex flex-col gap-3">
+      <I18n.div className="mt-5 flex flex-col gap-3">
         <Button variant="danger" full={false} onClick={() => setOpen(true)}>
           Yaptırım uygula
         </Button>
         {done ? <FormSuccess>{done}</FormSuccess> : null}
-      </div>
+      </I18n.div>
       <Modal title="Gerekçeli yaptırım" open={open} onClose={() => setOpen(false)}>
-        <form
+        <I18n.form
           onSubmit={(e) => {
             e.preventDefault();
             const form = new FormData(e.currentTarget);
@@ -46,7 +48,7 @@ export function SanctionButton({ userId, status }: { userId: string; status: str
           <Button type="submit" variant="danger" disabled={pending}>
             Uygula
           </Button>
-        </form>
+        </I18n.form>
       </Modal>
     </>
   );

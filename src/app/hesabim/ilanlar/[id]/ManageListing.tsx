@@ -1,7 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Image from "next/image";
-import Link from "next/link";
+
 import { useRef, useState, useTransition } from "react";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Checkbox, Field, TextareaField } from "@/components/ui/Field";
@@ -94,58 +94,58 @@ export function ManageListing({ listing, images }: Props) {
   const editable = listing.status !== "removed";
 
   return (
-    <div className="flex flex-col gap-6">
+    <I18n.div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Link href="/hesabim/ilanlar" className="mb-2 inline-flex items-center gap-1 text-[11px] text-muted">
+          <I18n.Link href="/hesabim/ilanlar" className="mb-2 inline-flex items-center gap-1 text-[11px] text-muted">
             <Icon name="back" className="h-3.5 w-3.5" /> İlanlarım
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">İlanı yönet</h1>
+          </I18n.Link>
+          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">İlanı yönet</I18n.h1>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-muted">{listing.viewCount} görüntülenme</span>
+          <I18n.span className="text-[11px] text-muted">{listing.viewCount} görüntülenme</I18n.span>
           <ListingStatusBadge status={listing.status} />
         </div>
       </div>
 
       {listing.status === "rejected" ? (
         <FormError>
-          <b>İlanın yayınlanamadı.</b> {listing.rejectReason ?? "Kurallara uygun bulunmadı."} Düzeltip tekrar incelemeye
+          <I18n.b>İlanın yayınlanamadı.</I18n.b> {listing.rejectReason ?? "Kurallara uygun bulunmadı."} Düzeltip tekrar incelemeye
           gönderebilirsin.
         </FormError>
       ) : listing.status === "active" ? (
-        <Link
+        <I18n.Link
           href="/one-cikar"
           className="flex items-center gap-3 rounded-xl bg-bg p-4 text-xs text-text transition hover:bg-brand-soft"
         >
           <Icon name="spark" className="h-5 w-5 flex-shrink-0" />
-          <span className="flex-1">
-            <b className="block">İlanını öne çıkar</b>
+          <I18n.span className="flex-1">
+            <I18n.b className="block">İlanını öne çıkar</I18n.b>
             Vitrin ve üste taşıma paketleri yakında. Ayrıntıları gör.
-          </span>
+          </I18n.span>
           <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-muted" />
-        </Link>
+        </I18n.Link>
       ) : listing.status === "pending" ? (
-        <div className="flex items-start gap-2.5 rounded-xl bg-bg p-4 text-xs text-muted">
+        <I18n.div className="flex items-start gap-2.5 rounded-xl bg-bg p-4 text-xs text-muted">
           <Icon name="clock" className="h-4 w-4 flex-shrink-0 text-accent" />
           İlanın incelemede. Onaylandığında sana bildirim göndereceğiz.
-        </div>
+        </I18n.div>
       ) : null}
 
       <div className="flex flex-col gap-6 rounded-2xl border border-border p-5 sm:p-7">
         <section>
-          <h2 className="mb-3 text-sm font-semibold">Fotoğraflar ({images.length}/{MAX_PHOTOS})</h2>
-          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
+          <I18n.h2 className="mb-3 text-sm font-semibold">Fotoğraflar ({images.length}/{MAX_PHOTOS})</I18n.h2>
+          <I18n.div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
             {images.map((img, i) => (
-              <div key={img.id} className="relative aspect-square overflow-hidden rounded-xl bg-bg">
-                <Image src={img.url} alt={`Fotoğraf ${i + 1}`} fill sizes="160px" className="object-cover" />
+              <I18n.div key={img.id} className="relative aspect-square overflow-hidden rounded-xl bg-bg">
+                <I18n.Image src={img.url} alt={`Fotoğraf ${i + 1}`} fill sizes="160px" className="object-cover" />
                 {i === 0 ? (
-                  <span className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[9px] text-[#111318]">
+                  <I18n.span className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[9px] text-[#111318]">
                     Kapak
-                  </span>
+                  </I18n.span>
                 ) : null}
                 {editable && images.length > 1 ? (
-                  <button
+                  <I18n.button
                     type="button"
                     aria-label={`${i + 1}. fotoğrafı kaldır`}
                     disabled={pending}
@@ -153,12 +153,12 @@ export function ManageListing({ listing, images }: Props) {
                     className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-white/90 text-[#111318]"
                   >
                     <Icon name="close" className="h-4 w-4" />
-                  </button>
+                  </I18n.button>
                 ) : null}
-              </div>
+              </I18n.div>
             ))}
             {editable && images.length < MAX_PHOTOS ? (
-              <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border text-[10px] text-muted">
+              <I18n.label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border text-[10px] text-muted">
                 <Icon name={uploading ? "refresh" : "plus"} className="h-5 w-5" />
                 {uploading ? "Yükleniyor…" : "Ekle"}
                 <input
@@ -170,12 +170,12 @@ export function ManageListing({ listing, images }: Props) {
                   className="hidden"
                   onChange={(e) => onFiles(e.target.files)}
                 />
-              </label>
+              </I18n.label>
             ) : null}
-          </div>
+          </I18n.div>
         </section>
 
-        <form
+        <I18n.form
           onSubmit={(e) => {
             e.preventDefault();
             const form = new FormData(e.currentTarget);
@@ -195,7 +195,7 @@ export function ManageListing({ listing, images }: Props) {
           }}
           className="flex flex-col gap-4"
         >
-          <h2 className="text-sm font-semibold">İlan bilgileri</h2>
+          <I18n.h2 className="text-sm font-semibold">İlan bilgileri</I18n.h2>
           <Field label="Başlık" name="title" defaultValue={listing.title} required minLength={3} maxLength={120} disabled={!editable} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1fr]">
             <Field
@@ -207,19 +207,19 @@ export function ManageListing({ listing, images }: Props) {
               required
               disabled={!editable}
             />
-            <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+            <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
               Bölge
-              <select
+              <I18n.select
                 name="city"
                 defaultValue={listing.city}
                 disabled={!editable}
                 className="min-h-12 w-full rounded-field border border-border bg-surface px-4 text-base font-normal text-text focus:outline-none"
               >
                 {regionNames.map((r) => (
-                  <option key={r}>{r}</option>
+                  <I18n.option key={r}>{r}</I18n.option>
                 ))}
-              </select>
-            </label>
+              </I18n.select>
+            </I18n.label>
             <Field label="Semt (opsiyonel)" name="district" defaultValue={listing.district} maxLength={40} disabled={!editable} />
           </div>
           <TextareaField
@@ -234,7 +234,7 @@ export function ManageListing({ listing, images }: Props) {
           {message.error ? <FormError>{message.error}</FormError> : null}
           {message.ok ? <FormSuccess>{message.ok}</FormSuccess> : null}
           {editable ? (
-            <div className="flex flex-wrap items-center gap-3">
+            <I18n.div className="flex flex-wrap items-center gap-3">
               <Button type="submit" full={false} disabled={pending} className="sm:min-w-[160px]">
                 Değişiklikleri kaydet
               </Button>
@@ -249,11 +249,11 @@ export function ManageListing({ listing, images }: Props) {
                   Tekrar incelemeye gönder
                 </Button>
               ) : null}
-            </div>
+            </I18n.div>
           ) : null}
-        </form>
+        </I18n.form>
 
-        <div className="flex flex-wrap gap-3 border-t border-border pt-6">
+        <I18n.div className="flex flex-wrap gap-3 border-t border-border pt-6">
           {listing.status === "active" ? (
             <>
               <LinkButton href={`/ilan/${listing.slug}`} variant="outline" full={false}>
@@ -282,22 +282,22 @@ export function ManageListing({ listing, images }: Props) {
           >
             İlanı sil
           </Button>
-        </div>
+        </I18n.div>
       </div>
 
       <Modal title="Satışı tamamla" open={modal === "sold"} onClose={() => setModal(null)}>
-        <p className="text-sm text-muted">
-          {listing.title} ilanını satıldı olarak işaretlemek üzeresin. İlan artık arama sonuçlarında görünmeyecek.
-        </p>
+        <I18n.p className="text-sm text-muted">
+          <I18n.Raw>{listing.title}</I18n.Raw> ilanını satıldı olarak işaretlemek üzeresin. İlan artık arama sonuçlarında görünmeyecek.
+        </I18n.p>
         <Button className="mt-5" disabled={pending} onClick={() => run(() => setListingStatus(listing.id, "sold"), "İlan satıldı olarak işaretlendi.")}>
           Satıldı olarak işaretle
         </Button>
       </Modal>
 
       <Modal title="İlan silme onayı" open={modal === "delete"} onClose={() => setModal(null)}>
-        <p className="text-sm text-muted">
-          {listing.title} ilanını ve fotoğraflarını kalıcı olarak silmek istediğine emin misin? Bu işlem geri alınamaz.
-        </p>
+        <I18n.p className="text-sm text-muted">
+          <I18n.Raw>{listing.title}</I18n.Raw> ilanını ve fotoğraflarını kalıcı olarak silmek istediğine emin misin? Bu işlem geri alınamaz.
+        </I18n.p>
         <div className="mt-5 flex gap-3">
           <Button variant="outline" full={false} onClick={() => setModal(null)}>
             Vazgeç
@@ -307,6 +307,6 @@ export function ManageListing({ listing, images }: Props) {
           </Button>
         </div>
       </Modal>
-    </div>
+    </I18n.div>
   );
 }

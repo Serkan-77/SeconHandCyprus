@@ -1,6 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
@@ -113,7 +114,7 @@ export function LiveUpdates({ userId }: { userId: string }) {
   if (!toasts.length) return null;
 
   return (
-    <div
+    <I18n.div
       aria-live="polite"
       className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col items-end gap-2 sm:inset-x-auto sm:right-6 sm:w-[360px]"
     >
@@ -123,31 +124,31 @@ export function LiveUpdates({ userId }: { userId: string }) {
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
               <Icon name="bell" className="h-4 w-4" />
             </span>
-            <span className="min-w-0 flex-1">
-              <b className="block truncate text-[13px]">{t.title}</b>
-              {t.body ? <span className="mt-0.5 line-clamp-2 block text-xs text-muted">{t.body}</span> : null}
-            </span>
+            <I18n.span className="min-w-0 flex-1">
+              <I18n.b className="block truncate text-[13px]">{t.title}</I18n.b>
+              {t.body ? <I18n.span className="mt-0.5 line-clamp-2 block text-xs text-muted">{t.body}</I18n.span> : null}
+            </I18n.span>
           </>
         );
         const dismiss = () => setToasts((prev) => prev.filter((x) => x.id !== t.id));
         return (
-          <div
+          <I18n.div
             key={t.id}
             className="pointer-events-auto flex w-full items-start gap-2 rounded-xl border border-border border-l-4 border-l-brand bg-surface p-3 shadow-lg"
           >
             {t.link ? (
-              <Link href={t.link} onClick={dismiss} className="flex min-w-0 flex-1 items-start gap-3">
+              <I18n.Link href={t.link} onClick={dismiss} className="flex min-w-0 flex-1 items-start gap-3">
                 {content}
-              </Link>
+              </I18n.Link>
             ) : (
-              <div className="flex min-w-0 flex-1 items-start gap-3">{content}</div>
+              <I18n.div className="flex min-w-0 flex-1 items-start gap-3">{content}</I18n.div>
             )}
-            <button type="button" onClick={dismiss} aria-label="Bildirimi kapat" className="grid h-7 w-7 place-items-center text-muted">
+            <I18n.button type="button" onClick={dismiss} aria-label="Bildirimi kapat" className="grid h-7 w-7 place-items-center text-muted">
               <Icon name="close" className="h-3.5 w-3.5" />
-            </button>
-          </div>
+            </I18n.button>
+          </I18n.div>
         );
       })}
-    </div>
+    </I18n.div>
   );
 }

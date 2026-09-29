@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
@@ -27,16 +29,16 @@ export function MapPreview({
           stroke="#bdc6d4"
           strokeWidth={2}
         />
-        <text x="28" y="52" fontFamily="Inter,Arial" fontSize="11" fill="#63748d">
+        <I18n.text x="28" y="52" fontFamily="Inter,Arial" fontSize="11" fill="#63748d">
           Akdeniz
-        </text>
-        <text x="251" y="196" fontFamily="Inter,Arial" fontSize="13" fill="#5f6b7d">
+        </I18n.text>
+        <I18n.text x="251" y="196" fontFamily="Inter,Arial" fontSize="13" fill="#5f6b7d">
           {label}
-        </text>
+        </I18n.text>
       </svg>
-      <span className="absolute left-4 top-3.5 rounded bg-white/88 px-2 py-1 text-[9px] tracking-wide text-[#606c7c]">
+      <I18n.span className="absolute left-4 top-3.5 rounded bg-white/88 px-2 py-1 text-[9px] tracking-wide text-[#606c7c]">
         ŞEMATİK KONUM ÖNİZLEMESİ
-      </span>
+      </I18n.span>
       <span className="absolute left-[28%] top-[18%] h-[155px] w-[155px] rounded-full border border-[#11131855] bg-[#11131811]" />
       <span className="absolute left-[45%] top-[38%] text-accent">
         <Icon name="pin" className="h-9 w-9" fill="currentColor" stroke="white" />

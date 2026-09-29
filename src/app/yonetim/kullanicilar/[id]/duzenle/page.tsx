@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { LinkButton } from "@/components/ui/Button";
@@ -29,7 +31,7 @@ async function Editor({ id }: { id: string }) {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kullanıcıyı düzenle</h1>
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kullanıcıyı düzenle</I18n.h1>
         <LinkButton href={`/yonetim/kullanicilar/${id}`} variant="outline" full={false} className="min-h-10 text-xs">
           Kullanıcıya dön
         </LinkButton>

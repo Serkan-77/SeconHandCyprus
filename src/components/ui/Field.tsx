@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -12,15 +14,15 @@ type FieldWrapperProps = {
 
 function FieldWrapper({ label, hint, error, children, className }: FieldWrapperProps) {
   return (
-    <label className={cn("flex flex-col gap-2 text-[13px] font-semibold text-text", className)}>
+    <I18n.label className={cn("flex flex-col gap-2 text-[13px] font-semibold text-text", className)}>
       {label}
       {children}
       {error ? (
-        <small className="text-[11px] font-normal text-danger">{error}</small>
+        <I18n.small className="text-[11px] font-normal text-danger">{error}</I18n.small>
       ) : hint ? (
-        <small className="text-[11px] font-normal text-muted">{hint}</small>
+        <I18n.small className="text-[11px] font-normal text-muted">{hint}</I18n.small>
       ) : null}
-    </label>
+    </I18n.label>
   );
 }
 
@@ -44,7 +46,7 @@ export function Field({
       {rest.type === "password" ? (
         <PasswordInput className={inputClass} data-error={Boolean(error)} {...rest} />
       ) : (
-        <input className={inputClass} data-error={Boolean(error)} {...rest} />
+        <I18n.input className={inputClass} data-error={Boolean(error)} {...rest} />
       )}
     </FieldWrapper>
   );
@@ -66,11 +68,11 @@ export function SelectField({
 } & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <FieldWrapper label={label} hint={hint} error={error} className={className}>
-      <select className={inputClass} {...rest}>
+      <I18n.select className={inputClass} {...rest} aria-label={rest["aria-label"] ?? label}>
         {options.map((option) => (
-          <option key={option}>{option}</option>
+          <I18n.option key={option}>{option}</I18n.option>
         ))}
-      </select>
+      </I18n.select>
     </FieldWrapper>
   );
 }
@@ -89,7 +91,7 @@ export function TextareaField({
 } & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <FieldWrapper label={label} hint={hint} error={error} className={className}>
-      <textarea className={cn(inputClass, "min-h-32 resize-y py-3")} {...rest} />
+      <I18n.textarea className={cn(inputClass, "min-h-32 resize-y py-3")} {...rest} />
     </FieldWrapper>
   );
 }
@@ -100,13 +102,13 @@ export function Checkbox({
   ...rest
 }: { label: ReactNode; className?: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className={cn("flex items-start gap-2.5 text-[12px] text-muted", className)}>
-      <input
+    <I18n.label className={cn("flex items-start gap-2.5 text-[12px] text-muted", className)}>
+      <I18n.input
         type="checkbox"
         className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 accent-brand"
         {...rest}
       />
       {label}
-    </label>
+    </I18n.label>
   );
 }

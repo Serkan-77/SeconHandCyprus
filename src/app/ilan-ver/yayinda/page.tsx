@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { LinkButton } from "@/components/ui/Button";
 import { Icon } from "@/components/icons";
 
@@ -10,10 +12,10 @@ export default async function ListingSubmittedPage({ searchParams }: { searchPar
       <span className="grid h-[85px] w-[85px] place-items-center rounded-full bg-accent-soft text-accent">
         <Icon name="check" className="h-9 w-9" />
       </span>
-      <h1 className="text-2xl font-semibold">İlanın incelemeye gönderildi.</h1>
-      <p className="max-w-xs text-sm text-muted">
+      <I18n.h1 className="text-2xl font-semibold">İlanın incelemeye gönderildi.</I18n.h1>
+      <I18n.p className="max-w-xs text-sm text-muted">
         İlanın onaylandığında yayına alınacak ve sana bildirim göndereceğiz. Bu genellikle birkaç saat içinde tamamlanır.
-      </p>
+      </I18n.p>
       <div className="flex w-full max-w-xs flex-col gap-3">
         <LinkButton href={id ? `/hesabim/ilanlar/${id}` : "/hesabim/ilanlar?sekme=inceleme"}>İlanımı gör</LinkButton>
         <LinkButton href="/ilan-ver/fotograflar" variant="outline">

@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -21,7 +23,7 @@ export function Badge({
   className?: string;
 }) {
   return (
-    <span
+    <I18n.span
       className={cn(
         "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold leading-tight",
         kindClass[kind],
@@ -30,6 +32,6 @@ export function Badge({
     >
       {icon}
       {children}
-    </span>
+    </I18n.span>
   );
 }

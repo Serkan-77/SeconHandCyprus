@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 import { Icon, type IconName } from "@/components/icons";
@@ -12,7 +14,7 @@ export function IconButton({
   label: string;
 } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button
+    <I18n.button
       aria-label={label}
       className={cn(
         "inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-text transition hover:bg-brand-soft",
@@ -21,6 +23,6 @@ export function IconButton({
       {...rest}
     >
       <Icon name={icon} className="h-5 w-5" />
-    </button>
+    </I18n.button>
   );
 }

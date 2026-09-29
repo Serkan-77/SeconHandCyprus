@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { LinkButton } from "@/components/ui/Button";
@@ -44,7 +45,7 @@ async function ReportDetail({ id }: { id: string }) {
     <>
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Şikayet inceleme</h1>
+          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Şikayet inceleme</I18n.h1>
           <Badge kind={s.kind}>{s.label}</Badge>
         </div>
         <LinkButton href="/yonetim/sikayetler" variant="outline" full={false} className="min-h-10 text-xs">
@@ -52,74 +53,74 @@ async function ReportDetail({ id }: { id: string }) {
         </LinkButton>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <h2 className="text-sm font-semibold">{report.reason}</h2>
-          <p className="mt-2 text-xs text-muted">
+      <I18n.div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <I18n.div className="rounded-xl border border-border bg-surface p-5">
+          <I18n.h2 className="text-sm font-semibold">{report.reason}</I18n.h2>
+          <I18n.p className="mt-2 text-xs text-muted">
             Hedef:{" "}
             {listing ? (
-              <Link href={`/yonetim/ilanlar/${listing.id}`} className="text-accent">
-                İlan · {listing.title}
-              </Link>
+              <I18n.Link href={`/yonetim/ilanlar/${listing.id}`} className="text-accent">
+                İlan · <I18n.Raw>{listing.title}</I18n.Raw>
+              </I18n.Link>
             ) : reported ? (
-              <Link href={`/yonetim/kullanicilar/${reported.id}`} className="text-accent">
-                Kullanıcı · {reported.display_name}
-              </Link>
+              <I18n.Link href={`/yonetim/kullanicilar/${reported.id}`} className="text-accent">
+                Kullanıcı · <I18n.Raw>{reported.display_name}</I18n.Raw>
+              </I18n.Link>
             ) : (
               snapshotLabel(snapshot)
             )}
-          </p>
-          <p className="mt-1 text-xs text-muted">
+          </I18n.p>
+          <I18n.p className="mt-1 text-xs text-muted">
             Bildiren:{" "}
             {reporter ? (
-              <Link href={`/yonetim/kullanicilar/${reporter.id}`} className="text-accent">
-                {reporter.display_name}
-              </Link>
+              <I18n.Link href={`/yonetim/kullanicilar/${reporter.id}`} className="text-accent">
+                <I18n.Raw>{reporter.display_name}</I18n.Raw>
+              </I18n.Link>
             ) : (
               "Silinmiş kullanıcı"
             )}{" "}
-            · {formatDate(report.created_at)}
-          </p>
-          <p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed">
-            {report.detail || <span className="text-muted">Bildiren kullanıcı ek açıklama bırakmadı.</span>}
-          </p>
+            · <I18n.Formatted kind="formatDate" args={[report.created_at]} />
+          </I18n.p>
+          <I18n.p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed">
+            {report.detail || <I18n.span className="text-muted">Bildiren kullanıcı ek açıklama bırakmadı.</I18n.span>}
+          </I18n.p>
           {snapListing ? (
-            <div className="mt-4 rounded-lg border border-border p-3 text-xs">
-              <p className="font-semibold">
+            <I18n.div className="mt-4 rounded-lg border border-border p-3 text-xs">
+              <I18n.p className="font-semibold">
                 Şikayet anındaki ilan{listing ? "" : " (ilan silinmiş)"}
                 {snapshot?.captured_at ? ` · ${formatDate(snapshot.captured_at)}` : ""}
-              </p>
-              <p className="mt-1">
+              </I18n.p>
+              <I18n.p className="mt-1">
                 {snapListing.title}
                 {snapListing.ref_no ? ` · #${snapListing.ref_no}` : ""}
                 {snapListing.price != null ? ` · ${snapListing.price} ${snapListing.currency ?? ""}` : ""}
                 {snapListing.city ? ` · ${snapListing.city}` : ""}
-              </p>
-              <p className="mt-1 text-muted">
+              </I18n.p>
+              <I18n.p className="mt-1 text-muted">
                 Satıcı:{" "}
                 {snapListing.seller_id ? (
-                  <Link href={`/yonetim/kullanicilar/${snapListing.seller_id}`} className="text-accent">
+                  <I18n.Link href={`/yonetim/kullanicilar/${snapListing.seller_id}`} className="text-accent">
                     {snapListing.seller_name ?? "—"}
-                  </Link>
+                  </I18n.Link>
                 ) : (
                   (snapListing.seller_name ?? "—")
                 )}
                 {snapListing.images?.length ? ` · ${snapListing.images.length} fotoğraf` : ""}
-              </p>
+              </I18n.p>
               {snapListing.description ? (
-                <p className="mt-2 whitespace-pre-line text-muted">{snapListing.description}</p>
+                <I18n.p className="mt-2 whitespace-pre-line text-muted">{snapListing.description}</I18n.p>
               ) : null}
-            </div>
+            </I18n.div>
           ) : null}
           {report.resolution_note ? (
-            <p className="mt-4 rounded-lg bg-brand-soft p-3 text-xs">
-              <b>Moderasyon notu:</b> {report.resolution_note}
+            <I18n.p className="mt-4 rounded-lg bg-brand-soft p-3 text-xs">
+              <I18n.b>Moderasyon notu:</I18n.b> {report.resolution_note}
               {report.resolved_at ? ` · ${formatDate(report.resolved_at)}` : ""}
-            </p>
+            </I18n.p>
           ) : null}
-        </div>
+        </I18n.div>
         {report.status !== "resolved" ? <ResolveReportForm id={report.id} status={report.status} /> : null}
-      </div>
+      </I18n.div>
     </>
   );
 }

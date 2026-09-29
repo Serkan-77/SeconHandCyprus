@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useRouter } from "next/navigation";
 import { WizardLayout } from "@/components/WizardLayout";
@@ -26,10 +28,10 @@ export function DetailsForm({ categories }: { categories: { slug: string; name: 
         className="flex flex-col gap-6"
       >
         <div>
-          <h2 className="text-xl font-semibold">Ürün bilgileri</h2>
-          <p className="mt-2 text-[13px] text-muted">
+          <I18n.h2 className="text-xl font-semibold">Ürün bilgileri</I18n.h2>
+          <I18n.p className="mt-2 text-[13px] text-muted">
             Alıcıların aradığını bulmasına yardımcı olacak net bir başlık ve açıklama yaz.
-          </p>
+          </I18n.p>
         </div>
 
         <Field
@@ -42,9 +44,9 @@ export function DetailsForm({ categories }: { categories: { slug: string; name: 
           maxLength={120}
           hint={`${draft.title.length}/120`}
         />
-        <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+        <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
           Kategori
-          <select
+          <I18n.select
             required
             value={draft.category}
             onChange={(e) => {
@@ -53,16 +55,16 @@ export function DetailsForm({ categories }: { categories: { slug: string; name: 
             }}
             className={selectClass}
           >
-            <option value="" disabled>
+            <I18n.option value="" disabled>
               Kategori seç
-            </option>
+            </I18n.option>
             {categories.map((c) => (
-              <option key={c.slug} value={c.slug}>
+              <I18n.option key={c.slug} value={c.slug}>
                 {c.name}
-              </option>
+              </I18n.option>
             ))}
-          </select>
-        </label>
+          </I18n.select>
+        </I18n.label>
         <SelectField
           label="Ürün durumu"
           options={conditions}

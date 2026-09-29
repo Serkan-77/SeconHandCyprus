@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
@@ -48,7 +50,7 @@ export function ProfileForm({
       {mode === "setup" ? <input type="hidden" name="next" value="/" /> : null}
       <div className="flex items-center gap-4">
         <Avatar initials={initials(name)} src={avatarPreview} large />
-        <div className="flex flex-col gap-1.5">
+        <I18n.div className="flex flex-col gap-1.5">
           <Button
             type="button"
             variant="outline"
@@ -65,8 +67,8 @@ export function ProfileForm({
             className="hidden"
             onChange={(e) => onAvatar(e.target.files?.[0])}
           />
-          {uploadError ? <small className="text-[11px] text-danger">{uploadError}</small> : null}
-        </div>
+          {uploadError ? <I18n.small className="text-[11px] text-danger">{uploadError}</I18n.small> : null}
+        </I18n.div>
       </div>
       <Field
         label={mode === "setup" ? "Görünen adın" : "Görünen ad"}
@@ -78,19 +80,19 @@ export function ProfileForm({
         maxLength={40}
         hint="Adın ve soyadının baş harfi yeterli, örn. Deniz A."
       />
-      <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+      <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
         Bölge
-        <select
+        <I18n.select
           name="region"
           defaultValue={profile.region ?? ""}
           className="min-h-12 w-full rounded-field border border-border bg-surface px-4 text-base font-normal text-text focus:outline-none"
         >
-          <option value="">Seçilmedi</option>
+          <I18n.option value="">Seçilmedi</I18n.option>
           {regionNames.map((r) => (
-            <option key={r}>{r}</option>
+            <I18n.option key={r}>{r}</I18n.option>
           ))}
-        </select>
-      </label>
+        </I18n.select>
+      </I18n.label>
       {mode === "edit" ? (
         <TextareaField
           label="Hakkımda"
@@ -103,7 +105,7 @@ export function ProfileForm({
       ) : null}
       {state?.error ? <FormError>{state.error}</FormError> : null}
       {state?.ok ? <FormSuccess>Profilin kaydedildi.</FormSuccess> : null}
-      <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
+      <I18n.div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
         {mode === "edit" ? (
           <LinkButton href="/hesabim" variant="outline" full={false} className="sm:min-w-[140px]">
             Vazgeç
@@ -112,7 +114,7 @@ export function ProfileForm({
         <Button type="submit" disabled={pending || uploading}>
           {pending ? "Kaydediliyor…" : mode === "setup" ? "Devam et" : "Kaydet"}
         </Button>
-      </div>
+      </I18n.div>
     </ActionForm>
   );
 }

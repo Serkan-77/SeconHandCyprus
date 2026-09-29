@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState, useState } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
@@ -28,7 +30,7 @@ export function LoginForm({
 
   return (
     <AuthLayout title="Tekrar hoş geldin." backHref="/" backLabel="Keşfetmeye dön">
-      <p className="text-sm text-muted">Favorilerin, mesajların ve yeni keşiflerin seni bekliyor.</p>
+      <I18n.p className="text-sm text-muted">Favorilerin, mesajların ve yeni keşiflerin seni bekliyor.</I18n.p>
 
       {linkError ? (
         <FormError className="mt-5">Bağlantı bu tarayıcıda açılamadı ya da süresi dolmuş. E-postanı doğruladıysan aşağıdan giriş yapabilirsin.</FormError>
@@ -45,9 +47,9 @@ export function LoginForm({
       ) : null}
 
       {AUTH_METHODS.phone ? (
-        <div className="mt-5 flex gap-0 border-b border-border" role="tablist">
+        <I18n.div className="mt-5 flex gap-0 border-b border-border" role="tablist">
           {(["email", "phone"] as const).map((tab) => (
-            <button
+            <I18n.button
               key={tab}
               type="button"
               role="tab"
@@ -59,9 +61,9 @@ export function LoginForm({
               }
             >
               {tab === "email" ? "E-posta" : "Telefon"}
-            </button>
+            </I18n.button>
           ))}
-        </div>
+        </I18n.div>
       ) : null}
 
       {mode === "email" ? (
@@ -102,14 +104,14 @@ export function LoginForm({
         </ActionForm>
       )}
 
-      <div className="mt-5 flex items-center gap-2.5 rounded-xl bg-brand-soft p-3.5 text-xs leading-relaxed">
+      <I18n.div className="mt-5 flex items-center gap-2.5 rounded-xl bg-brand-soft p-3.5 text-xs leading-relaxed">
         <Icon name="lock" className="h-[18px] w-[18px] flex-shrink-0 text-accent" />
         Bilgilerin yalnızca hesabın ve iletişimin için kullanılır.
-      </div>
+      </I18n.div>
 
-      <p className="mt-5 text-center text-sm text-muted">
+      <I18n.p className="mt-5 text-center text-sm text-muted">
         Hesabın yok mu? <TextLink href={`/kayit${next}`}>Kayıt ol</TextLink>
-      </p>
+      </I18n.p>
     </AuthLayout>
   );
 }

@@ -15,6 +15,7 @@
     "integration": "node --env-file=.env.local scripts/integration-check.mjs",
     "e2e": "node --env-file=.env.local scripts/e2e-check.mjs",
     "responsive": "node --env-file=.env.local scripts/responsive-check.mjs",
+    "test:i18n": "node scripts/i18n-check.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
     "smoke": "node scripts/production-smoke.mjs",
     "smoke:local": "node --env-file=.env.local scripts/production-smoke.mjs"

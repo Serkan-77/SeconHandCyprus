@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { LinkButton } from "@/components/ui/Button";
@@ -7,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ListingStatusBadge } from "@/components/ListingStatusBadge";
 import { createClient } from "@/lib/supabase/server";
 import { getSellerSummary, one, type ListingStatus } from "@/lib/queries";
-import { formatDate, formatPrice, initials, ratingLabel } from "@/lib/format";
+import { formatDate, initials } from "@/lib/format";
 import { accountStatus, reportStatus, sanctionLabel } from "@/lib/adminLabels";
 import { SanctionButton } from "./SanctionButton";
 import { DeleteRatingButton } from "./DeleteRatingButton";
@@ -63,7 +64,7 @@ async function UserDetail({ id }: { id: string }) {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kullanıcı detayı</h1>
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kullanıcı detayı</I18n.h1>
         <div className="flex flex-wrap gap-2.5">
           <LinkButton href={`/yonetim/kullanicilar/${user.id}/duzenle`} full={false} className="min-h-10 text-xs">
             Düzenle / sil
@@ -76,116 +77,116 @@ async function UserDetail({ id }: { id: string }) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.2fr]">
         <div className="flex flex-col gap-6">
-          <div className="rounded-xl border border-border bg-surface p-5">
+          <I18n.div className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center gap-3">
               <Avatar initials={initials(user.displayName)} src={user.avatarUrl} large />
-              <div className="min-w-0">
-                <h2 className="text-lg font-semibold">{user.displayName}</h2>
-                <p className="truncate text-xs text-muted">{contact?.email ?? "—"}</p>
-                {contact?.phone ? <p className="text-xs text-muted">{contact.phone}</p> : null}
-              </div>
+              <I18n.div className="min-w-0">
+                <I18n.h2 className="text-lg font-semibold"><I18n.Raw>{user.displayName}</I18n.Raw></I18n.h2>
+                <I18n.p className="truncate text-xs text-muted">{contact?.email ?? "—"}</I18n.p>
+                {contact?.phone ? <I18n.p className="text-xs text-muted">{contact.phone}</I18n.p> : null}
+              </I18n.div>
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3 text-xs">
               <div>
-                <strong className="block text-lg">{user.activeListings}</strong>
-                <span className="text-muted">Aktif ilan</span>
+                <I18n.strong className="block text-lg">{user.activeListings}</I18n.strong>
+                <I18n.span className="text-muted">Aktif ilan</I18n.span>
               </div>
               <div>
-                <strong className="block text-lg">{user.soldListings}</strong>
-                <span className="text-muted">Satılan</span>
+                <I18n.strong className="block text-lg">{user.soldListings}</I18n.strong>
+                <I18n.span className="text-muted">Satılan</I18n.span>
               </div>
               <div>
-                <strong className="block text-lg">{new Date(user.createdAt).getFullYear()}</strong>
-                <span className="text-muted">Üyelik yılı</span>
+                <I18n.strong className="block text-lg">{new Date(user.createdAt).getFullYear()}</I18n.strong>
+                <I18n.span className="text-muted">Üyelik yılı</I18n.span>
               </div>
             </div>
-            <p className="mt-4 text-xs text-muted">{ratingLabel(user.ratingAvg, user.ratingCount)}</p>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <I18n.p className="mt-4 text-xs text-muted"><I18n.Formatted kind="ratingLabel" args={[user.ratingAvg, user.ratingCount]} /></I18n.p>
+            <I18n.div className="mt-4 flex flex-wrap items-center gap-2">
               <Badge kind={status.kind}>{status.label}</Badge>
-              {user.statusUntil ? <span className="text-[11px] text-muted">bitiş {formatDate(user.statusUntil)}</span> : null}
+              {user.statusUntil ? <I18n.span className="text-[11px] text-muted">bitiş <I18n.Formatted kind="formatDate" args={[user.statusUntil]} /></I18n.span> : null}
               {user.phoneVerified ? <Badge kind="neutral">Telefon elle incelendi</Badge> : null}
               {user.role === "admin" ? <Badge kind="neutral">Yönetici</Badge> : null}
               {user.accountType === "store" ? (
-                <Badge kind="accent">{user.storeVerified ? "Onaylı mağaza" : "Mağaza"}: {user.storeName}</Badge>
+                <Badge kind="accent">{user.storeVerified ? "Onaylı mağaza" : "Mağaza"}: <I18n.Raw>{user.storeName}</I18n.Raw></Badge>
               ) : null}
-            </div>
+            </I18n.div>
             {user.role !== "admin" ? <SanctionButton userId={user.id} status={user.status} /> : null}
-          </div>
+          </I18n.div>
 
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold">Hakkındaki şikayetler</h3>
+          <I18n.div className="rounded-xl border border-border bg-surface p-5">
+            <I18n.h3 className="mb-3 text-sm font-semibold">Hakkındaki şikayetler</I18n.h3>
             {reports && reports.length ? (
-              <ul className="flex flex-col gap-2 text-xs">
+              <I18n.ul className="flex flex-col gap-2 text-xs">
                 {reports.map((r) => (
                   <li key={r.id} className="flex items-center justify-between gap-2">
-                    <Link href={`/yonetim/sikayetler/${r.id}`} className="text-accent">
+                    <I18n.Link href={`/yonetim/sikayetler/${r.id}`} className="text-accent">
                       {r.reason}
-                    </Link>
-                    <span className="flex items-center gap-2 text-muted">
-                      {formatDate(r.created_at)}
+                    </I18n.Link>
+                    <I18n.span className="flex items-center gap-2 text-muted">
+                      <I18n.Formatted kind="formatDate" args={[r.created_at]} />
                       <Badge kind={reportStatus[r.status].kind}>{reportStatus[r.status].label}</Badge>
-                    </span>
+                    </I18n.span>
                   </li>
                 ))}
-              </ul>
+              </I18n.ul>
             ) : (
-              <p className="text-xs text-muted">Bu kullanıcı hakkında şikayet yok.</p>
+              <I18n.p className="text-xs text-muted">Bu kullanıcı hakkında şikayet yok.</I18n.p>
             )}
-          </div>
+          </I18n.div>
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold">İlanları</h3>
+          <I18n.div className="rounded-xl border border-border bg-surface p-5">
+            <I18n.h3 className="mb-3 text-sm font-semibold">İlanları</I18n.h3>
             {listings && listings.length ? (
-              <ul className="flex flex-col divide-y divide-border text-xs">
+              <I18n.ul className="flex flex-col divide-y divide-border text-xs">
                 {listings.map((l) => (
                   <li key={l.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <Link href={`/yonetim/ilanlar/${l.id}`} className="min-w-0 truncate hover:text-accent">
-                      {l.title}
-                    </Link>
+                    <I18n.Link href={`/yonetim/ilanlar/${l.id}`} className="min-w-0 truncate hover:text-accent">
+                      <I18n.Raw>{l.title}</I18n.Raw>
+                    </I18n.Link>
                     <span className="flex flex-shrink-0 items-center gap-2">
-                      <span className="text-muted">{formatPrice(l.price, l.currency)}</span>
+                      <I18n.span className="text-muted"><I18n.Formatted kind="formatPrice" args={[l.price, l.currency]} /></I18n.span>
                       <ListingStatusBadge status={l.status as ListingStatus} />
                     </span>
                   </li>
                 ))}
-              </ul>
+              </I18n.ul>
             ) : (
-              <p className="text-xs text-muted">Henüz ilanı yok.</p>
+              <I18n.p className="text-xs text-muted">Henüz ilanı yok.</I18n.p>
             )}
-          </div>
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold">Aldığı değerlendirmeler</h3>
+          </I18n.div>
+          <I18n.div className="rounded-xl border border-border bg-surface p-5">
+            <I18n.h3 className="mb-3 text-sm font-semibold">Aldığı değerlendirmeler</I18n.h3>
             {ratings && ratings.length ? (
-              <ul className="flex flex-col divide-y divide-border text-xs">
+              <I18n.ul className="flex flex-col divide-y divide-border text-xs">
                 {ratings.map((r) => (
                   <li key={r.id} className="flex items-start justify-between gap-3 py-2.5">
-                    <span className="min-w-0">
-                      <b className="text-accent">{"★".repeat(r.score)}</b>{" "}
-                      <span className="text-muted">
-                        {(one(r.rater) as { display_name: string } | null)?.display_name ?? "Silinmiş kullanıcı"} ·{" "}
-                        {formatDate(r.created_at)}
-                      </span>
-                      {r.comment ? <span className="mt-1 block">{r.comment}</span> : null}
-                    </span>
+                    <I18n.span className="min-w-0">
+                      <I18n.b className="text-accent">{"★".repeat(r.score)}</I18n.b>{" "}
+                      <I18n.span className="text-muted">
+                        {(one(r.rater) as { display_name: string } | null)?.display_name ? <I18n.Raw>{(one(r.rater) as { display_name: string } | null)?.display_name}</I18n.Raw> : "Silinmiş kullanıcı"} ·{" "}
+                        <I18n.Formatted kind="formatDate" args={[r.created_at]} />
+                      </I18n.span>
+                      {r.comment ? <I18n.span className="mt-1 block"><I18n.Raw>{r.comment}</I18n.Raw></I18n.span> : null}
+                    </I18n.span>
                     <DeleteRatingButton id={r.id} />
                   </li>
                 ))}
-              </ul>
+              </I18n.ul>
             ) : (
-              <p className="text-xs text-muted">Henüz değerlendirme almamış.</p>
+              <I18n.p className="text-xs text-muted">Henüz değerlendirme almamış.</I18n.p>
             )}
-          </div>
+          </I18n.div>
           <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold">İşlem geçmişi</h3>
-            <ul className="flex flex-col gap-3 text-xs text-muted">
+            <I18n.h3 className="mb-3 text-sm font-semibold">İşlem geçmişi</I18n.h3>
+            <I18n.ul className="flex flex-col gap-3 text-xs text-muted">
               {history.slice(0, 20).map((h, i) => (
-                <li key={i}>
-                  {formatDate(h.at)} · {h.text}
-                </li>
+                <I18n.li key={i}>
+                  <I18n.Formatted kind="formatDate" args={[h.at]} /> · {h.text}
+                </I18n.li>
               ))}
-            </ul>
+            </I18n.ul>
           </div>
         </div>
       </div>

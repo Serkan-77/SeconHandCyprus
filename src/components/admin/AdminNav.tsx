@@ -1,6 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Link from "next/link";
+
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/icons";
 import { cn } from "@/lib/cn";
@@ -19,12 +20,12 @@ const nav: { href: string; icon: IconName; label: string }[] = [
 export function AdminNav({ counts }: { counts: Record<string, number> }) {
   const pathname = usePathname();
   return (
-    <nav className="flex gap-1.5 overflow-x-auto sm:flex-col sm:overflow-visible" aria-label="Yönetim menüsü">
+    <I18n.nav className="flex gap-1.5 overflow-x-auto sm:flex-col sm:overflow-visible" aria-label="Yönetim menüsü">
       {nav.map((item) => {
         const active = item.href === "/yonetim" ? pathname === item.href : pathname.startsWith(item.href);
         const count = counts[item.href] ?? 0;
         return (
-          <Link
+          <I18n.Link
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
@@ -36,13 +37,13 @@ export function AdminNav({ counts }: { counts: Record<string, number> }) {
             <Icon name={item.icon} className="h-[18px] w-[18px] flex-shrink-0" />
             {item.label}
             {count ? (
-              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-white px-1 text-[10px] font-semibold text-[#111318]">
+              <I18n.span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-white px-1 text-[10px] font-semibold text-[#111318]">
                 {count}
-              </span>
+              </I18n.span>
             ) : null}
-          </Link>
+          </I18n.Link>
         );
       })}
-    </nav>
+    </I18n.nav>
   );
 }

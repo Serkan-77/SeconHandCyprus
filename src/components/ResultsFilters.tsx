@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -37,16 +39,16 @@ function Select({
   options: { value: string; label: string }[];
 }) {
   return (
-    <label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
+    <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text">
       {label}
-      <select name={name} defaultValue={defaultValue} className={selectClass}>
+      <I18n.select name={name} defaultValue={defaultValue} className={selectClass}>
         {options.map((o) => (
-          <option key={o.value} value={o.value}>
+          <I18n.option key={o.value} value={o.value}>
             {o.label}
-          </option>
+          </I18n.option>
         ))}
-      </select>
-    </label>
+      </I18n.select>
+    </I18n.label>
   );
 }
 
@@ -86,7 +88,7 @@ export function ResultsFilters({
 
   return (
     <>
-      <button
+      <I18n.button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
@@ -94,8 +96,8 @@ export function ResultsFilters({
       >
         <Icon name="filter" className="h-4 w-4" />
         Filtreler{activeCount ? ` (${activeCount})` : ""}
-      </button>
-      <form
+      </I18n.button>
+      <I18n.form
         key={formKey}
         onSubmit={onSubmit}
         className={cn(
@@ -105,8 +107,8 @@ export function ResultsFilters({
         aria-label="İlan filtreleri"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Filtreler</h2>
-          <button
+          <I18n.h2 className="text-base font-semibold">Filtreler</I18n.h2>
+          <I18n.button
             type="button"
             onClick={() => {
               setOpen(false);
@@ -115,7 +117,7 @@ export function ResultsFilters({
             className="text-[11px] font-medium text-accent"
           >
             Temizle
-          </button>
+          </I18n.button>
         </div>
         <Select
           label="Kategori"
@@ -130,7 +132,7 @@ export function ResultsFilters({
           options={[{ value: "", label: "Tüm Kıbrıs" }, ...regions.map((r) => ({ value: r, label: r }))]}
         />
         <fieldset className="flex flex-col gap-3">
-          <legend className="mb-1 text-[13px] font-medium">Fiyat aralığı</legend>
+          <I18n.legend className="mb-1 text-[13px] font-medium">Fiyat aralığı</I18n.legend>
           <div className="grid grid-cols-2 gap-2">
             <Field label="En az" type="number" min={0} name="min" defaultValue={values.min} />
             <Field label="En çok" type="number" min={0} name="max" defaultValue={values.max} />
@@ -146,12 +148,12 @@ export function ResultsFilters({
             ]}
           />
         </fieldset>
-        <fieldset className="flex flex-col gap-3">
-          <legend className="mb-1 text-[13px] font-medium">Ürün durumu</legend>
+        <I18n.fieldset className="flex flex-col gap-3">
+          <I18n.legend className="mb-1 text-[13px] font-medium">Ürün durumu</I18n.legend>
           {conditions.map((c) => (
             <Checkbox key={c} label={c} name="durum" value={c} defaultChecked={values.durum.includes(c)} />
           ))}
-        </fieldset>
+        </I18n.fieldset>
         <Select
           label="İlan tarihi"
           name="tarih"
@@ -165,7 +167,7 @@ export function ResultsFilters({
         />
         <Checkbox label="Pazarlığa açık" name="pazarlik" value="1" defaultChecked={values.pazarlik} />
         <Button type="submit">Sonuçları göster</Button>
-      </form>
+      </I18n.form>
     </>
   );
 }
@@ -173,9 +175,9 @@ export function ResultsFilters({
 export function SortSelect({ value }: { value: string }) {
   const router = useRouter();
   return (
-    <label className="ml-auto text-[11px] text-muted">
+    <I18n.label className="ml-auto text-[11px] text-muted">
       Sırala
-      <select
+      <I18n.select
         aria-label="İlanları sırala"
         value={value}
         onChange={(e) => {
@@ -187,10 +189,10 @@ export function SortSelect({ value }: { value: string }) {
         }}
         className="ml-2 rounded-md border border-border bg-surface px-2 py-2.5 text-xs text-text"
       >
-        <option value="">En yeni</option>
-        <option value="artan">Fiyat: artan</option>
-        <option value="azalan">Fiyat: azalan</option>
-      </select>
-    </label>
+        <I18n.option value="">En yeni</I18n.option>
+        <I18n.option value="artan">Fiyat: artan</I18n.option>
+        <I18n.option value="azalan">Fiyat: azalan</I18n.option>
+      </I18n.select>
+    </I18n.label>
   );
 }

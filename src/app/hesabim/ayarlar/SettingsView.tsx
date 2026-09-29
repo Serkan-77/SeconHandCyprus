@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState, useState, useTransition } from "react";
 import { Icon } from "@/components/icons";
@@ -11,6 +13,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { deleteAccount, updateContact, updateSettings } from "@/lib/actions/account";
 import { updatePassword } from "@/lib/actions/auth";
 import { ActionForm } from "@/components/ui/ActionForm";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 const defaults: Record<string, boolean | string> = {
   notify_messages: true,
@@ -36,10 +39,10 @@ function ToggleRow({
   const value = (settings[settingKey] ?? defaults[settingKey]) as boolean;
   return (
     <div className="flex items-center justify-between gap-4 py-3.5">
-      <span>
-        <b className="text-[13px]">{title}</b>
-        {sub ? <p className="mt-1 text-xs text-muted">{sub}</p> : null}
-      </span>
+      <I18n.span>
+        <I18n.b className="text-[13px]">{title}</I18n.b>
+        {sub ? <I18n.p className="mt-1 text-xs text-muted">{sub}</I18n.p> : null}
+      </I18n.span>
       <Switch label={title} defaultChecked={value} onChange={(checked) => onSave(settingKey, checked)} />
     </div>
   );
@@ -53,6 +56,7 @@ export function SettingsView({
   contact: { phone: string; whatsapp: boolean };
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { locale, setLocale } = useLocale();
   const [confirmText, setConfirmText] = useState("");
   const [confirmChecked, setConfirmChecked] = useState(false);
   const [saved, setSaved] = useState("");
@@ -72,13 +76,13 @@ export function SettingsView({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Ayarlar</h1>
+      <I18n.div className="flex flex-wrap items-center justify-between gap-3">
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Ayarlar</I18n.h1>
         {saved ? <FormSuccess>{saved}</FormSuccess> : null}
-      </div>
+      </I18n.div>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold">Bildirim tercihleri</h2>
+        <I18n.h2 className="mb-2 text-base font-semibold">Bildirim tercihleri</I18n.h2>
         <div className="divide-y divide-border rounded-xl border border-border px-5">
           <ToggleRow title="Yeni mesaj bildirimleri" settingKey="notify_messages" settings={settings} onSave={save} />
           <ToggleRow title="Favori fiyat düşüşleri" settingKey="notify_price" settings={settings} onSave={save} />
@@ -89,7 +93,7 @@ export function SettingsView({
       </section>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold">İletişim</h2>
+        <I18n.h2 className="mb-2 text-base font-semibold">İletişim</I18n.h2>
         <ActionForm action={contactAction} className="flex flex-col gap-4 rounded-xl border border-border p-5">
           <Field
             label="Telefon numarası"
@@ -100,21 +104,21 @@ export function SettingsView({
             hint="Numaran profilinde ve ilanlarında hiçbir zaman açıkça yazmaz. Boş da bırakabilirsin."
           />
           <fieldset className="flex flex-col gap-2.5">
-            <legend className="mb-2 text-[13px] font-semibold">Alıcılar bana nasıl ulaşsın?</legend>
+            <I18n.legend className="mb-2 text-[13px] font-semibold">Alıcılar bana nasıl ulaşsın?</I18n.legend>
             <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-brand has-[:checked]:bg-bg">
               <input type="radio" name="whatsapp" value="off" defaultChecked={!contact.whatsapp} className="mt-0.5 accent-brand" />
               <span>
-                <b className="block">Yalnızca uygulama içi mesaj</b>
-                <span className="text-xs text-muted">Numaran gizli kalır; ilanlarında WhatsApp butonu görünmez.</span>
+                <I18n.b className="block">Yalnızca uygulama içi mesaj</I18n.b>
+                <I18n.span className="text-xs text-muted">Numaran gizli kalır; ilanlarında WhatsApp butonu görünmez.</I18n.span>
               </span>
             </label>
             <label className="flex items-start gap-2.5 rounded-xl border border-border p-3.5 text-[13px] has-[:checked]:border-brand has-[:checked]:bg-bg">
               <input type="radio" name="whatsapp" value="on" defaultChecked={contact.whatsapp} className="mt-0.5 accent-brand" />
               <span>
-                <b className="block">Uygulama içi mesaj + WhatsApp</b>
-                <span className="text-xs text-muted">
+                <I18n.b className="block">Uygulama içi mesaj + WhatsApp</I18n.b>
+                <I18n.span className="text-xs text-muted">
                   Giriş yapmış alıcılar ilanlarındaki WhatsApp butonuyla numarana ulaşabilir. Telefon numarası gerekir.
-                </span>
+                </I18n.span>
               </span>
             </label>
           </fieldset>
@@ -127,34 +131,36 @@ export function SettingsView({
       </section>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold">Görünüm</h2>
+        <I18n.h2 className="mb-2 text-base font-semibold">Görünüm</I18n.h2>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-5 py-4">
           <div>
-            <b className="text-[13px]">Tema</b>
-            <p className="mt-1 text-xs text-muted">Açık ya da koyu görünüm arasında seç. Tercihin bu cihazda saklanır.</p>
+            <I18n.b className="text-[13px]">Tema</I18n.b>
+            <I18n.p className="mt-1 text-xs text-muted">Açık ya da koyu görünüm arasında seç. Tercihin bu cihazda saklanır.</I18n.p>
           </div>
           <ThemeToggle className="inline-flex min-h-11 items-center gap-2 rounded-button border border-border px-4 text-xs font-medium" />
         </div>
       </section>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold">Dil</h2>
+        <I18n.h2 className="mb-2 text-base font-semibold">Dil</I18n.h2>
         <div className="grid grid-cols-1 gap-4 rounded-xl border border-border p-5 sm:grid-cols-2">
-          <label className="flex flex-col gap-2 text-[13px] font-semibold">
+          <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold">
             Dil
             <select
-              disabled
-              className="min-h-12 rounded-field border border-border bg-surface px-4 text-base font-normal text-text opacity-70"
+              value={locale}
+              onChange={(event) => setLocale(event.target.value === "en" ? "en" : "tr")}
+              className="min-h-12 rounded-field border border-border bg-surface px-4 text-base font-normal text-text"
             >
-              <option>Türkçe</option>
+              <option value="tr" lang="tr">Türkçe</option>
+              <option value="en" lang="en">English</option>
             </select>
-            <small className="text-[11px] font-normal text-muted">İngilizce arayüz yakında.</small>
-          </label>
+            <I18n.small className="text-[11px] font-normal text-muted">Dilin anında değişir. Tercihin bu cihazda saklanır.</I18n.small>
+          </I18n.label>
         </div>
       </section>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold">Güvenlik</h2>
+        <I18n.h2 className="mb-2 text-base font-semibold">Güvenlik</I18n.h2>
         <ActionForm action={passwordAction} className="flex flex-col gap-4 rounded-xl border border-border p-5">
           <Field label="Yeni şifre" type="password" name="password" autoComplete="new-password" minLength={8} required />
           <Field label="Yeni şifre (tekrar)" type="password" name="password2" autoComplete="new-password" required />
@@ -167,11 +173,11 @@ export function SettingsView({
       </section>
 
       <section>
-        <h2 className="mb-2 text-base font-semibold text-danger">Tehlikeli bölge</h2>
+        <I18n.h2 className="mb-2 text-base font-semibold text-danger">Tehlikeli bölge</I18n.h2>
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border p-5">
           <div>
-            <b className="text-[13px]">Hesabımı sil</b>
-            <p className="mt-1 text-xs text-muted">Bu işlem geri alınamaz; profilin, ilanların ve fotoğrafların kalıcı olarak silinir. Gönderdiğin mesajlar karşı tarafın konuşmasında “Silinmiş kullanıcı” adıyla kalır.</p>
+            <I18n.b className="text-[13px]">Hesabımı sil</I18n.b>
+            <I18n.p className="mt-1 text-xs text-muted">Bu işlem geri alınamaz; profilin, ilanların ve fotoğrafların kalıcı olarak silinir. Gönderdiğin mesajlar karşı tarafın konuşmasında “Silinmiş kullanıcı” adıyla kalır.</I18n.p>
           </div>
           <Button variant="danger" full={false} onClick={() => setDeleteOpen(true)} icon={<Icon name="trash" className="h-4 w-4" />}>
             Hesabımı sil
@@ -180,7 +186,7 @@ export function SettingsView({
       </section>
 
       <Modal title="Hesabı silme onayı" open={deleteOpen} onClose={() => setDeleteOpen(false)}>
-        <form
+        <I18n.form
           onSubmit={(e) => {
             e.preventDefault();
             if (confirmText !== "SİL" || !confirmChecked) return;
@@ -191,9 +197,9 @@ export function SettingsView({
           }}
           className="flex flex-col gap-5"
         >
-          <p className="text-sm text-muted">
-            Bu işlem geri alınamaz. Onaylamak için aşağıya <b className="text-text">SİL</b> yaz ve kutucuğu işaretle.
-          </p>
+          <I18n.p className="text-sm text-muted">
+            Bu işlem geri alınamaz. Onaylamak için aşağıya <I18n.b className="text-text">SİL</I18n.b> yaz ve kutucuğu işaretle.
+          </I18n.p>
           <Field label="Onay metni" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
           <Checkbox
             label="Profil bilgilerimin, ilanlarımın ve fotoğraflarımın silineceğini biliyorum."
@@ -204,7 +210,7 @@ export function SettingsView({
           <Button type="submit" variant="danger" disabled={confirmText !== "SİL" || !confirmChecked || deleting}>
             {deleting ? "Siliniyor…" : "Hesabımı kalıcı olarak sil"}
           </Button>
-        </form>
+        </I18n.form>
       </Modal>
     </div>
   );

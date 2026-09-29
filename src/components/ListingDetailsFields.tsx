@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { Checkbox, Field } from "@/components/ui/Field";
 import { DELIVERY_OPTIONS, DETAIL_TEXT_MAX, WARRANTY_OPTIONS, type ListingDetails } from "@/lib/listingDetails";
@@ -27,10 +29,10 @@ export function ListingDetailsFields({
 
   return (
     <fieldset className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:p-5">
-      <legend className="px-1 text-[13px] font-semibold">
-        Ek bilgiler <span className="font-normal text-muted">(opsiyonel)</span>
-      </legend>
-      <p className="-mt-1 text-[12px] text-muted">Doldurduğun bilgiler ilan sayfasında özellik tablosunda görünür.</p>
+      <I18n.legend className="px-1 text-[13px] font-semibold">
+        Ek bilgiler <I18n.span className="font-normal text-muted">(opsiyonel)</I18n.span>
+      </I18n.legend>
+      <I18n.p className="-mt-1 text-[12px] text-muted">Doldurduğun bilgiler ilan sayfasında özellik tablosunda görünür.</I18n.p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
           label="Marka"
@@ -60,23 +62,23 @@ export function ListingDetailsFields({
           value={value.year ?? ""}
           onChange={(e) => set("year", e.target.value ? Number(e.target.value) : undefined)}
         />
-        <label className="flex flex-col gap-2 text-[13px] font-semibold text-text sm:col-span-2">
+        <I18n.label className="flex flex-col gap-2 text-[13px] font-semibold text-text sm:col-span-2">
           Garanti
-          <select
+          <I18n.select
             value={value.warranty ?? ""}
             onChange={(e) => set("warranty", (e.target.value || undefined) as ListingDetails["warranty"])}
             className={selectClass}
           >
-            <option value="">Belirtme</option>
+            <I18n.option value="">Belirtme</I18n.option>
             {WARRANTY_OPTIONS.map((o) => (
-              <option key={o}>{o}</option>
+              <I18n.option key={o}>{o}</I18n.option>
             ))}
-          </select>
-        </label>
+          </I18n.select>
+        </I18n.label>
       </div>
       <div className="flex flex-col gap-2.5">
-        <span className="text-[13px] font-semibold">Teslimat</span>
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
+        <I18n.span className="text-[13px] font-semibold">Teslimat</I18n.span>
+        <I18n.div className="flex flex-wrap gap-x-5 gap-y-2">
           {DELIVERY_OPTIONS.map((option) => (
             <Checkbox
               key={option}
@@ -85,7 +87,7 @@ export function ListingDetailsFields({
               onChange={(e) => toggleDelivery(option, e.target.checked)}
             />
           ))}
-        </div>
+        </I18n.div>
       </div>
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         <Checkbox label="Faturası var" checked={Boolean(value.invoice)} onChange={(e) => set("invoice", e.target.checked)} />

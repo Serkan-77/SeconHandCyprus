@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -42,10 +43,10 @@ export function Button({
   ...rest
 }: BaseProps & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button className={buttonClasses(variant, full, className)} {...rest}>
+    <I18n.button className={buttonClasses(variant, full, className)} {...rest}>
       {icon}
       {children}
-    </button>
+    </I18n.button>
   );
 }
 
@@ -60,9 +61,9 @@ export function LinkButton({
 }: BaseProps &
   AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   return (
-    <Link href={href} className={buttonClasses(variant, full, className)} {...rest}>
+    <I18n.Link href={href} className={buttonClasses(variant, full, className)} {...rest}>
       {icon}
       {children}
-    </Link>
+    </I18n.Link>
   );
 }

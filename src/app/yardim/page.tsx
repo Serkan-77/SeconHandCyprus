@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Icon, type IconName } from "@/components/icons";
 
@@ -114,53 +115,53 @@ export default function HelpPage() {
   return (
     <div className="mx-auto max-w-[900px] px-4 pb-16 sm:px-6">
       <Breadcrumbs items={["Yardım & güvenlik"]} />
-      <h1 className="mb-2 text-2xl font-semibold tracking-tight sm:text-[32px]">Yardım & güvenlik</h1>
-      <p className="mb-8 text-[13px] text-muted">Aradığın cevabı bulamazsan destek ekibimize ulaşabilirsin.</p>
+      <I18n.h1 className="mb-2 text-2xl font-semibold tracking-tight sm:text-[32px]">Yardım & güvenlik</I18n.h1>
+      <I18n.p className="mb-8 text-[13px] text-muted">Aradığın cevabı bulamazsan destek ekibimize ulaşabilirsin.</I18n.p>
 
-      <nav aria-label="Yardım konuları" className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <I18n.nav aria-label="Yardım konuları" className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {topics.map((topic) => (
           <a key={topic.id} href={`#${topic.id}`} className="flex gap-3.5 rounded-xl border border-border p-5 transition hover:border-accent">
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
               <Icon name={topic.icon} className="h-[18px] w-[18px]" />
             </span>
             <div>
-              <b className="text-[13px]">{topic.title}</b>
-              <p className="mt-1 text-xs text-muted">{topic.desc}</p>
+              <I18n.b className="text-[13px]">{topic.title}</I18n.b>
+              <I18n.p className="mt-1 text-xs text-muted">{topic.desc}</I18n.p>
             </div>
           </a>
         ))}
-      </nav>
+      </I18n.nav>
 
-      <div className="flex flex-col gap-10">
+      <I18n.div className="flex flex-col gap-10">
         {topics.map((topic) => (
           <section key={topic.id} id={topic.id} className="scroll-mt-6">
-            <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+            <I18n.h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
               <Icon name={topic.icon} className="h-5 w-5 text-accent" />
               {topic.title}
-            </h2>
-            <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+            </I18n.h2>
+            <I18n.div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
               {topic.faqs.map(([q, a]) => (
                 <details key={q} className="group px-5 py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13px] font-medium">
+                  <I18n.summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13px] font-medium">
                     {q}
                     <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-muted transition group-open:rotate-90" />
-                  </summary>
-                  <p className="mt-3 text-[13px] leading-relaxed text-muted">{a}</p>
+                  </I18n.summary>
+                  <I18n.p className="mt-3 text-[13px] leading-relaxed text-muted">{a}</I18n.p>
                 </details>
               ))}
-            </div>
+            </I18n.div>
           </section>
         ))}
-      </div>
+      </I18n.div>
 
       <div className="mt-12 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-bg p-6">
         <div>
-          <b className="text-sm">Aradığını bulamadın mı?</b>
-          <p className="mt-1 text-xs text-muted">Destek ekibimize doğrudan yazabilirsin.</p>
+          <I18n.b className="text-sm">Aradığını bulamadın mı?</I18n.b>
+          <I18n.p className="mt-1 text-xs text-muted">Destek ekibimize doğrudan yazabilirsin.</I18n.p>
         </div>
-        <Link href="/destek" className="flex min-h-12 items-center rounded-button bg-brand px-5 text-sm font-semibold text-on-brand">
+        <I18n.Link href="/destek" className="flex min-h-12 items-center rounded-button bg-brand px-5 text-sm font-semibold text-on-brand">
           Destek talebi oluştur
-        </Link>
+        </I18n.Link>
       </div>
     </div>
   );

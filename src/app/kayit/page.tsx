@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
@@ -22,10 +24,10 @@ export default function RegisterPage() {
           <span className="flex h-[85px] w-[85px] items-center justify-center rounded-full bg-accent-soft text-accent">
             <Icon name="mail" className="h-9 w-9" />
           </span>
-          <p className="max-w-xs text-sm text-muted">
-            <b className="text-text">{state.email}</b> adresine bir doğrulama bağlantısı gönderdik. Bağlantıya
+          <I18n.p className="max-w-xs text-sm text-muted">
+            <I18n.b className="text-text">{state.email}</I18n.b> adresine bir doğrulama bağlantısı gönderdik. Bağlantıya
             tıkladığında hesabın açılacak ve profilini tamamlayabileceksin.
-          </p>
+          </I18n.p>
           <LinkButton href="/giris" full={false} variant="outline" className="min-w-[220px]">
             Girişe dön
           </LinkButton>
@@ -36,7 +38,7 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout title="Adaya hoş geldin." backHref="/" backLabel="Keşfetmeye dön">
-      <p className="text-sm text-muted">Birkaç bilgiyle, sen de ilan verip mesajlaşmaya başla.</p>
+      <I18n.p className="text-sm text-muted">Birkaç bilgiyle, sen de ilan verip mesajlaşmaya başla.</I18n.p>
       {AUTH_METHODS.google ? (
         <div className="mt-5 flex flex-col gap-4">
           <GoogleButton returnTo="/kurulum" />
@@ -71,16 +73,16 @@ export default function RegisterPage() {
             required
             name="terms"
             label={
-              <span>
+              <I18n.span>
+                Okudum ve kabul ediyorum:{" "}
                 <TextLink href="/kosullar" className="inline min-h-0">
                   Kullanım koşullarını
                 </TextLink>{" "}
                 ve{" "}
                 <TextLink href="/gizlilik" className="inline min-h-0">
                   gizlilik bildirimini
-                </TextLink>{" "}
-                okudum, kabul ediyorum.
-              </span>
+                </TextLink>
+              </I18n.span>
             }
           />
           <Checkbox name="marketing" label="Kampanya ve yeniliklerden e-posta ile haberdar olmak istiyorum." />
@@ -91,9 +93,9 @@ export default function RegisterPage() {
           {pending ? "Hesap oluşturuluyor…" : "Kayıt ol"}
         </Button>
 
-        <p className="text-center text-sm text-muted">
+        <I18n.p className="text-center text-sm text-muted">
           Zaten hesabın var mı? <TextLink href="/giris">Giriş yap</TextLink>
-        </p>
+        </I18n.p>
       </ActionForm>
     </AuthLayout>
   );

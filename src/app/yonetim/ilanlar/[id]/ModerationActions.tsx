@@ -1,6 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Link from "next/link";
+
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -39,38 +40,38 @@ export function ModerationActions({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5">
-      <h3 className="mb-3 text-sm font-semibold">Karar</h3>
+    <I18n.div className="rounded-xl border border-border bg-surface p-5">
+      <I18n.h3 className="mb-3 text-sm font-semibold">Karar</I18n.h3>
       {done ? (
         <div className="flex flex-col gap-3">
           <FormSuccess>{done}</FormSuccess>
-          <Link href="/yonetim/ilanlar" className="text-xs font-medium text-accent">
+          <I18n.Link href="/yonetim/ilanlar" className="text-xs font-medium text-accent">
             Sıradaki ilana geç →
-          </Link>
+          </I18n.Link>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-3">
+        <I18n.div className="flex flex-wrap gap-3">
           {status !== "active" ? (
             <Button full={false} disabled={pending} icon={<Icon name="check" className="h-4 w-4" />} onClick={approve}>
               Onayla ve yayınla
             </Button>
           ) : (
-            <Link href={`/ilan/${slug}`} className="inline-flex min-h-12 items-center text-xs font-medium text-accent">
+            <I18n.Link href={`/ilan/${slug}`} className="inline-flex min-h-12 items-center text-xs font-medium text-accent">
               Yayındaki ilanı gör
-            </Link>
+            </I18n.Link>
           )}
           {status !== "rejected" ? (
             <Button full={false} variant="outline" disabled={pending} onClick={() => setRejectOpen(true)}>
               {status === "active" ? "Yayından kaldır" : "Reddet"}
             </Button>
           ) : null}
-        </div>
+        </I18n.div>
       )}
       {status === "active" ? (
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4 text-xs">
-          <span className="text-muted">
+          <I18n.span className="text-muted">
             {featured ? "Bu ilan vitrinde; listelerde en üstte görünüyor." : "Vitrine eklenen ilanlar listelerde en üstte görünür."}
-          </span>
+          </I18n.span>
           <Button
             variant="outline"
             full={false}
@@ -110,6 +111,6 @@ export function ModerationActions({
           </Button>
         </form>
       </Modal>
-    </div>
+    </I18n.div>
   );
 }

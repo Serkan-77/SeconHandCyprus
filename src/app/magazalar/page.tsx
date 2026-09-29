@@ -1,5 +1,6 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ListingGrid } from "@/components/ListingGrid";
 import { Avatar } from "@/components/ui/Avatar";
@@ -46,19 +47,19 @@ export default async function StoresPage() {
   const isStore = viewer?.profile.accountType === "store";
 
   return (
-    <div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6">
+    <I18n.div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6">
       <Breadcrumbs items={["Mağazalar"]} />
 
       <section className="mb-10 flex flex-col gap-5 overflow-hidden rounded-hero bg-brand p-6 text-on-brand sm:flex-row sm:items-center sm:justify-between sm:p-10">
         <div className="max-w-xl">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold">
+          <I18n.span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold">
             <Icon name="store" className="h-3.5 w-3.5" />
             Mağazalar
-          </span>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-[34px]">Kıbrıs&apos;ın mağazaları, tek vitrinde.</h1>
-          <p className="mt-2 text-[13px] leading-relaxed opacity-85">
+          </I18n.span>
+          <I18n.h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-[34px]">Kıbrıs&apos;ın mağazaları, tek vitrinde.</I18n.h1>
+          <I18n.p className="mt-2 text-[13px] leading-relaxed opacity-85">
             Mobilyacılar, elektronikçiler, ikinci el dükkânları… İşletmelerin ürünlerine buradan ulaş, doğrudan mesaj at.
-          </p>
+          </I18n.p>
         </div>
         <LinkButton
           href={viewer ? "/hesabim/magaza" : "/giris-gerekli?returnTo=/hesabim/magaza"}
@@ -71,45 +72,45 @@ export default async function StoresPage() {
         </LinkButton>
       </section>
 
-      <h2 className="mb-5 text-lg font-semibold sm:text-xl">Mağazalar ({stores.length})</h2>
+      <I18n.h2 className="mb-5 text-lg font-semibold sm:text-xl">Mağazalar ({stores.length})</I18n.h2>
       {stores.length ? (
-        <div className="mb-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <I18n.div className="mb-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {stores.map((s) => (
-            <Link
+            <I18n.Link
               key={s.id}
               href={`/satici/${s.id}`}
               className="flex items-center gap-3.5 rounded-2xl border border-border p-5 transition hover:border-accent hover:bg-accent-soft"
             >
               <Avatar initials={initials(s.storeName ?? s.displayName)} src={s.avatarUrl} />
               <span className="min-w-0 flex-1">
-                <span className="flex flex-wrap items-center gap-1.5">
-                  <b className="truncate text-sm">{s.storeName ?? s.displayName}</b>
+                <I18n.span className="flex flex-wrap items-center gap-1.5">
+                  <I18n.b className="truncate text-sm">{s.storeName ? <I18n.Raw>{s.storeName}</I18n.Raw> : s.displayName}</I18n.b>
                   {s.storeVerified ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-accent-soft px-1.5 py-0.5 text-[9px] font-semibold text-accent">
+                    <I18n.span className="inline-flex items-center gap-1 rounded bg-accent-soft px-1.5 py-0.5 text-[9px] font-semibold text-accent">
                       <Icon name="shield" className="h-2.5 w-2.5" />
                       Onaylı
-                    </span>
+                    </I18n.span>
                   ) : null}
-                </span>
-                <span className="mt-1 block truncate text-[11px] text-muted">
+                </I18n.span>
+                <I18n.span className="mt-1 block truncate text-[11px] text-muted">
                   {[s.region, `${s.activeListings} ürün`, s.ratingCount ? `★ ${s.ratingAvg.toFixed(1)}` : null]
                     .filter(Boolean)
                     .join(" · ")}
-                </span>
+                </I18n.span>
               </span>
               <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-muted" />
-            </Link>
+            </I18n.Link>
           ))}
-        </div>
+        </I18n.div>
       ) : (
         <div className="mb-14 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
           <Icon name="store" className="h-8 w-8 text-accent" />
-          <p className="max-w-sm text-sm text-muted">Henüz mağaza yok. İlk mağazayı sen aç, ürünlerin burada öne çıksın.</p>
+          <I18n.p className="max-w-sm text-sm text-muted">Henüz mağaza yok. İlk mağazayı sen aç, ürünlerin burada öne çıksın.</I18n.p>
         </div>
       )}
 
-      <h2 className="mb-5 text-lg font-semibold sm:text-xl">Mağazalardan son ürünler</h2>
+      <I18n.h2 className="mb-5 text-lg font-semibold sm:text-xl">Mağazalardan son ürünler</I18n.h2>
       <ListingGrid items={latest.items} empty="Mağazalar henüz ürün yayınlamadı." />
-    </div>
+    </I18n.div>
   );
 }

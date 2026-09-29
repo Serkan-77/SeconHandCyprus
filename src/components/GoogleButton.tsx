@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { signInWithGoogle } from "@/lib/actions/auth";
 
 function GoogleMark() {
@@ -16,23 +18,23 @@ export function GoogleButton({ returnTo = "/" }: { returnTo?: string }) {
   return (
     <form action={signInWithGoogle}>
       <input type="hidden" name="returnTo" value={returnTo} />
-      <button
+      <I18n.button
         type="submit"
         className="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-button border border-border bg-surface px-5 text-sm font-semibold text-text transition hover:bg-brand-soft"
       >
         <GoogleMark />
         Google ile devam et
-      </button>
+      </I18n.button>
     </form>
   );
 }
 
 export function OrDivider() {
   return (
-    <div className="flex items-center gap-3 text-[11px] text-muted" role="separator">
+    <I18n.div className="flex items-center gap-3 text-[11px] text-muted" role="separator">
       <span className="h-px flex-1 bg-border" />
       veya
       <span className="h-px flex-1 bg-border" />
-    </div>
+    </I18n.div>
   );
 }

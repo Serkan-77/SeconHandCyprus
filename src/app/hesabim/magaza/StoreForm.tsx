@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useActionState, useState, useTransition } from "react";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -35,7 +37,7 @@ export function StoreForm({ userId, isStore, initial }: { userId: string; isStor
         <Field label="Çalışma saatleri (opsiyonel)" name="hours" defaultValue={initial.hours} maxLength={80} placeholder="Hafta içi 09:00–18:00" />
         {state?.error ? <FormError>{state.error}</FormError> : null}
         {state?.ok ? <FormSuccess>Mağaza bilgilerin kaydedildi.</FormSuccess> : null}
-        <div className="flex flex-wrap items-center gap-3">
+        <I18n.div className="flex flex-wrap items-center gap-3">
           <Button type="submit" full={false} disabled={saving} className="sm:min-w-[180px]">
             {isStore ? "Mağaza bilgilerini kaydet" : "Mağaza hesabına geç"}
           </Button>
@@ -44,12 +46,12 @@ export function StoreForm({ userId, isStore, initial }: { userId: string; isStor
               Mağaza sayfamı gör
             </LinkButton>
           ) : null}
-        </div>
+        </I18n.div>
       </ActionForm>
 
       {isStore ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-5 text-xs">
-          <span className="text-muted">Bireysel hesaba dönersen mağaza bilgilerin ve onay rozetin kaldırılır.</span>
+          <I18n.span className="text-muted">Bireysel hesaba dönersen mağaza bilgilerin ve onay rozetin kaldırılır.</I18n.span>
           <Button variant="outline" full={false} className="min-h-10 text-xs" onClick={() => setCloseOpen(true)}>
             Bireysel hesaba dön
           </Button>
@@ -57,9 +59,9 @@ export function StoreForm({ userId, isStore, initial }: { userId: string; isStor
       ) : null}
 
       <Modal title="Bireysel hesaba dön" open={closeOpen} onClose={() => setCloseOpen(false)}>
-        <p className="text-sm text-muted">
+        <I18n.p className="text-sm text-muted">
           Mağaza bilgilerin silinecek ve varsa onaylı mağaza rozetin kaldırılacak. İlanların yayında kalır.
-        </p>
+        </I18n.p>
         {closeError ? <FormError>{closeError}</FormError> : null}
         <div className="flex gap-3">
           <Button variant="outline" full={false} onClick={() => setCloseOpen(false)}>

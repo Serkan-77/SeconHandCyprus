@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
@@ -39,7 +41,7 @@ export function AdSlot({ placement, className }: { placement: AdPlacement; class
   if (!adsEnabled) {
     if (process.env.NODE_ENV !== "development") return null;
     return (
-      <aside
+      <I18n.aside
         aria-label="Reklam alanı"
         className={cn(
           "grid place-items-center rounded-card border border-dashed border-border text-center text-[11px] text-muted",
@@ -47,19 +49,19 @@ export function AdSlot({ placement, className }: { placement: AdPlacement; class
           className,
         )}
       >
-        <span>
+        <I18n.span>
           Reklam alanı · {placement}
           <br />
-          <small>NEXT_PUBLIC_ADSENSE_CLIENT ayarlanınca AdSense burada görünür (yalnızca geliştirmede görünür)</small>
-        </span>
-      </aside>
+          <I18n.small>NEXT_PUBLIC_ADSENSE_CLIENT ayarlanınca AdSense burada görünür (yalnızca geliştirmede görünür)</I18n.small>
+        </I18n.span>
+      </I18n.aside>
     );
   }
 
   return (
-    <aside aria-label="Reklam" className={cn("flex flex-col gap-1", className)}>
-      <span className="text-[9px] font-semibold uppercase tracking-[1.4px] text-muted">Reklam</span>
-      <ins
+    <I18n.aside aria-label="Reklam" className={cn("flex flex-col gap-1", className)}>
+      <I18n.span className="text-[9px] font-semibold uppercase tracking-[1.4px] text-muted">Reklam</I18n.span>
+      <I18n.ins
         key={pathname}
         ref={ref}
         className={cn("adsbygoogle block w-full overflow-hidden", sizes[placement])}
@@ -68,6 +70,6 @@ export function AdSlot({ placement, className }: { placement: AdPlacement; class
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
-    </aside>
+    </I18n.aside>
   );
 }

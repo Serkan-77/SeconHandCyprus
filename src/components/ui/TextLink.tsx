@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -14,7 +15,7 @@ export function TextLink({
   underline?: boolean;
 } & AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
-    <Link
+    <I18n.Link
       href={href}
       className={cn(
         "inline-flex min-h-11 items-center gap-2 text-[13px] font-medium text-accent",
@@ -24,6 +25,6 @@ export function TextLink({
       {...rest}
     >
       {children}
-    </Link>
+    </I18n.Link>
   );
 }

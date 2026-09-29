@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,7 +36,7 @@ export function ReportListingButton({ listingId, loggedIn }: { listingId: string
 
   return (
     <>
-      <button
+      <I18n.button
         type="button"
         onClick={() => {
           if (!loggedIn) router.push(`/giris-gerekli?returnTo=${encodeURIComponent(pathname)}`);
@@ -44,20 +46,20 @@ export function ReportListingButton({ listingId, loggedIn }: { listingId: string
       >
         <Icon name="flag" className="h-4 w-4" />
         Bu ilanı şikayet et
-      </button>
+      </I18n.button>
       <Modal title={sent ? "Şikayet alındı" : "İlanı şikayet et"} open={open} onClose={close}>
         {sent ? (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-accent">
               <Icon name="check" className="h-7 w-7" />
             </span>
-            <p className="text-sm text-muted">Şikayetini aldık. Moderasyon ekibimiz ilanı 24 saat içinde inceleyecek.</p>
+            <I18n.p className="text-sm text-muted">Şikayetini aldık. Moderasyon ekibimiz ilanı 24 saat içinde inceleyecek.</I18n.p>
             <Button onClick={close} full={false}>
               Tamam
             </Button>
           </div>
         ) : (
-          <form
+          <I18n.form
             onSubmit={(e) => {
               e.preventDefault();
               const form = new FormData(e.currentTarget);
@@ -75,11 +77,11 @@ export function ReportListingButton({ listingId, loggedIn }: { listingId: string
           >
             <SelectField label="Şikayet nedeni" name="reason" options={reasons} />
             <TextareaField label="Detay (opsiyonel)" name="detail" placeholder="Kısaca açıklar mısın?" maxLength={1000} />
-            {error ? <p className="text-xs text-danger">{error}</p> : null}
+            {error ? <I18n.p className="text-xs text-danger">{error}</I18n.p> : null}
             <Button type="submit" disabled={pending}>
               {pending ? "Gönderiliyor…" : "Şikayeti gönder"}
             </Button>
-          </form>
+          </I18n.form>
         )}
       </Modal>
     </>

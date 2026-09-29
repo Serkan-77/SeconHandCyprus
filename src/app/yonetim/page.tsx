@@ -1,9 +1,10 @@
-import Link from "next/link";
+
+import * as I18n from "@/components/i18n/Localized";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Icon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/queries";
-import { formatDate, formatNumber, timeAgo } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 
 export const metadata = { title: "Yönetim · Genel bakış", robots: { index: false } };
 
@@ -83,25 +84,25 @@ async function Dashboard() {
   return (
     <>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Genel bakış</h1>
-        <p className="mt-1.5 text-xs text-muted">Platformun bugünkü durumu.</p>
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Genel bakış</I18n.h1>
+        <I18n.p className="mt-1.5 text-xs text-muted">Platformun bugünkü durumu.</I18n.p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      <I18n.div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         {metrics.map((m) => (
-          <Link key={m.label} href={m.href} className="rounded-[14px] border border-border bg-surface p-5">
-            <span className="text-[11px] text-muted">{m.label}</span>
-            <strong className="my-3 block text-[27px] tracking-tight">{m.value}</strong>
-            <small className="text-[10px] text-accent">{m.delta}</small>
-          </Link>
+          <I18n.Link key={m.label} href={m.href} className="rounded-[14px] border border-border bg-surface p-5">
+            <I18n.span className="text-[11px] text-muted">{m.label}</I18n.span>
+            <I18n.strong className="my-3 block text-[27px] tracking-tight">{m.value}</I18n.strong>
+            <I18n.small className="text-[10px] text-accent">{m.delta}</I18n.small>
+          </I18n.Link>
         ))}
-      </div>
+      </I18n.div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div className="rounded-[14px] border border-border bg-surface p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-semibold">Son 30 gün yeni ilan</h2>
-            <span className="text-[11px] text-muted">Toplam {total}</span>
+            <I18n.h2 className="text-sm font-semibold">Son 30 gün yeni ilan</I18n.h2>
+            <I18n.span className="text-[11px] text-muted">Toplam {total}</I18n.span>
           </div>
           <svg viewBox={`0 0 ${W} ${H}`} className="mt-5 h-[170px] w-full" role="img" aria-label={`Son 30 günde ${total} yeni ilan`}>
             {[0, 0.25, 0.5, 0.75, 1].map((f) => (
@@ -111,39 +112,39 @@ async function Dashboard() {
             <polyline points={points.join(" ")} fill="none" stroke="var(--brand)" strokeWidth={2.5} strokeLinejoin="round" />
           </svg>
           <div className="mt-2 flex justify-between text-[10px] text-muted">
-            <span>{formatDate(days[0])}</span>
-            <span>Bugün</span>
+            <I18n.span><I18n.Formatted kind="formatDate" args={[days[0]]} /></I18n.span>
+            <I18n.span>Bugün</I18n.span>
           </div>
         </div>
-        <div className="rounded-[14px] border border-border bg-surface p-5">
+        <I18n.div className="rounded-[14px] border border-border bg-surface p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Bekleyen şikayetler</h2>
-            <Link href="/yonetim/sikayetler" className="text-[11px] font-medium text-accent">
+            <I18n.h2 className="text-sm font-semibold">Bekleyen şikayetler</I18n.h2>
+            <I18n.Link href="/yonetim/sikayetler" className="text-[11px] font-medium text-accent">
               Tümü
-            </Link>
+            </I18n.Link>
           </div>
           {reports && reports.length ? (
-            <div className="flex flex-col gap-3">
+            <I18n.div className="flex flex-col gap-3">
               {reports.map((r) => {
                 const listing = one(r.listing) as { title: string } | null;
                 const reported = one(r.reported) as { display_name: string } | null;
                 return (
-                  <Link key={r.id} href={`/yonetim/sikayetler/${r.id}`} className="flex items-start gap-2.5 text-xs">
+                  <I18n.Link key={r.id} href={`/yonetim/sikayetler/${r.id}`} className="flex items-start gap-2.5 text-xs">
                     <Icon name="flag" className="h-4 w-4 flex-shrink-0 text-accent" />
                     <div className="min-w-0">
-                      <b>{r.reason}</b>
-                      <p className="truncate text-[11px] text-muted">
-                        {listing ? listing.title : `Kullanıcı: ${reported?.display_name ?? "—"}`} · {timeAgo(r.created_at)}
-                      </p>
+                      <I18n.b>{r.reason}</I18n.b>
+                      <I18n.p className="truncate text-[11px] text-muted">
+                        {listing ? listing.title : `Kullanıcı: ${reported?.display_name ?? "—"}`} · <I18n.Formatted kind="timeAgo" args={[r.created_at]} />
+                      </I18n.p>
                     </div>
-                  </Link>
+                  </I18n.Link>
                 );
               })}
-            </div>
+            </I18n.div>
           ) : (
-            <p className="py-6 text-center text-xs text-muted">Bekleyen şikayet yok.</p>
+            <I18n.p className="py-6 text-center text-xs text-muted">Bekleyen şikayet yok.</I18n.p>
           )}
-        </div>
+        </I18n.div>
       </div>
     </>
   );

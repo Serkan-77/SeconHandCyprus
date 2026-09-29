@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { IconButton } from "@/components/ui/IconButton";
@@ -46,7 +48,7 @@ export function Modal({
       className="fixed inset-0 z-50 flex items-end justify-center bg-[#0d0f12]/40 sm:items-center"
       onClick={onClose}
     >
-      <div
+      <I18n.div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
@@ -57,11 +59,11 @@ export function Modal({
       >
         <div className="mx-auto -mt-1 mb-1 h-1 w-9 rounded-full bg-border sm:hidden" />
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-text">{title}</h2>
+          <I18n.h2 className="text-xl font-semibold text-text">{title}</I18n.h2>
           <IconButton icon="close" label="Kapat" onClick={onClose} />
         </div>
         {children}
-      </div>
+      </I18n.div>
     </div>
   );
 }

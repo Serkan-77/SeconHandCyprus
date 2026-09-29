@@ -1,6 +1,7 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
 
-import Image from "next/image";
+
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardLayout } from "@/components/WizardLayout";
@@ -62,8 +63,8 @@ export default function AddPhotosPage() {
   return (
     <WizardLayout active={0} preview={<WizardPreviewCard />}>
       <div>
-        <h2 className="text-xl font-semibold">Fotoğraflarını ekle</h2>
-        <p className="mt-2 text-[13px] text-muted">İyi ışıklı, net fotoğraflar ilanının daha hızlı satılmasını sağlar.</p>
+        <I18n.h2 className="text-xl font-semibold">Fotoğraflarını ekle</I18n.h2>
+        <I18n.p className="mt-2 text-[13px] text-muted">İyi ışıklı, net fotoğraflar ilanının daha hızlı satılmasını sağlar.</I18n.p>
       </div>
 
       <div
@@ -86,8 +87,8 @@ export default function AddPhotosPage() {
         )}
       >
         <Icon name="camera" className="h-8 w-8 text-brand" />
-        <span className="text-sm font-medium">Fotoğraf seçmek için tıkla ya da buraya sürükle</span>
-        <span className="text-xs text-muted">En az 1, en fazla {MAX_PHOTOS} fotoğraf · JPG, PNG, WEBP</span>
+        <I18n.span className="text-sm font-medium">Fotoğraf seçmek için tıkla ya da buraya sürükle</I18n.span>
+        <I18n.span className="text-xs text-muted">En az 1, en fazla {MAX_PHOTOS} fotoğraf · JPG, PNG, WEBP</I18n.span>
         <input
           ref={inputRef}
           type="file"
@@ -109,55 +110,55 @@ export default function AddPhotosPage() {
 
       {error ? <FormError>{error}</FormError> : null}
 
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+      <I18n.div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {draft.photos.map((path, i) => (
-          <div key={path} className="group relative aspect-square overflow-hidden rounded-xl bg-bg">
-            <Image src={publicImageUrl(path)} alt={`Fotoğraf ${i + 1}`} fill sizes="160px" className="object-cover" />
+          <I18n.div key={path} className="group relative aspect-square overflow-hidden rounded-xl bg-bg">
+            <I18n.Image src={publicImageUrl(path)} alt={`Fotoğraf ${i + 1}`} fill sizes="160px" className="object-cover" />
             {i === 0 ? (
-              <span className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[9px] text-[#111318]">
+              <I18n.span className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[9px] text-[#111318]">
                 Kapak
-              </span>
+              </I18n.span>
             ) : (
-              <button
+              <I18n.button
                 type="button"
                 onClick={() => makeCover(path)}
                 className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[9px] text-[#111318]"
               >
                 Kapak yap
-              </button>
+              </I18n.button>
             )}
-            <button
+            <I18n.button
               type="button"
               aria-label={`${i + 1}. fotoğrafı kaldır`}
               onClick={() => remove(path)}
               className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-white/90 text-[#111318]"
             >
               <Icon name="close" className="h-4 w-4" />
-            </button>
-          </div>
+            </I18n.button>
+          </I18n.div>
         ))}
         {Array.from({ length: uploading }).map((_, i) => (
           <div key={`up-${i}`} className="skeleton aspect-square rounded-xl" />
         ))}
         {draft.photos.length + uploading < 3 &&
           Array.from({ length: 3 - draft.photos.length - uploading }).map((_, i) => (
-            <div
+            <I18n.div
               key={`empty-${i}`}
               className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-border text-[10px] text-muted"
             >
               Boş
-            </div>
+            </I18n.div>
           ))}
-      </div>
+      </I18n.div>
 
       <div className="mt-auto flex flex-col gap-3 border-t border-border pt-6">
         <Button disabled={draft.photos.length === 0 || uploading > 0} onClick={() => router.push("/ilan-ver/detaylar")}>
           Devam et
         </Button>
-        <p className="text-center text-[11px] text-muted">
+        <I18n.p className="text-center text-[11px] text-muted">
           {draft.photos.length} / {MAX_PHOTOS} fotoğraf eklendi
           {draft.photos.length === 0 ? " · devam etmek için en az 1 fotoğraf ekle" : ""}
-        </p>
+        </I18n.p>
       </div>
     </WizardLayout>
   );

@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import { redirect } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { TextLink } from "@/components/ui/TextLink";
@@ -26,39 +28,39 @@ export default async function FavoritesPage() {
     .filter((l: ListingCardData) => l.status === "active");
 
   return (
-    <div className="flex flex-col gap-6">
+    <I18n.div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Bir kenara ayırdıkların.</h1>
-        <p className="mt-2 text-[13px] text-muted">Beğendiğin eşyalar, yeniden keşfetmeni bekliyor.</p>
+        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Bir kenara ayırdıkların.</I18n.h1>
+        <I18n.p className="mt-2 text-[13px] text-muted">Beğendiğin eşyalar, yeniden keşfetmeni bekliyor.</I18n.p>
       </div>
 
       {favorites.length > 0 ? (
         <>
           <div className="flex flex-wrap items-center gap-2.5 rounded-xl bg-bg px-4 py-3 text-xs">
             <Icon name="bell" className="h-4 w-4 flex-shrink-0 text-accent" />
-            <span>Bir favorinin fiyatı düşünce bildirim alırsın.</span>
+            <I18n.span>Bir favorinin fiyatı düşünce bildirim alırsın.</I18n.span>
             <TextLink href="/hesabim/ayarlar" className="ml-auto">
               Bildirim tercihleri
             </TextLink>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
+          <I18n.div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
             {favorites.map((listing) => (
               <ListingCard key={listing.id} listing={listing} />
             ))}
-          </div>
+          </I18n.div>
         </>
       ) : (
         <div className="flex flex-col items-center gap-4 py-20 text-center">
           <span className="flex h-[100px] w-[100px] -rotate-6 items-center justify-center rounded-[35px] bg-brand-soft text-brand">
             <Icon name="heart" className="h-11 w-11 rotate-6" />
           </span>
-          <h2 className="text-xl font-semibold">Henüz favorin yok.</h2>
-          <p className="max-w-xs text-sm text-muted">Beğendiğin ilanları kalbe dokunarak buraya kaydedebilirsin.</p>
+          <I18n.h2 className="text-xl font-semibold">Henüz favorin yok.</I18n.h2>
+          <I18n.p className="max-w-xs text-sm text-muted">Beğendiğin ilanları kalbe dokunarak buraya kaydedebilirsin.</I18n.p>
           <LinkButton href="/ilanlar" full={false} variant="secondary" className="min-w-[200px]">
             İlanları keşfet
           </LinkButton>
         </div>
       )}
-    </div>
+    </I18n.div>
   );
 }

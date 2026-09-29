@@ -1,4 +1,6 @@
 "use client";
+import * as I18n from "@/components/i18n/Localized";
+
 
 import { useState, type InputHTMLAttributes } from "react";
 import { Icon } from "@/components/icons";
@@ -9,7 +11,7 @@ export function PasswordInput({ className, ...rest }: InputHTMLAttributes<HTMLIn
   const [visible, setVisible] = useState(false);
   return (
     <span className="relative block">
-      <input
+      <I18n.input
         {...rest}
         type={visible ? "text" : "password"}
         autoCapitalize="none"
@@ -17,7 +19,7 @@ export function PasswordInput({ className, ...rest }: InputHTMLAttributes<HTMLIn
         spellCheck={false}
         className={cn(className, "pr-12")}
       />
-      <button
+      <I18n.button
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "Şifreyi gizle" : "Şifreyi göster"}
@@ -25,7 +27,7 @@ export function PasswordInput({ className, ...rest }: InputHTMLAttributes<HTMLIn
         className="absolute inset-y-0 right-0 grid w-12 place-items-center text-muted hover:text-text"
       >
         <Icon name={visible ? "eyeOff" : "eye"} className="h-5 w-5" />
-      </button>
+      </I18n.button>
     </span>
   );
 }

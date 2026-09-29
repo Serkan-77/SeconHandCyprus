@@ -1,3 +1,5 @@
+
+import * as I18n from "@/components/i18n/Localized";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { LinkButton } from "@/components/ui/Button";
@@ -49,21 +51,21 @@ export default function PromotePage() {
       <Breadcrumbs items={["İlanını öne çıkar"]} />
 
       <section className="mb-10 rounded-hero bg-brand-soft p-6 sm:p-10">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-[11px] font-semibold text-on-brand">
+        <I18n.span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-[11px] font-semibold text-on-brand">
           <Icon name="clock" className="h-3.5 w-3.5" />
           Yakında
-        </span>
-        <h1 className="mt-3 max-w-2xl text-2xl font-semibold tracking-tight sm:text-[34px]">
+        </I18n.span>
+        <I18n.h1 className="mt-3 max-w-2xl text-2xl font-semibold tracking-tight sm:text-[34px]">
           İlanını daha çok kişiye göster.
-        </h1>
-        <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-muted">
+        </I18n.h1>
+        <I18n.p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-muted">
           Öne çıkarma paketleri çok yakında burada. Şimdilik bilgilendirme amaçlıdır; hiçbir paket için ödeme alınmıyor.
-        </p>
+        </I18n.p>
       </section>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+      <I18n.div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         {packages.map((p) => (
-          <article
+          <I18n.article
             key={p.name}
             className={
               p.highlight
@@ -72,49 +74,49 @@ export default function PromotePage() {
             }
           >
             {p.highlight ? (
-              <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-1 text-[10px] font-semibold text-on-brand">
+              <I18n.span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-1 text-[10px] font-semibold text-on-brand">
                 En çok tercih edilecek
-              </span>
+              </I18n.span>
             ) : null}
             <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-soft text-brand">
               <Icon name={p.icon} className="h-6 w-6" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold">{p.name}</h2>
-              <p className="mt-1 text-[13px] text-muted">{p.tagline}</p>
+              <I18n.h2 className="text-lg font-semibold">{p.name}</I18n.h2>
+              <I18n.p className="mt-1 text-[13px] text-muted">{p.tagline}</I18n.p>
             </div>
             <div className="flex items-baseline justify-between border-y border-border py-3 text-xs">
-              <span className="text-muted">Süre</span>
-              <b>{p.duration}</b>
+              <I18n.span className="text-muted">Süre</I18n.span>
+              <I18n.b>{p.duration}</I18n.b>
             </div>
-            <ul className="flex flex-1 flex-col gap-2.5 text-[13px]">
+            <I18n.ul className="flex flex-1 flex-col gap-2.5 text-[13px]">
               {p.features.map((f) => (
-                <li key={f} className="flex items-start gap-2">
+                <I18n.li key={f} className="flex items-start gap-2">
                   <Icon name="check" className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   {f}
-                </li>
+                </I18n.li>
               ))}
-            </ul>
-            <span className="rounded-button bg-bg py-3 text-center text-xs font-semibold text-muted">Fiyat yakında açıklanacak</span>
-          </article>
+            </I18n.ul>
+            <I18n.span className="rounded-button bg-bg py-3 text-center text-xs font-semibold text-muted">Fiyat yakında açıklanacak</I18n.span>
+          </I18n.article>
         ))}
-      </div>
+      </I18n.div>
 
       <section className="mx-auto mt-14 max-w-[760px]">
-        <h2 className="mb-5 text-xl font-semibold tracking-tight">Sık sorulanlar</h2>
-        <div className="divide-y divide-border rounded-2xl border border-border">
+        <I18n.h2 className="mb-5 text-xl font-semibold tracking-tight">Sık sorulanlar</I18n.h2>
+        <I18n.div className="divide-y divide-border rounded-2xl border border-border">
           {faq.map(([q, a]) => (
             <details key={q} className="group p-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium">
+              <I18n.summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium">
                 {q}
                 <Icon name="chevron" className="h-4 w-4 flex-shrink-0 text-muted transition group-open:rotate-90" />
-              </summary>
-              <p className="mt-3 text-[13px] leading-relaxed text-muted">{a}</p>
+              </I18n.summary>
+              <I18n.p className="mt-3 text-[13px] leading-relaxed text-muted">{a}</I18n.p>
             </details>
           ))}
-        </div>
+        </I18n.div>
         <div className="mt-8 flex flex-col items-center gap-3 text-center">
-          <p className="text-sm text-muted">Paketler açıldığında haber almak ya da vitrin için başvurmak ister misin?</p>
+          <I18n.p className="text-sm text-muted">Paketler açıldığında haber almak ya da vitrin için başvurmak ister misin?</I18n.p>
           <LinkButton href="/destek" full={false}>
             Bize yaz
           </LinkButton>
