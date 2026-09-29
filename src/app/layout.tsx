@@ -3,6 +3,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { cookies, headers } from "next/headers";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { OfflineBanner } from "@/components/OfflineBanner";
@@ -112,6 +113,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
           />
         ) : null}
+        <Analytics />
       </body>
     </html>
   );
