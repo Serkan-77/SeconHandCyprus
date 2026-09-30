@@ -43,3 +43,16 @@ next-env.d.ts
 !.env.production.example
 e2e-screens/
 responsive-shots/
+
+# marketplace-v2: API service, local data and deploy secrets
+/api/node_modules
+/api/dist
+/api/data
+/api/.env
+/migration/node_modules
+/migration/out
+/deploy/.env*
+!/deploy/.env.example
+/deploy/secrets/
+*.sql.gz
+*.dump

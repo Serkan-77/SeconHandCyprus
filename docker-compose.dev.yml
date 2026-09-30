@@ -1,0 +1,22 @@
+# Local development / test database. Bound to 127.0.0.1 only.
+#   docker compose -f docker-compose.dev.yml up -d
+# Passwords here are development-only placeholders, never used in production.
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_PASSWORD: dev-superuser-password
+      KIE_OWNER_PASSWORD: dev-owner-password
+      KIE_APP_PASSWORD: dev-app-password
+      KIE_DB: kibrisikincielcim
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - kie-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+volumes:
+  kie-dev-db:
