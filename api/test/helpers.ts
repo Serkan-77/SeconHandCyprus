@@ -59,7 +59,7 @@ export async function startApp(env: Record<string, string> = {}): Promise<TestAp
   });
   const app = await buildApp(config);
   await app.ready();
-  const owner = postgres(OWNER_URL, { max: 2, onnotice: () => {}, transform: postgres.camel });
+  const owner = postgres(OWNER_URL, { max: 2, onnotice: () => {}, transform: { column: { from: postgres.toCamel, to: postgres.fromCamel } } });
   return {
     app,
     owner,
@@ -250,7 +250,7 @@ export async function newListing(
 
 /** Runs SQL as the API role with a given caller context: the same path an API bug would take. */
 export async function asDbUser<T>(userId: string | null, role: "anon" | "user", fn: (sql: postgres.TransactionSql) => Promise<T>) {
-  const sql = postgres(APP_URL, { max: 1, onnotice: () => {}, transform: postgres.camel });
+  const sql = postgres(APP_URL, { max: 1, onnotice: () => {}, transform: { column: { from: postgres.toCamel, to: postgres.fromCamel } } });
   try {
     return (await sql.begin(async (tx) => {
       await tx`select set_config('app.user_id', ${userId ?? ""}, true), set_config('app.role', ${role}, true)`;

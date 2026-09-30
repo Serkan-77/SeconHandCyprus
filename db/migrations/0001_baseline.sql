@@ -355,6 +355,12 @@ begin
   if new.status = 'active' and new.published_at is null then
     new.published_at := now();
   end if;
+  -- The showcase (Vitrin) only ever holds published listings, whoever
+  -- changes the status (the admin exemption in guard_listing_update used to
+  -- leave a rejected listing marked as featured).
+  if new.status <> 'active' then
+    new.featured := false;
+  end if;
   return new;
 end $$;
 

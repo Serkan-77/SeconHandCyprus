@@ -22,7 +22,9 @@ export function createDb(url: string, max = 10): Db {
     connect_timeout: 10,
     max_lifetime: 60 * 30,
     onnotice: () => {},
-    transform: { ...postgres.camel, undefined: null },
+    // Column names become camelCase; JSON values (listing attributes,
+    // settings, snapshots) keep their keys exactly as stored.
+    transform: { column: { from: postgres.toCamel, to: postgres.fromCamel }, undefined: null },
     types: {
       // numeric (prices) and bigint (ref_no, counts) as JS numbers: every
       // value in this schema is far below 2^53.

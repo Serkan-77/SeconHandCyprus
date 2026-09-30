@@ -222,7 +222,7 @@ export async function listingRoutes(app: FastifyInstance) {
           select public.listing_accepts_whatsapp(${row.id}) as accepts_whatsapp,
                  exists (select 1 from favorites f where f.listing_id = ${row.id} and f.user_id = ${viewer?.id ?? null}::uuid) as is_favorite,
                  (select c.id from conversations c where c.listing_id = ${row.id} and c.buyer_id = ${viewer?.id ?? null}::uuid) as conversation_id,
-                 case when ${isOwner || isAdmin} then (select count(*)::int from favorites f where f.listing_id = ${row.id}) end as favorite_count`,
+                 public.listing_favorite_count(${row.id}) as favorite_count`,
       ]);
       const defs = taxonomy.attributesFor(row.categoryId);
       const s = seller[0] ?? {};

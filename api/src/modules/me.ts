@@ -154,7 +154,7 @@ export async function meRoutes(app: FastifyInstance) {
     return run(app, req, async (sql) => {
       const rows = await sql<(CardRow & { rejectReason: string | null; favoriteCount: number; conversationCount: number; unreadCount: number })[]>`
         select ${sql.unsafe(CARD_COLUMNS)}, l.reject_reason,
-          (select count(*)::int from favorites f where f.listing_id = l.id) as favorite_count,
+          public.listing_favorite_count(l.id) as favorite_count,
           (select count(*)::int from conversations c where c.listing_id = l.id) as conversation_count,
           (select count(*)::int from messages m join conversations c on c.id = m.conversation_id
              where c.listing_id = l.id and m.read_at is null and m.sender_id is distinct from ${v.id}) as unread_count
