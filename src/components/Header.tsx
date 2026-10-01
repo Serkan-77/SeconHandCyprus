@@ -184,7 +184,7 @@ function AccountMenu({ viewer, unreadNotifications }: { viewer: NonNullable<Head
           <Avatar name={viewer.name} src={viewer.avatar} size="xs" />
           <CountDot count={unreadNotifications} />
         </span>
-        <span className="max-w-[72px] truncate">{viewer.name.split(" ")[0]}</span>
+        <span className="hidden max-w-[72px] truncate xl:block">{viewer.name.split(" ")[0]}</span>
       </button>
       {open ? (
         <div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-64 animate-fade-in overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
@@ -277,12 +277,13 @@ function CategoryMenu({ categories, onNavigate }: { categories: NavCategory[]; o
 
 function HeaderAction({ href, icon, label, badge }: { href: string; icon: IconName; label: string; badge?: number }) {
   return (
-    <Link href={href} className="flex h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 text-[11.5px] font-medium hover:bg-brand-soft">
+    <Link href={href} aria-label={label} className="flex h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 text-[11.5px] font-medium hover:bg-brand-soft">
       <span className="relative">
         <Icon name={icon} className="h-[22px] w-[22px]" />
         {badge ? <CountDot count={badge} /> : null}
       </span>
-      {label}
+      {/* Labels only where there is room; the search keeps the width on smaller desktops. */}
+      <span className="hidden xl:block">{label}</span>
     </Link>
   );
 }
@@ -343,7 +344,7 @@ export function Header({
               )}
               <Link
                 href="/ilan-ver"
-                className="ml-3 flex h-[52px] items-center gap-2 rounded-[14px] bg-brand px-6 text-[15px] font-semibold text-on-brand transition hover:opacity-90"
+                className="ml-2 flex h-[52px] items-center gap-2 rounded-[14px] bg-brand px-4 text-[15px] font-semibold text-on-brand transition hover:opacity-90 xl:ml-3 xl:px-6"
               >
                 <Icon name="plus" className="h-5 w-5" />
                 {t("İlan ver")}

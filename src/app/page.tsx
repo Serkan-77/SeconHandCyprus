@@ -139,8 +139,8 @@ export default async function HomePage() {
 
             {mosaic.length ? (
               <>
-                {/* Desktop mosaic: one large tile and four smaller ones. */}
-                <div className="hidden h-[min(580px,calc(100vh-230px))] min-h-[460px] grid-cols-4 grid-rows-2 gap-3.5 md:grid">
+                {/* Wide screens: one large tile and four smaller ones. */}
+                <div className="hidden h-[min(580px,calc(100vh-230px))] min-h-[460px] grid-cols-4 grid-rows-2 gap-3.5 xl:grid">
                   {mosaic.map((item, i) => (
                     <ListingCard
                       key={item.id}
@@ -151,8 +151,8 @@ export default async function HomePage() {
                     />
                   ))}
                 </div>
-                {/* Phones: the same tiles as a swipeable rail. */}
-                <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:hidden">
+                {/* Narrower screens: the same tiles as a swipeable rail. */}
+                <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 xl:hidden">
                   {mosaic.map((item, i) => (
                     <ListingCard key={item.id} listing={item} layout="feature" priority={i === 0} className="aspect-[4/5] w-[78vw] max-w-[340px] flex-shrink-0 snap-start" />
                   ))}
