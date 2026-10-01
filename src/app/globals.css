@@ -100,6 +100,7 @@
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-band: var(--band);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
@@ -216,16 +217,12 @@ textarea:focus-visible {
   display: none;
 }
 
-/* A soft section band: the off-white fades in from the white above and
-   back out below, so sections are separated by a transition, not a line. */
-.band-soft {
-  background: linear-gradient(
-    to bottom,
-    var(--surface) 0,
-    var(--band) 120px,
-    var(--band) calc(100% - 120px),
-    var(--surface) 100%
-  );
+/* Homepage colour zones (white → grey → ink → grey → footer), with sharp edges. */
+.zone-band {
+  background: var(--band);
+}
+.zone-ink {
+  background: #0a0a0a;
 }
 
 /* Sections drift up as they enter the screen (CSS scroll-driven animation;
@@ -243,6 +240,80 @@ textarea:focus-visible {
       animation: rise linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+/*
+ * Horizontal scroll moment: on desktops the section pins under the header
+ * and vertical scrolling slides its track to the left, then the page goes
+ * on. Elsewhere (phones, older browsers, reduced motion) the track is a
+ * plain horizontal swipe row.
+ */
+.hscroll-viewport {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hscroll-viewport::-webkit-scrollbar {
+  display: none;
+}
+.hscroll-track {
+  display: flex;
+  width: max-content;
+}
+/* The row is rendered three times. Scrolling moves it by at most one set
+   and the idle drift by at most one set, so even both together leave a
+   full set on screen; each loops seamlessly because the sets are identical. */
+@keyframes hslide {
+  to {
+    transform: translateX(-33.3333%);
+  }
+}
+@keyframes hdrift {
+  from {
+    transform: translateX(-33.3333%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.hscroll-copy {
+  display: none;
+}
+.hscroll-drift {
+  display: contents;
+}
+@supports (animation-timeline: view()) {
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+    /* Taller section = slower slide. Scrolling down moves the row left by
+       one full set, scrolling up brings it back; while idle the row drifts
+       slowly to the right. */
+    .hscroll {
+      height: 360vh;
+      view-timeline: --hscroll block;
+    }
+    .hscroll-copy {
+      display: contents;
+    }
+    .hscroll-drift {
+      display: flex;
+      width: max-content;
+      animation: hdrift 120s linear infinite;
+    }
+    /* The frame is as tall as its content (cards scale with the screen
+       height), so nothing empty sits under the row when the page moves on. */
+    .hscroll-pin {
+      position: sticky;
+      top: 134px;
+      padding-block: 24px;
+    }
+    .hscroll-viewport {
+      overflow: hidden;
+    }
+    .hscroll-track {
+      animation: hslide linear both;
+      animation-timeline: --hscroll;
+      animation-range: contain 0% contain 100%;
     }
   }
 }

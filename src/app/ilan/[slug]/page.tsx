@@ -143,7 +143,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           </Notice>
         ) : null}
 
-        <div className="mt-3 sm:mt-4">
+        {/* Two columns from the top: photos and content on the left, the price card beside the photos (sticky). */}
+        <div className="mt-3 grid gap-10 sm:mt-4 lg:grid-cols-[minmax(0,1fr)_400px] xl:gap-12">
+          <div className="min-w-0">
           <Gallery
             photos={listing.images}
             title={listing.title}
@@ -155,12 +157,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               ) : null
             }
           />
-        </div>
 
-        <div className="mt-6 grid gap-10 lg:mt-8 lg:grid-cols-[minmax(0,1fr)_400px] xl:gap-16">
-          <div className="min-w-0">
             {/* Title */}
-            <div className="flex flex-wrap items-center gap-2 text-[13px]">
+            <div className="mt-6 flex flex-wrap items-center gap-2 text-[13px] lg:mt-8">
               <span className="rounded-full bg-brand px-2.5 py-1 font-semibold text-on-brand">{conditionLabel}</span>
               {listing.negotiable ? <span className="rounded-full border border-accent px-2.5 py-0.5 font-semibold text-accent">{t("Pazarlığa açık")}</span> : null}
               {listing.status === "sold" ? <Badge kind="danger">{t("Satıldı")}</Badge> : null}
@@ -185,11 +184,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </p>
 
             {/* Key facts strip */}
-            <dl className="mt-6 grid grid-cols-2 border-y border-border sm:grid-cols-4">
+            <dl className="mt-6 grid grid-cols-2 overflow-hidden rounded-2xl bg-band px-5 sm:grid-cols-4">
               {keyFacts.map((k, i) => (
                 <div
                   key={k.label}
-                  className={cn("py-4 pr-4", i % 2 === 1 && "pl-4 sm:pl-0", i > 0 && "sm:border-l sm:border-border sm:pl-5", i > 1 && "border-t border-border sm:border-t-0")}
+                  className={cn("py-4 pr-4", i % 2 === 1 && "pl-4 sm:pl-0", i > 0 && "sm:border-l sm:border-black/10 sm:pl-5", i > 1 && "border-t border-black/10 sm:border-t-0")}
                 >
                   <dt className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted">{k.label}</dt>
                   <dd className="mt-1 truncate text-[16px] font-semibold" translate="no">
@@ -204,7 +203,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               <ContactActions {...contactProps} />
             </div>
 
-            <section className="mt-10" aria-labelledby="desc">
+            <section className="mt-6 rounded-2xl bg-band p-6 sm:p-7" aria-labelledby="desc">
               <h2 id="desc" className="text-[20px] font-bold tracking-tight">
                 {t("Açıklama")}
               </h2>
@@ -218,7 +217,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </section>
 
             {specs.length ? (
-              <section className="mt-10" aria-labelledby="specs">
+              <section className="mt-6 rounded-2xl bg-band p-6 sm:p-7" aria-labelledby="specs">
                 <h2 id="specs" className="text-[20px] font-bold tracking-tight">
                   {t("Özellikler")}
                 </h2>
@@ -228,7 +227,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">{g.group}</p>
                       <dl>
                         {g.rows.map((r) => (
-                          <div key={r.key} className="flex items-baseline justify-between gap-4 border-b border-border py-2.5 text-[14.5px]">
+                          <div key={r.key} className="flex items-baseline justify-between gap-4 border-b border-black/10 py-2.5 text-[14.5px] last:border-b-0">
                             <dt className="text-muted">{r.label}</dt>
                             <dd className="text-right font-medium" translate="no">
                               {r.value}
@@ -242,7 +241,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               </section>
             ) : null}
 
-            <section className="mt-10 grid items-center gap-6 sm:grid-cols-[1fr_1.1fr]" aria-labelledby="where">
+            <section className="mt-6 grid items-center gap-6 rounded-2xl bg-band p-6 sm:grid-cols-[1fr_1.1fr] sm:p-7" aria-labelledby="where">
               <div>
                 <h2 id="where" className="text-[20px] font-bold tracking-tight">
                   {t("Konum ve teslimat")}

@@ -67,7 +67,9 @@ export default async function HomePage() {
   const popular = [...tree].filter((c) => (counts.get(c.id) ?? 0) > 0).sort((a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0));
 
   const [collections, regionTotals, stores, storeListings] = await Promise.all([
-    Promise.all(popular.slice(0, 4).map(async (c) => ({ category: c, result: await searchPublic({ category: c.slug, pageSize: 4 }, 60) }))),
+    Promise.all(
+      [...popular, ...tree.filter((c) => !popular.includes(c))].map(async (c) => ({ category: c, result: await searchPublic({ category: c.slug, pageSize: 4 }, 60) })),
+    ),
     Promise.all(taxonomy.regions.map(async (r) => [r.name, (await searchPublic({ city: r.name, pageSize: 1 }, 60)).total] as const)),
     apiServer<{ stores: PublicProfile[] }>("/stores?pageSize=3", { anonymous: true, revalidate: 120 }).catch(() => ({ stores: [] as PublicProfile[] })),
     searchPublic({ stores: 1, pageSize: 48 }, 120),
@@ -166,25 +168,30 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Stores on the left, the newest listings on the right, on one grey band. */}
-      <div className="band-soft mt-10 py-[88px]">
-        <div className={cn(SHELL, "reveal grid gap-12", hasStores && "xl:grid-cols-[340px_minmax(0,1fr)] xl:gap-12")}>
+      {/* The page moves through colour zones with sharp edges: white → grey → ink → grey → footer. */}
+
+      {/* Grey zone, split down the middle: newest listings on the left, stores on the right. */}
+      <div className="zone-band mt-8 pb-10 pt-10">
+        <div className={cn(SHELL, "grid gap-12", hasStores && "xl:grid-cols-2 xl:gap-10")}>
           {latest.items.length ? (
-            <section className="min-w-0 xl:order-2" aria-labelledby="latest-heading">
+            <section className="reveal min-w-0" aria-labelledby="latest-heading">
               <Eyebrow>{t("Az önce eklendi")}</Eyebrow>
               <SectionHead id="latest-heading" title={t("Yeni eklenenler")} meta={t("Bugünden geriye")} href="/ilanlar?sirala=yeni" linkLabel={t("Tümünü gör")} />
               <ListingGrid items={latest.items} fill narrow={hasStores} />
             </section>
           ) : null}
           {hasStores ? (
-            <section className="min-w-0 xl:sticky xl:top-[150px] xl:order-1 xl:self-start" aria-labelledby="stores-heading">
+            <section
+              className="min-w-0 xl:sticky xl:top-[150px] xl:self-start xl:rounded-[28px] xl:bg-surface xl:p-6 xl:shadow-sm xl:ring-1 xl:ring-black/5"
+              aria-labelledby="stores-heading"
+            >
               <Eyebrow>{t("İşletmeler")}</Eyebrow>
               <SectionHead id="stores-heading" title={t("Mağazalar")} href="/magazalar" linkLabel={t("Tümü")} />
-              <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 xl:mx-0 xl:grid xl:gap-7 xl:overflow-visible xl:px-0">
+              <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 xl:mx-0 xl:grid xl:grid-cols-2 xl:gap-5 xl:overflow-visible xl:px-0">
                 {stores.stores.map((store) => (
                   <StoreCollection key={store.id} store={store} items={storeListings.items.filter((i) => i.seller.id === store.id)} t={t} />
                 ))}
-                <Link href="/hesabim/magaza" className="flex w-[260px] flex-shrink-0 items-center gap-3 rounded-[20px] border-2 border-dashed border-border-strong p-4 transition hover:border-brand xl:w-auto">
+                <Link href="/hesabim/magaza" className="flex w-[260px] flex-shrink-0 items-center gap-3 self-start rounded-[20px] border-2 border-dashed border-border-strong p-4 transition hover:border-brand xl:w-auto">
                   <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-brand text-on-brand">
                     <Icon name="store" className="h-5 w-5" />
                   </span>
@@ -197,32 +204,50 @@ export default async function HomePage() {
             </section>
           ) : null}
         </div>
+        <div className={cn(SHELL, "mt-10")}>
+          <AdSlot placement="home" />
+        </div>
       </div>
 
-      {/* Category collections: real photos of what is listed in each popular category. */}
-      {collections.length ? (
-        <section className={cn(SHELL, "reveal mt-4")} aria-labelledby="collections-heading">
-          <Eyebrow>{t("Keşfet")}</Eyebrow>
-          <SectionHead id="collections-heading" title={t("Popüler kategoriler")} href="/kategori" linkLabel={t("Tüm kategoriler")} />
-          <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 xl:grid-cols-4">
-            {collections.map(({ category, result }) => (
-              <Collection key={category.id} category={category} items={result.items} total={counts.get(category.id) ?? result.total} locale={locale} t={t} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      {/* Ink zone: every category slides past (pinned on desktops), then the regions. */}
+      <div className="dark zone-ink text-text">
+        {collections.length ? (
+          <section className="hscroll" aria-labelledby="collections-heading">
+            <div className="hscroll-pin">
+              <div className={SHELL}>
+                <Eyebrow>{t("Keşfet")}</Eyebrow>
+                <SectionHead id="collections-heading" title={t("Popüler kategoriler")} meta={`${collections.length} ${t("kategori")}`} href="/kategori" linkLabel={t("Tüm kategoriler")} />
+              </div>
+              <div className="hscroll-viewport">
+                <div className="hscroll-track px-4 pb-2 sm:px-6 xl:px-[max(2.5rem,calc((100vw-1680px)/2+2.5rem))]">
+                  <div className="hscroll-drift">
+                    {[false, true, true].map((copy, n) => (
+                      // The copies only exist for the seamless loop on desktops.
+                      <div key={n} className={copy ? "hscroll-copy" : "contents"} aria-hidden={copy || undefined} inert={copy || undefined}>
+                        {collections.map(({ category, result }) => (
+                          <div key={category.id} className="pr-5">
+                            <Collection category={category} items={result.items} total={counts.get(category.id) ?? result.total} locale={locale} t={t} />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
-      <div className={cn(SHELL, "mt-14")}>
-        <AdSlot placement="home" />
+        <RegionsBand regions={taxonomy.regions} totals={new Map(regionTotals)} current={region} t={t} />
       </div>
 
-      <RegionsBand regions={taxonomy.regions} totals={new Map(regionTotals)} current={region} t={t} />
-
-      <div className={cn(SHELL, "mt-14")}>
-        <RecentlyViewed />
+      {/* Grey zone again: what you looked at, then selling and safety; it fades into the footer. */}
+      <div className="zone-band pb-4 pt-10">
+        <div className={SHELL}>
+          <RecentlyViewed />
+        </div>
+        <SellAndSafety t={t} />
       </div>
-
-      <SellAndSafety t={t} />
     </div>
   );
 }
@@ -242,32 +267,41 @@ function EmptyMarket({ t }: { t: Translate }) {
 }
 
 function Collection({ category, items, total, locale, t }: { category: CategoryNode; items: Card[]; total: number; locale: "tr" | "en"; t: Translate }) {
-  const cells = [...items.slice(0, 4), ...Array.from({ length: Math.max(0, 4 - items.length) }, () => null)];
+  const photos = items.filter((i) => i.image).slice(0, 4);
+  const cells = [...photos, ...Array.from({ length: Math.max(0, 4 - photos.length) }, () => null)];
   return (
-    <article className="group">
-      <Link href={`/kategori/${category.slug}`} className="block overflow-hidden rounded-[24px] shadow-sm ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
+    <article className="group w-[72vw] max-w-[300px] flex-shrink-0 snap-start sm:w-[300px] lg:w-[clamp(260px,calc(100vh-400px),560px)] lg:max-w-none">
+      <Link href={`/kategori/${category.slug}`} className="block overflow-hidden rounded-[24px] shadow-sm ring-1 ring-white/10 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
+        {photos.length === 0 ? (
+          <div className="grid aspect-square place-items-center bg-surface-2">
+            <span className="grid h-20 w-20 place-items-center rounded-full bg-text text-bg">
+              <Icon name={category.icon as IconName} className="h-9 w-9" />
+            </span>
+          </div>
+        ) : (
         <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-1 bg-surface">
           {cells.map((item, i) =>
             item?.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={item.id} src={item.image.sm} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
             ) : (
-              <span key={i} className="grid place-items-center bg-brand-soft">
+              <span key={i} className="grid place-items-center bg-surface-2">
                 <Icon name={category.icon as IconName} className="h-7 w-7 text-subtle" />
               </span>
             ),
           )}
         </div>
+        )}
       </Link>
       <div className="mt-3 flex items-center gap-2.5">
-        <span className="hidden h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-brand text-on-brand sm:grid">
+        <span className="hidden h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-text text-bg sm:grid">
           <Icon name={category.icon as IconName} className="h-[18px] w-[18px]" />
         </span>
         <Link href={`/kategori/${category.slug}`} className="min-w-0 flex-1 truncate text-[15px] font-bold tracking-tight hover:text-accent sm:text-[17px]">
           {categoryLabel(category, locale)}
         </Link>
         <span className="text-[13px] text-muted tabular">
-          {total} {t("ilan")}
+          {total ? `${total} ${t("ilan")}` : t("Henüz ilan yok")}
         </span>
       </div>
       <p className="mt-2 line-clamp-1 hidden text-[13px] text-muted sm:block">
@@ -290,9 +324,9 @@ function RegionsBand({ regions, totals, current, t }: { regions: Region[]; total
   const max = Math.max(1, ...regions.map((r) => totals.get(r.name) ?? 0));
   const side = (s: Region["side"]) => regions.filter((r) => r.side === s);
   return (
-    <section className={cn(SHELL, "reveal mt-20")} aria-labelledby="regions-heading">
-      <div className="dark overflow-hidden rounded-[32px] bg-bg text-text">
-        <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-14">
+    <section className={cn(SHELL, "reveal pb-12 pt-2")} aria-labelledby="regions-heading">
+      <div>
+        <div className="grid gap-8 border-t border-border pt-8 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-14">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-accent">{t("Bölgeler")}</p>
             <h2 id="regions-heading" className="mt-2 text-[26px] font-bold leading-tight tracking-[-0.02em] sm:text-[34px]">
@@ -387,7 +421,7 @@ function SellAndSafety({ t }: { t: Translate }) {
   const steps = ["Fotoğrafını çek, ilan ver", "Uygulama içinden konuş", "Buluş ve değerlendir"];
   const rules = ["Ürünü görmeden ödeme yapma.", "Kalabalık bir yerde buluş.", "Kapora ya da kargo ücreti isteyenlere dikkat et."];
   return (
-    <div className="band-soft mt-16 py-[88px]">
+    <div className="mt-8 pb-8">
     <section className={cn(SHELL, "reveal")}>
       <div className="grid overflow-hidden rounded-[32px] bg-surface shadow-sm ring-1 ring-black/5 lg:grid-cols-[1.4fr_1fr]">
         <div className="p-6 sm:p-10">

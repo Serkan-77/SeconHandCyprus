@@ -51,8 +51,8 @@ export function RecentlyViewed({ excludeId, title = "Son baktıkların" }: { exc
   if (items.length < 2) return null;
   return (
     <section aria-labelledby="recent-heading">
-      <div className="mb-4 flex items-end justify-between gap-4 sm:mb-5">
-        <h2 id="recent-heading" className="text-[22px] font-bold leading-tight tracking-[-0.02em] sm:text-[26px]">
+      <div className="mb-3 flex items-end justify-between gap-4">
+        <h2 id="recent-heading" className="text-[17px] font-bold leading-tight tracking-[-0.01em] sm:text-[19px]">
           {t(title)}
         </h2>
         <button
@@ -68,7 +68,7 @@ export function RecentlyViewed({ excludeId, title = "Son baktıkların" }: { exc
           {t("Temizle")}
         </button>
       </div>
-      <ListingRail items={items} />
+      <ListingRail items={items} size="sm" />
     </section>
   );
 }

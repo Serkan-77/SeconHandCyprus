@@ -146,8 +146,13 @@ export function ListingCard({
   }
 
   return (
-    <article className={cn("group relative flex min-w-0 flex-col", className)}>
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-brand-soft shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition duration-300 group-hover:shadow-[0_14px_32px_-12px_rgb(0_0_0/0.28)]">
+    <article
+      className={cn(
+        "group relative flex min-w-0 flex-col rounded-[20px] border border-border bg-surface p-2 transition duration-300 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-[0_16px_36px_-16px_rgb(0_0_0/0.3)]",
+        className,
+      )}
+    >
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-brand-soft">
         <MediaImage
           urls={listing.image}
           alt={listing.title}
@@ -173,7 +178,7 @@ export function ListingCard({
         ) : null}
         <StatusVeil status={listing.status} />
       </div>
-      <div className="flex flex-1 flex-col px-0.5 pt-2.5">
+      <div className="flex flex-1 flex-col px-1.5 pb-1.5 pt-2.5">
         <p className="flex items-baseline gap-2">
           <span className="text-[17px] font-bold tracking-tight tabular sm:text-[18px]">{price}</span>
           {listing.negotiable ? <span className="text-[11px] font-semibold uppercase tracking-wide text-accent">{t("Pazarlık")}</span> : null}
@@ -193,8 +198,8 @@ export function ListingCard({
 /** The product grid: 2 columns on phones up to 7 on very wide screens. */
 export const GRID = "grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 md:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-7";
 
-/** For a grid that shares its row with a side column: 2, 3, 4 or 6 columns (12 cards always fill whole rows). */
-export const GRID_NARROW = "grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4 3xl:grid-cols-6";
+/** For a grid that takes half of its row: 2 or 3 columns (12 cards always fill whole rows). */
+export const GRID_NARROW = "grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6";
 
 /**
  * `fill`: render only whole rows. 12 cards fill 2, 3, 4 and 6 columns; the
@@ -224,11 +229,15 @@ export function ListingGrid({
 }
 
 /** A horizontally scrolling row of cards (snap on touch). */
-export function ListingRail({ items, className }: { items: Card[]; className?: string }) {
+export function ListingRail({ items, className, size = "md" }: { items: Card[]; className?: string; size?: "md" | "sm" }) {
   return (
     <div className={cn("no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:-mx-6 sm:gap-4 sm:px-6 xl:mx-0 xl:px-0", className)}>
       {items.map((item) => (
-        <ListingCard key={item.id} listing={item} className="w-[44vw] flex-shrink-0 snap-start sm:w-[220px] xl:w-[236px]" />
+        <ListingCard
+          key={item.id}
+          listing={item}
+          className={cn("flex-shrink-0 snap-start", size === "sm" ? "w-[34vw] sm:w-[150px] xl:w-[160px]" : "w-[44vw] sm:w-[220px] xl:w-[236px]")}
+        />
       ))}
     </div>
   );
@@ -238,9 +247,9 @@ export function ListingGridSkeleton({ count = 12 }: { count?: number }) {
   return (
     <div className={GRID} aria-hidden>
       {Array.from({ length: count }, (_, i) => (
-        <div key={i}>
+        <div key={i} className="rounded-[20px] border border-border p-2">
           <div className="skeleton aspect-[4/5] rounded-[14px]" />
-          <div className="space-y-2 pt-3">
+          <div className="space-y-2 px-1.5 pb-1.5 pt-3">
             <div className="skeleton h-5 w-1/2" />
             <div className="skeleton h-4 w-full" />
             <div className="skeleton h-3 w-2/3" />
