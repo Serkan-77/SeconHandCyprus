@@ -1,13 +1,15 @@
+import { SHELL } from "@/lib/layout";
+import { cn } from "@/lib/cn";
+import { SectionHead } from "@/components/SectionHead";
+import type { IconName } from "@/components/icons";
 import type { Metadata } from "next";
 import { cache } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Icon } from "@/components/icons";
 import { JsonLd } from "@/components/JsonLd";
 import { ListingGrid } from "@/components/ListingCard";
 import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Notice } from "@/components/ui/FormError";
 import { Stars } from "@/components/ui/Stars";
@@ -51,161 +53,131 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
     ...(p.isStore && p.store?.address ? { address: p.store.address } : {}),
   };
 
+  const facts: { icon: IconName; text: string; href?: string; external?: boolean }[] = [];
+  if (p.isStore && p.store) {
+    if (p.store.address) facts.push({ icon: "pin", text: p.store.address });
+    if (p.store.hours) facts.push({ icon: "clock", text: p.store.hours });
+    if (p.store.phone) facts.push({ icon: "phone", text: p.store.phone, href: `tel:${p.store.phone}` });
+    if (p.store.website) facts.push({ icon: "globe", text: p.store.website.replace(/^https?:\/\//, ""), href: p.store.website, external: true });
+  }
+
   return (
-    <div className="mx-auto max-w-[1320px] px-4 pb-16 pt-4 sm:px-6 sm:pt-6">
+    <div className="pb-16">
       <JsonLd data={schema} />
-      <Breadcrumbs items={[{ label: t(p.isStore ? "Mağazalar" : "Satıcılar"), href: p.isStore ? "/magazalar" : undefined }, { label: p.name }]} />
 
-      {p.unavailable ? <Notice tone="warning" className="mt-4">{t("Bu hesabın ilanları şu anda görüntülenemiyor.")}</Notice> : null}
-
-      <section className="mt-4 grid gap-6 rounded-hero border border-border p-5 sm:p-7 lg:grid-cols-[1fr_320px]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <Avatar name={p.name} src={p.avatar} size="xl" />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight" translate="no">
-                {p.name}
-              </h1>
-              {p.isStore ? (
-                <Badge kind={p.store?.verified ? "accent" : "neutral"} icon={p.store?.verified ? <Icon name="verified" className="h-3.5 w-3.5" /> : <Icon name="store" className="h-3.5 w-3.5" />}>
-                  {t(p.store?.verified ? "Onaylı mağaza" : "Mağaza")}
-                </Badge>
-              ) : null}
+      {/* Profile band */}
+      <section className="dark bg-bg text-text">
+        <div className={cn(SHELL, "pb-8 pt-5 sm:pb-10")}>
+          <Breadcrumbs items={[{ label: t(p.isStore ? "Mağazalar" : "Satıcılar"), href: p.isStore ? "/magazalar" : undefined }, { label: p.name }]} />
+          <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+              <Avatar name={p.name} src={p.avatar} size="xl" />
+              <div className="min-w-0">
+                {p.isStore ? (
+                  <p className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+                    <Icon name={p.store?.verified ? "verified" : "store"} className="h-4 w-4" />
+                    {t(p.store?.verified ? "Onaylı mağaza" : "Mağaza")}
+                  </p>
+                ) : null}
+                <h1 className="text-[30px] font-bold leading-tight tracking-[-0.025em] sm:text-[40px]" translate="no">
+                  {p.name}
+                </h1>
+                <p className="mt-1 flex flex-wrap gap-x-3 text-[14px] text-muted">
+                  <span>{f("memberSince", p.memberSince)}</span>
+                  {p.region ? <span>{p.region}</span> : null}
+                  {p.emailVerified ? (
+                    <span className="flex items-center gap-1">
+                      <Icon name="mail" className="h-4 w-4" />
+                      {t("E-posta doğrulandı")}
+                    </span>
+                  ) : null}
+                </p>
+                {p.bio ? (
+                  <p className="mt-3 max-w-[60ch] whitespace-pre-line text-[15px] leading-relaxed text-text/90" translate="no">
+                    {p.bio}
+                  </p>
+                ) : null}
+              </div>
             </div>
-            <p className="mt-1 text-[14px] text-muted">
-              {f("memberSince", p.memberSince)}
-              {p.region ? ` · ${p.region}` : ""}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-              {p.emailVerified ? (
-                <span className="flex items-center gap-1 text-muted">
-                  <Icon name="mail" className="h-4 w-4" />
-                  {t("E-posta doğrulandı")}
-                </span>
-              ) : null}
-            </div>
-            {p.bio ? (
-              <p className="mt-3 max-w-2xl whitespace-pre-line text-[15px] leading-relaxed" translate="no">
-                {p.bio}
-              </p>
-            ) : null}
-            {p.isStore && p.store ? (
-              <dl className="mt-4 grid gap-2 text-[14px] sm:grid-cols-2">
-                {p.store.address ? (
-                  <div className="flex gap-2">
-                    <Icon name="pin" className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted" />
-                    <dd translate="no">{p.store.address}</dd>
-                  </div>
-                ) : null}
-                {p.store.hours ? (
-                  <div className="flex gap-2">
-                    <Icon name="clock" className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted" />
-                    <dd translate="no">{p.store.hours}</dd>
-                  </div>
-                ) : null}
-                {p.store.phone ? (
-                  <div className="flex gap-2">
-                    <Icon name="phone" className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted" />
-                    <dd>
-                      <a href={`tel:${p.store.phone}`} className="text-accent hover:underline">
-                        {p.store.phone}
-                      </a>
-                    </dd>
-                  </div>
-                ) : null}
-                {p.store.website ? (
-                  <div className="flex gap-2">
-                    <Icon name="globe" className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted" />
-                    <dd>
-                      <a href={p.store.website} rel="nofollow noopener noreferrer ugc" target="_blank" className="text-accent hover:underline">
-                        {p.store.website.replace(/^https?:\/\//, "")}
-                      </a>
-                    </dd>
-                  </div>
-                ) : null}
-              </dl>
-            ) : null}
+            <dl className="grid grid-cols-3 divide-x divide-border rounded-2xl border border-border">
+              <div className="flex flex-col-reverse px-5 py-4 text-center sm:px-7">
+                <dt className="mt-1 text-[12.5px] text-muted">{p.stats.ratingCount ? t(`${p.stats.ratingCount} değerlendirme`) : t("Puan yok")}</dt>
+                <dd className="text-[26px] font-bold leading-none tabular">{p.stats.ratingCount ? f("decimal", p.stats.ratingAvg) : "–"}</dd>
+              </div>
+              <div className="flex flex-col-reverse px-5 py-4 text-center sm:px-7">
+                <dt className="mt-1 text-[12.5px] text-muted">{t("Yayında")}</dt>
+                <dd className="text-[26px] font-bold leading-none tabular">{p.stats.activeListings}</dd>
+              </div>
+              <div className="flex flex-col-reverse px-5 py-4 text-center sm:px-7">
+                <dt className="mt-1 text-[12.5px] text-muted">{t("Satılan")}</dt>
+                <dd className="text-[26px] font-bold leading-none tabular">{p.stats.soldListings}</dd>
+              </div>
+            </dl>
           </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2 self-start text-center lg:grid-cols-1 lg:text-left">
-          <div className="rounded-card bg-bg p-3 lg:flex lg:items-center lg:justify-between">
-            <p className="text-[13px] text-muted">{t("Puan")}</p>
-            <p className="flex items-center justify-center gap-1.5 font-bold lg:justify-end">
-              {p.stats.ratingCount ? (
-                <>
-                  <Stars value={p.stats.ratingAvg} className="hidden sm:inline-flex" />
-                  {f("decimal", p.stats.ratingAvg)}
-                  <span className="text-[13px] font-normal text-muted">({p.stats.ratingCount})</span>
-                </>
-              ) : (
-                "—"
-              )}
-            </p>
-          </div>
-          <div className="rounded-card bg-bg p-3 lg:flex lg:items-center lg:justify-between">
-            <p className="text-[13px] text-muted">{t("Yayındaki ilan")}</p>
-            <p className="font-bold tabular">{p.stats.activeListings}</p>
-          </div>
-          <div className="rounded-card bg-bg p-3 lg:flex lg:items-center lg:justify-between">
-            <p className="text-[13px] text-muted">{t("Satılan")}</p>
-            <p className="font-bold tabular">{p.stats.soldListings}</p>
-          </div>
-          {!data.viewer.isSelf ? (
-            <div className="col-span-3 pt-1 lg:col-span-1">
-              <ReportDialog target={{ kind: "user", id: p.id }} signedIn={Boolean(me)} label="Kullanıcıyı şikayet et" />
-            </div>
+          {facts.length ? (
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-[14px]">
+              {facts.map((x) => (
+                <li key={x.text} className="flex items-center gap-2">
+                  <Icon name={x.icon} className="h-4 w-4 text-muted" />
+                  {x.href ? (
+                    <a href={x.href} {...(x.external ? { rel: "nofollow noopener noreferrer ugc", target: "_blank" } : {})} className="underline-offset-4 hover:underline" translate="no">
+                      {x.text}
+                    </a>
+                  ) : (
+                    <span translate="no">{x.text}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
       </section>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_340px]">
-        <section aria-labelledby="listings">
-          <h2 id="listings" className="mb-4 text-xl font-bold tracking-tight">
-            {t("İlanları")}
-          </h2>
-          {listings.length ? (
-            <ListingGrid items={listings} className="lg:grid-cols-3" />
-          ) : (
-            <EmptyState icon="grid" title={t("Yayında ilanı yok")} />
-          )}
-        </section>
-        <section aria-labelledby="reviews">
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 id="reviews" className="text-xl font-bold tracking-tight">
-              {t("Değerlendirmeler")}
-            </h2>
-            {p.stats.ratingCount > recentRatings.length ? (
-              <Link href={`/satici/${p.id}/yorumlar`} className="text-[14px] font-semibold text-accent hover:underline">
-                {t("Tümü")}
-              </Link>
-            ) : null}
-          </div>
-          {recentRatings.length ? (
-            <ul className="flex flex-col gap-3">
-              {recentRatings.map((r) => (
-                <li key={r.id} className="rounded-card border border-border p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <Stars value={r.score} />
-                    <span className="text-[12px] text-subtle">{f("formatDate", r.createdAt)}</span>
-                  </div>
-                  {r.comment ? (
-                    <p className="mt-2 text-[14px] leading-relaxed" translate="no">
-                      {r.comment}
-                    </p>
-                  ) : null}
-                  <p className="mt-2 text-[12px] text-muted" translate="no">
+      {p.unavailable ? (
+        <div className={cn(SHELL, "mt-6")}>
+          <Notice tone="warning">{t("Bu hesabın ilanları şu anda görüntülenemiyor.")}</Notice>
+        </div>
+      ) : null}
+
+      <section className={cn(SHELL, "mt-10")} aria-labelledby="listings">
+        <SectionHead id="listings" title={t("İlanları")} meta={`${listings.length} ${t("ilan")}`} />
+        {listings.length ? <ListingGrid items={listings} /> : <EmptyState icon="grid" title={t("Yayında ilanı yok")} />}
+      </section>
+
+      <section className={cn(SHELL, "mt-14")} aria-labelledby="reviews">
+        <SectionHead
+          id="reviews"
+          title={t("Değerlendirmeler")}
+          meta={p.stats.ratingCount ? `${f("decimal", p.stats.ratingAvg)} · ${p.stats.ratingCount}` : undefined}
+          href={p.stats.ratingCount > recentRatings.length ? `/satici/${p.id}/yorumlar` : undefined}
+          linkLabel={t("Tümü")}
+        />
+        {recentRatings.length ? (
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {recentRatings.map((r) => (
+              <li key={r.id} className="flex flex-col rounded-2xl border border-border p-5">
+                <Stars value={r.score} />
+                <p className="mt-3 flex-1 text-[15px] leading-relaxed" translate="no">
+                  {r.comment ? `“${r.comment}”` : <span className="text-muted">{t("Yorum yazılmamış.")}</span>}
+                </p>
+                <p className="mt-4 flex items-center justify-between text-[12.5px] text-muted">
+                  <span className="font-semibold text-text" translate="no">
                     {r.raterName ?? t("Silinmiş kullanıcı")}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="rounded-card border border-dashed border-border-strong p-5 text-[14px] text-muted">
-              {t("Henüz değerlendirme yok. Değerlendirmeler yalnızca iki tarafın da onayladığı buluşmalardan sonra yapılabilir.")}
-            </p>
-          )}
-        </section>
-      </div>
+                  </span>
+                  {f("formatDate", r.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[14px] text-muted">{t("Henüz değerlendirme yok. Değerlendirmeler yalnızca iki tarafın da onayladığı buluşmalardan sonra yapılabilir.")}</p>
+        )}
+        {!data.viewer.isSelf ? (
+          <div className="mt-8 border-t border-border pt-5 text-[13.5px]">
+            <ReportDialog target={{ kind: "user", id: p.id }} signedIn={Boolean(me)} label="Kullanıcıyı şikayet et" />
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }
