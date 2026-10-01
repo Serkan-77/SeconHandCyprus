@@ -1964,5 +1964,7 @@
   "Son kontrol": "Final check",
   "Devam": "Continue",
   "Sayfalar": "Pages",
-  "veritabanı, kimlik doğrulama ve fotoğraflar kiraladığımız sanal sunucuda, kendi yönettiğimiz yazılımla tutulur; e-postalar e-posta gönderim hizmetleri aracılığıyla; reklamlar Google tarafından sunulur.": "database, authentication and photos are kept on a virtual server we rent, running software we operate ourselves; emails are sent through email delivery services; ads are served by Google."
+  "veritabanı, kimlik doğrulama ve fotoğraflar kiraladığımız sanal sunucuda, kendi yönettiğimiz yazılımla tutulur; e-postalar e-posta gönderim hizmetleri aracılığıyla; reklamlar Google tarafından sunulur.": "database, authentication and photos are kept on a virtual server we rent, running software we operate ourselves; emails are sent through email delivery services; ads are served by Google.",
+  "ya da e-posta ile": "or with email",
+  "Google ile giriş tamamlanamadı. Tekrar dene ya da e-posta adresinle giriş yap.": "Signing in with Google could not be completed. Try again or sign in with your email address."
 }

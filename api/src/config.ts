@@ -49,6 +49,11 @@ const schema = z
 
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
+    /** Google endpoints; overridden only by tests (a local fake provider). */
+    GOOGLE_AUTH_URL: z.string().url().default("https://accounts.google.com/o/oauth2/v2/auth"),
+    GOOGLE_TOKEN_URL: z.string().url().default("https://oauth2.googleapis.com/token"),
+    GOOGLE_JWKS_URL: z.string().url().default("https://www.googleapis.com/oauth2/v3/certs"),
+    GOOGLE_ISSUER: z.string().default("https://accounts.google.com"),
 
     /** Disables the in-memory request limiter (tests only). */
     DISABLE_REQUEST_LIMITER: bool,
@@ -60,6 +65,9 @@ const schema = z
       }
       if (env.MAIL_TRANSPORT !== "smtp") {
         ctx.addIssue({ code: "custom", path: ["MAIL_TRANSPORT"], message: "must be smtp in production" });
+      }
+      for (const key of ["GOOGLE_AUTH_URL", "GOOGLE_TOKEN_URL", "GOOGLE_JWKS_URL"] as const) {
+        if (!env[key].startsWith("https://")) ctx.addIssue({ code: "custom", path: [key], message: "must be https in production" });
       }
       if (env.DISABLE_REQUEST_LIMITER) {
         ctx.addIssue({ code: "custom", path: ["DISABLE_REQUEST_LIMITER"], message: "not allowed in production" });

@@ -88,6 +88,8 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_SECURE: ${SMTP_SECURE:-0}
       MAIL_FROM: ${MAIL_FROM:-Kıbrıs İkinci Elcim <no-reply@kibrisikincielcim.com>}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       LOG_LEVEL: info
     volumes:
       - ${KIE_UPLOAD_DIR:-/srv/kibrisikincielcim/uploads}:/data/uploads
@@ -114,6 +116,7 @@ services:
         NEXT_PUBLIC_ADSENSE_SLOT_RESULTS: ${NEXT_PUBLIC_ADSENSE_SLOT_RESULTS:-}
         NEXT_PUBLIC_ADSENSE_SLOT_LISTING: ${NEXT_PUBLIC_ADSENSE_SLOT_LISTING:-}
         NEXT_PUBLIC_ADSENSE_CMP_READY: ${NEXT_PUBLIC_ADSENSE_CMP_READY:-0}
+        NEXT_PUBLIC_AUTH_GOOGLE: ${NEXT_PUBLIC_AUTH_GOOGLE:-0}
     image: kibrisikincielcim-web:latest
     restart: unless-stopped
     environment:

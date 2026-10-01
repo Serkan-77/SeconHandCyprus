@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { getI18n } from "@/lib/i18n/server";
 import { safeInternalPath } from "@/lib/safeRedirect";
@@ -26,6 +27,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         </>
       }
     >
+      <GoogleButton returnTo={target} />
       <SignupForm returnTo={target} />
     </AuthShell>
   );

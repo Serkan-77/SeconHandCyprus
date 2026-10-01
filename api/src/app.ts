@@ -17,6 +17,7 @@ import { RealtimeHub } from "./realtime/hub.ts";
 import { checkCsrf, resolveClientIp, resolveViewer } from "./http/context.ts";
 import { LIMITS } from "../../shared/constants.ts";
 import { firstError } from "../../shared/schemas.ts";
+import { googleRoutes } from "./modules/google.ts";
 import { authRoutes } from "./modules/auth.ts";
 import { taxonomyRoutes } from "./modules/taxonomy.ts";
 import { listingRoutes } from "./modules/listings.ts";
@@ -149,6 +150,7 @@ export async function buildApp(config: Config, overrides: Partial<Deps> = {}): P
   await app.register(
     async (api) => {
       await api.register(authRoutes, { prefix: "/auth" });
+      await api.register(googleRoutes, { prefix: "/auth/google" });
       await api.register(taxonomyRoutes);
       await api.register(listingRoutes);
       await api.register(meRoutes, { prefix: "/me" });

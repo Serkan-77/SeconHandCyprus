@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { LoginForm } from "@/components/auth/AuthForms";
 import { getI18n } from "@/lib/i18n/server";
 import { safeInternalPath } from "@/lib/safeRedirect";
@@ -11,6 +12,7 @@ const NOTICES: Record<string, string> = {
   gerekli: "Devam etmek için giriş yap.",
   baglanti: "Bu bağlantı artık geçerli değil. Giriş yapıp devam edebilirsin.",
   oturum: "Oturumun sona erdi. Tekrar giriş yap.",
+  google: "Google ile giriş tamamlanamadı. Tekrar dene ya da e-posta adresinle giriş yap.",
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ returnTo?: string; hata?: string }> }) {
@@ -30,6 +32,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </>
       }
     >
+      <GoogleButton returnTo={target} />
       <LoginForm returnTo={target} notice={notice} />
     </AuthShell>
   );
