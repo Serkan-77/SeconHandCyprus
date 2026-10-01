@@ -1,0 +1,13 @@
+[Unit]
+Description=Kıbrıs İkinci Elcim: health check
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/srv/kibrisikincielcim/ops.env
+ExecStart=/usr/bin/env bash /srv/kibrisikincielcim/app/deploy/ops/healthcheck.sh
+TimeoutStartSec=2min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
