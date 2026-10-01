@@ -10,11 +10,12 @@ import { cn } from "@/lib/cn";
  */
 export function Logo({
   className,
-  priority = false,
+  eager = false,
   tone = "auto",
 }: {
   className?: string;
-  priority?: boolean;
+  /** Above the fold (header): load immediately, it is often the LCP element. */
+  eager?: boolean;
   tone?: "auto" | "dark";
 }) {
   const img = (src: string, extra?: string) => (
@@ -23,7 +24,7 @@ export function Logo({
       alt={SITE.name}
       width={538}
       height={104}
-      priority={priority}
+      loading={eager ? "eager" : undefined}
       className={cn("h-9 w-auto", extra, className)}
     />
   );

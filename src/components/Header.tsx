@@ -218,7 +218,7 @@ export function Header({
     <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
       <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-3 px-4 sm:h-16 sm:px-6 lg:gap-6">
         <Link href="/" className="flex flex-shrink-0 items-center" aria-label={t("Ana sayfa")}>
-          <Logo priority className="h-7 sm:h-9" />
+          <Logo eager className="h-7 sm:h-9" />
         </Link>
 
         <SearchBox region={region} className="hidden flex-1 lg:flex lg:max-w-[640px]" />

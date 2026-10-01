@@ -68,7 +68,7 @@ export default async function AboutPage() {
           </I18n.p>
         </div>
         <div className="relative hidden aspect-[4/3] overflow-hidden rounded-hero bg-bg sm:block">
-          <I18n.Image src="/images/demo-chair.jpg" alt="" fill priority sizes="(min-width: 1024px) 45vw, 90vw" className="object-cover" />
+          <I18n.Image src="/images/demo-chair.jpg" alt="" fill loading="eager" sizes="(min-width: 1024px) 45vw, 90vw" className="object-cover" />
         </div>
       </section>
 
