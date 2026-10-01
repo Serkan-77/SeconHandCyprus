@@ -328,7 +328,7 @@ export function FiltersSidebar(props: Props) {
 }
 
 /** Phones: a sheet with a live result count; nothing changes until "show results". */
-export function FiltersButton(props: Props & { activeCount: number }) {
+export function FiltersButton({ side = "bottom", className, ...props }: Props & { activeCount: number; side?: "bottom" | "left"; className?: string }) {
   const { t } = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -360,17 +360,17 @@ export function FiltersButton(props: Props & { activeCount: number }) {
           setDraft(toDraft(props.params));
           setOpen(true);
         }}
-        className="flex h-10 items-center gap-2 rounded-button border border-border-strong px-3.5 text-[14px] font-semibold"
+        className={cn("flex h-10 flex-shrink-0 items-center gap-2 rounded-full bg-brand px-4 text-[14px] font-semibold text-on-brand", className)}
       >
         <Icon name="sliders" className="h-4 w-4" />
-        {t("Filtrele")}
-        {props.activeCount ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] text-on-accent">{props.activeCount}</span> : null}
+        {t(side === "left" ? "Tüm filtreler" : "Filtrele")}
+        {props.activeCount ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-on-brand px-1 text-[11px] text-brand tabular">{props.activeCount}</span> : null}
       </button>
       <Sheet
         title="Filtrele"
         open={open}
         onClose={() => setOpen(false)}
-        side="bottom"
+        side={side}
         footer={
           <>
             <Button variant="outline" onClick={() => setDraft({})}>
@@ -396,23 +396,54 @@ export function FiltersButton(props: Props & { activeCount: number }) {
   );
 }
 
+/** Region as one compact control in the results toolbar. */
+export function RegionSelect({ base, params, regions }: { base: string; params: WebParams; regions: { name: string; side: string }[] }) {
+  const { t } = useLocale();
+  const router = useRouter();
+  const value = typeof params.sehir === "string" && !params.sehir.includes(",") ? params.sehir : "";
+  return (
+    <label className="relative flex h-10 flex-shrink-0 items-center">
+      <Icon name="pin" className="pointer-events-none absolute left-3.5 h-4 w-4" />
+      <select
+        value={value}
+        onChange={(e) => router.push(resultsHref(base, params, { sehir: e.target.value || undefined }))}
+        aria-label={t("Bölge")}
+        className={cn(
+          "h-10 appearance-none rounded-full border pl-9 pr-9 text-[14px] font-medium",
+          value ? "border-brand bg-brand text-on-brand" : "border-border-strong bg-surface text-text",
+        )}
+      >
+        <option value="">{t("Tüm Kıbrıs")}</option>
+        <optgroup label={t("Kuzey Kıbrıs")}>
+          {regions.filter((r) => r.side === "north").map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+        </optgroup>
+        <optgroup label={t("Güney Kıbrıs")}>
+          {regions.filter((r) => r.side === "south").map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+        </optgroup>
+      </select>
+      <Icon name="down" className={cn("pointer-events-none absolute right-3 h-4 w-4", value ? "text-on-brand" : "")} />
+    </label>
+  );
+}
+
 export function SortSelect({ base, params }: { base: string; params: WebParams }) {
   const { t } = useLocale();
   const router = useRouter();
   const value = (params.sirala as string) ?? "";
   return (
-    <label className="flex items-center gap-2 text-[13px] text-muted">
-      <span className="hidden sm:inline">{t("Sırala")}</span>
+    <label className="relative flex h-10 flex-shrink-0 items-center">
+      <Icon name="sort" className="pointer-events-none absolute left-3.5 h-4 w-4" />
       <select
         value={value}
         onChange={(e) => router.push(resultsHref(base, params, { sirala: e.target.value || undefined }))}
         aria-label={t("Sırala")}
-        className="h-10 rounded-button border border-border-strong bg-surface px-3 text-[14px] font-medium text-text"
+        className="h-10 appearance-none rounded-full border border-border-strong bg-surface pl-9 pr-9 text-[14px] font-medium text-text"
       >
         <option value="">{t("En yeni")}</option>
         <option value="artan">{t("Fiyat: düşükten yükseğe")}</option>
         <option value="azalan">{t("Fiyat: yüksekten düşüğe")}</option>
       </select>
+      <Icon name="down" className="pointer-events-none absolute right-3 h-4 w-4" />
     </label>
   );
 }

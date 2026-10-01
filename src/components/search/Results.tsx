@@ -6,12 +6,14 @@ import { AdSlot } from "@/components/AdSlot";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkButton } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
-import { FiltersButton, FiltersSidebar, SortSelect } from "@/components/search/Filters";
+import { FiltersButton, RegionSelect, SortSelect } from "@/components/search/Filters";
 import { apiServer, getTaxonomy } from "@/lib/api/server";
 import type { Category, SearchResult } from "@/lib/api/types";
 import { attributesFor, categoryLabel, chainOf, childrenOf } from "@/lib/taxonomy";
 import { resultsHref, toApiQuery, type WebParams } from "@/lib/search";
 import { getI18n } from "@/lib/i18n/server";
+import { SHELL } from "@/lib/layout";
+import { cn } from "@/lib/cn";
 import { formatAttributeValue } from "@shared/attributes";
 
 const PAGE_SIZE = 24;
@@ -95,53 +97,100 @@ export async function Results({ params, category }: { params: WebParams; categor
     ? [{ href: "/ilanlar", label: t("Tüm ilanlar") }, ...chain.map((c) => ({ href: `/kategori/${c.slug}`, label: categoryLabel(c, locale) }))]
     : [{ href: "/ilanlar", label: t("Tüm ilanlar") }];
 
+  // One-tap filters: real, link-based toggles.
+  const toggles: { key: string; value: string; label: string; icon: IconName }[] = [
+    { key: "vitrin", value: "1", label: "Vitrin", icon: "spark" },
+    { key: "tarih", value: "1", label: "Son 24 saat", icon: "clock" },
+    { key: "pazarlik", value: "1", label: "Pazarlığa açık", icon: "handshake" },
+    { key: "magaza", value: "1", label: "Mağazalar", icon: "store" },
+  ];
+  const activeCount = pills.filter((p) => !p.label.startsWith("“")).length;
+
   return (
-    <div className="mx-auto max-w-[1320px] px-4 pb-16 pt-4 sm:px-6 sm:pt-6">
-      <Breadcrumbs items={crumbs} />
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">{heading}</h1>
-          <p className="mt-1 text-[14px] text-muted" aria-live="polite">
-            {result.total < 0 ? t("İlanlar şu anda yüklenemedi.") : t(`${f("formatNumber", result.total)} ilan`)}
+    <div className="pb-16">
+      {/* Title band */}
+      <div className={cn(SHELL, "pt-4 sm:pt-6")}>
+        <Breadcrumbs items={crumbs} />
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.025em] sm:text-[38px]">{heading}</h1>
+          <p className="text-[15px] text-muted" aria-live="polite">
+            {result.total < 0 ? t("İlanlar şu anda yüklenemedi.") : (
+              <>
+                <span className="font-semibold text-text tabular">{f("formatNumber", result.total)}</span> {t("ilan")}
+              </>
+            )}
           </p>
         </div>
+        {parent && category ? (
+          <Link href={`/kategori/${parent.slug}`} className="mt-1 inline-block text-[14px] text-muted hover:text-text">
+            ← {categoryLabel(parent, locale)}
+          </Link>
+        ) : null}
       </div>
 
+      {/* Subcategories as visual tiles */}
       {subs.length ? (
-        <nav aria-label={t("Alt kategoriler")} className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
-          {subs.map((c) => (
-            <Link
-              key={c.id}
-              href={resultsHref(`/kategori/${c.slug}`, params)}
-              className="flex h-10 flex-shrink-0 items-center gap-2 rounded-pill border border-border bg-surface pl-2 pr-3.5 text-[13px] font-medium hover:border-border-strong hover:bg-brand-soft"
-            >
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft">
-                <Icon name={c.icon as IconName} className="h-4 w-4" />
-              </span>
-              {categoryLabel(c, locale)}
-              {counts.get(c.id) ? <span className="text-[12px] text-subtle tabular">{counts.get(c.id)}</span> : null}
-            </Link>
-          ))}
+        <nav aria-label={t("Alt kategoriler")} className={cn(SHELL, "mt-5")}>
+          <ul className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6 xl:mx-0 xl:px-0">
+            {subs.map((c) => {
+              const n = counts.get(c.id) ?? 0;
+              return (
+                <li key={c.id} className="flex-shrink-0">
+                  <Link
+                    href={resultsHref(`/kategori/${c.slug}`, params)}
+                    className="flex h-[76px] w-[168px] flex-col justify-between rounded-2xl border border-border p-3 transition hover:border-brand"
+                  >
+                    <span className="flex items-center justify-between">
+                      <Icon name={c.icon as IconName} className="h-5 w-5" />
+                      <span className={cn("text-[12px] tabular", n ? "font-semibold text-text" : "text-subtle")}>{n}</span>
+                    </span>
+                    <span className="truncate text-[13.5px] font-semibold">{categoryLabel(c, locale)}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
       ) : null}
 
-      <div className="mt-5 grid gap-8 lg:grid-cols-[260px_1fr]">
-        <aside className="hidden lg:block" aria-label={t("Filtreler")}>
-          <div className="sticky top-[132px] max-h-[calc(100dvh-150px)] overflow-y-auto pr-2">
-            <FiltersSidebar {...filterProps} />
+      {/* Sticky toolbar: all filters, quick toggles, region, sort */}
+      <div className="z-30 mt-5 border-y border-border bg-surface/95 backdrop-blur lg:sticky lg:top-[134px]">
+        <div className={cn(SHELL, "no-scrollbar flex h-16 items-center gap-2 overflow-x-auto")}>
+          <FiltersButton {...filterProps} activeCount={activeCount} className="lg:hidden" />
+          <FiltersButton {...filterProps} activeCount={activeCount} side="left" className="hidden lg:flex" />
+          <span className="mx-1 h-6 w-px flex-shrink-0 bg-border" aria-hidden />
+          {toggles.map((tg) => {
+            const on = params[tg.key] === tg.value;
+            return (
+              <Link
+                key={tg.key}
+                href={resultsHref(base, params, { [tg.key]: on ? undefined : tg.value })}
+                aria-pressed={on}
+                className={cn(
+                  "flex h-10 flex-shrink-0 items-center gap-2 rounded-full border px-4 text-[14px] font-medium transition",
+                  on ? "border-brand bg-brand text-on-brand" : "border-border-strong hover:border-brand",
+                )}
+              >
+                <Icon name={tg.icon} className="h-4 w-4" />
+                {t(tg.label)}
+              </Link>
+            );
+          })}
+          <RegionSelect base={base} params={params} regions={taxonomy.regions} />
+          <div className="ml-auto pl-2">
+            <SortSelect base={base} params={params} />
           </div>
-        </aside>
+        </div>
+      </div>
 
-        <section aria-label={t("Sonuçlar")} className="min-w-0">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <div className="lg:hidden">
-              <FiltersButton {...filterProps} activeCount={pills.filter((p) => !p.label.startsWith("“")).length} />
-            </div>
+      <section aria-label={t("Sonuçlar")} className={cn(SHELL, "mt-5")}>
+        {pills.length ? (
+          <div className="mb-5 flex flex-wrap items-center gap-2">
             {pills.map((p) => (
               <Link
                 key={p.href + p.label}
                 href={p.href}
-                className="hidden h-8 items-center gap-1.5 rounded-pill bg-brand-soft pl-3 pr-2 text-[13px] font-medium hover:bg-border sm:flex"
+                className="flex h-8 items-center gap-1.5 rounded-full bg-brand-soft pl-3 pr-2 text-[13px] font-medium hover:bg-border"
                 aria-label={t(`Filtreyi kaldır: ${p.label}`)}
               >
                 <span translate="no">{p.label}</span>
@@ -149,50 +198,47 @@ export async function Results({ params, category }: { params: WebParams; categor
               </Link>
             ))}
             {pills.length > 1 ? (
-              <Link href={q ? `${base}?q=${encodeURIComponent(q)}` : base} className="hidden text-[13px] font-semibold text-accent hover:underline sm:inline">
+              <Link href={q ? `${base}?q=${encodeURIComponent(q)}` : base} className="ml-1 text-[13px] font-semibold underline underline-offset-4 hover:text-accent">
                 {t("Tümünü temizle")}
               </Link>
             ) : null}
-            <div className="ml-auto">
-              <SortSelect base={base} params={params} />
-            </div>
           </div>
+        ) : null}
 
-          {result.items.length ? (
-            <>
-              <ListingGrid items={result.items} priorityCount={4} className="lg:grid-cols-3 xl:grid-cols-4" />
-              <Pagination
-                page={page}
-                pages={pages}
-                href={(p) => resultsHref(base, params, { sayfa: p === 1 ? undefined : String(p) })}
-                className="mt-10"
-              />
-              <AdSlot placement="results" className="mt-10" />
-            </>
-          ) : result.total < 0 ? (
-            <EmptyState icon="refresh" tone="error" title={t("İlanlar yüklenemedi")}>
-              {t("Bağlantıda bir sorun oldu. Sayfayı yenileyip tekrar dene.")}
-            </EmptyState>
-          ) : (
-            <EmptyState
-              icon="search"
-              title={t("Bu aramaya uyan ilan yok")}
-              action={
-                <>
-                  {pills.length ? (
-                    <LinkButton href={base} variant="outline">
-                      {t("Filtreleri temizle")}
-                    </LinkButton>
-                  ) : null}
-                  <LinkButton href="/ilan-ver">{t("Sen ilan ver")}</LinkButton>
-                </>
-              }
-            >
-              {t("Filtreleri azaltmayı ya da farklı kelimelerle aramayı dene.")}
-            </EmptyState>
-          )}
-        </section>
-      </div>
+        {result.items.length ? (
+          <>
+            <ListingGrid items={result.items} priorityCount={6} />
+            <Pagination
+              page={page}
+              pages={pages}
+              href={(p) => resultsHref(base, params, { sayfa: p === 1 ? undefined : String(p) })}
+              className="mt-12"
+            />
+            <AdSlot placement="results" className="mt-10" />
+          </>
+        ) : result.total < 0 ? (
+          <EmptyState icon="refresh" tone="error" title={t("İlanlar yüklenemedi")}>
+            {t("Bağlantıda bir sorun oldu. Sayfayı yenileyip tekrar dene.")}
+          </EmptyState>
+        ) : (
+          <EmptyState
+            icon="search"
+            title={t("Bu aramaya uyan ilan yok")}
+            action={
+              <>
+                {pills.length ? (
+                  <LinkButton href={base} variant="secondary">
+                    {t("Filtreleri temizle")}
+                  </LinkButton>
+                ) : null}
+                <LinkButton href="/ilan-ver">{t("Sen ilan ver")}</LinkButton>
+              </>
+            }
+          >
+            {t("Filtreleri azaltmayı ya da farklı kelimelerle aramayı dene.")}
+          </EmptyState>
+        )}
+      </section>
     </div>
   );
 }
