@@ -20,7 +20,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   const name = me.accountType === "store" && me.store.name ? me.store.name : me.displayName;
   return (
     <div className="pb-16">
-      <div className="border-b border-border">
+      <div className="zone-band border-b border-border">
         <div className={cn(SHELL, "flex flex-wrap items-center gap-x-5 gap-y-4 pt-6 sm:pt-8")}>
           <Avatar name={name} src={me.avatar} size="lg" />
           <div className="min-w-0 flex-1">
@@ -49,7 +49,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
             </LinkButton>
           </div>
         </div>
-        <div className={cn(SHELL, "mt-5")}>
+        <div className={cn(SHELL, "mt-4")}>
           <AccountNav unread={unread} />
         </div>
       </div>

@@ -62,7 +62,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="pb-16">
+    <div>
       <JsonLd data={schema} />
 
       {/* Profile band */}
@@ -139,12 +139,13 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
         </div>
       ) : null}
 
-      <section className={cn(SHELL, "mt-10")} aria-labelledby="listings">
+      <section className={cn(SHELL, "pb-12 pt-8")} aria-labelledby="listings">
         <SectionHead id="listings" title={t("İlanları")} meta={`${listings.length} ${t("ilan")}`} />
         {listings.length ? <ListingGrid items={listings} /> : <EmptyState icon="grid" title={t("Yayında ilanı yok")} />}
       </section>
 
-      <section className={cn(SHELL, "mt-14")} aria-labelledby="reviews">
+      <div className="zone-band py-10">
+      <section className={SHELL} aria-labelledby="reviews">
         <SectionHead
           id="reviews"
           title={t("Değerlendirmeler")}
@@ -155,7 +156,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
         {recentRatings.length ? (
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {recentRatings.map((r) => (
-              <li key={r.id} className="flex flex-col rounded-2xl border border-border p-5">
+              <li key={r.id} className="flex flex-col rounded-2xl border border-border bg-surface p-5">
                 <Stars value={r.score} />
                 <p className="mt-3 flex-1 text-[15px] leading-relaxed" translate="no">
                   {r.comment ? `“${r.comment}”` : <span className="text-muted">{t("Yorum yazılmamış.")}</span>}
@@ -178,6 +179,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
           </div>
         ) : null}
       </section>
+      </div>
     </div>
   );
 }

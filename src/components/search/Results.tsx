@@ -108,7 +108,8 @@ export async function Results({ params, category }: { params: WebParams; categor
 
   return (
     <div className="pb-16">
-      {/* Title band */}
+      {/* Title band (grey) */}
+      <div className="zone-band pb-6">
       <div className={cn(SHELL, "pt-4 sm:pt-6")}>
         <Breadcrumbs items={crumbs} />
         <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
@@ -138,7 +139,7 @@ export async function Results({ params, category }: { params: WebParams; categor
                 <li key={c.id} className="flex-shrink-0">
                   <Link
                     href={resultsHref(`/kategori/${c.slug}`, params)}
-                    className="flex h-[76px] w-[168px] flex-col justify-between rounded-2xl border border-border p-3 transition hover:border-brand"
+                    className="flex h-[76px] w-[168px] flex-col justify-between rounded-2xl border border-border bg-surface p-3 transition hover:border-brand"
                   >
                     <span className="flex items-center justify-between">
                       <Icon name={c.icon as IconName} className="h-5 w-5" />
@@ -153,8 +154,10 @@ export async function Results({ params, category }: { params: WebParams; categor
         </nav>
       ) : null}
 
+      </div>
+
       {/* Sticky toolbar: all filters, quick toggles, region, sort */}
-      <div className="z-30 mt-5 border-y border-border bg-surface/95 backdrop-blur lg:sticky lg:top-[134px]">
+      <div className="z-30 border-b border-border bg-surface/95 backdrop-blur lg:sticky lg:top-[134px]">
         <div className={cn(SHELL, "no-scrollbar flex h-16 items-center gap-2 overflow-x-auto")}>
           <FiltersButton {...filterProps} activeCount={activeCount} className="lg:hidden" />
           <FiltersButton {...filterProps} activeCount={activeCount} side="left" className="hidden lg:flex" />
@@ -183,7 +186,7 @@ export async function Results({ params, category }: { params: WebParams; categor
         </div>
       </div>
 
-      <section aria-label={t("Sonuçlar")} className={cn(SHELL, "mt-5")}>
+      <section aria-label={t("Sonuçlar")} className={cn(SHELL, "mt-6")}>
         {pills.length ? (
           <div className="mb-5 flex flex-wrap items-center gap-2">
             {pills.map((p) => (

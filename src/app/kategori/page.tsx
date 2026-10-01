@@ -25,7 +25,8 @@ export default async function CategoriesPage() {
 
   return (
     <div className="pb-16">
-      <div className={cn(SHELL, "pt-4 sm:pt-6")}>
+      <div className="zone-band">
+      <div className={cn(SHELL, "pb-6 pt-4 sm:pt-6")}>
         <Breadcrumbs items={[t("Kategoriler")]} />
         <div className="mt-2 flex flex-wrap items-baseline gap-x-4">
           <h1 className="text-[30px] font-bold leading-tight tracking-[-0.025em] sm:text-[40px]">{t("Kategoriler")}</h1>
@@ -35,8 +36,10 @@ export default async function CategoriesPage() {
         </div>
       </div>
 
+      </div>
+
       {/* Jump bar */}
-      <nav aria-label={t("Bölümler")} className="sticky top-[130px] z-20 mt-5 border-y border-border bg-surface/95 backdrop-blur lg:top-[134px]">
+      <nav aria-label={t("Bölümler")} className="sticky top-[130px] z-20 border-b border-border bg-surface/95 backdrop-blur lg:top-[134px]">
         <ul className={cn(SHELL, "no-scrollbar flex h-14 items-center gap-2 overflow-x-auto")}>
           {tree.map((c) => (
             <li key={c.id} className="flex-shrink-0">

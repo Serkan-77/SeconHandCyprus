@@ -31,7 +31,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
   const photosOf = (id: string) => latest.items.filter((i) => i.seller.id === id && i.image).slice(0, 3);
 
   return (
-    <div className="pb-16">
+    <div>
       <section className="dark bg-bg text-text">
         <div className={cn(SHELL, "pb-10 pt-5")}>
           <Breadcrumbs items={[t("Mağazalar")]} />
@@ -54,7 +54,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
         </div>
       </section>
 
-      <div className={cn(SHELL, "mt-8")}>
+      <div className={cn(SHELL, "py-8")}>
         {stores.length ? (
           <ul className="grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {stores.map((s) => {
@@ -102,10 +102,12 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
       </div>
 
       {latest.items.length ? (
-        <section className={cn(SHELL, "mt-14")}>
+        <div className="zone-band py-10">
+        <section className={SHELL}>
           <SectionHead title={t("Mağazalardan yeni ilanlar")} href="/ilanlar?magaza=1" linkLabel={t("Tümünü gör")} />
           <ListingGrid items={latest.items} fill />
         </section>
+        </div>
       ) : null}
     </div>
   );
