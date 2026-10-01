@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { validateAttributes, type AttributeDef } from "@shared/attributes";
+import { highlightFacts, specificationGroups, validateAttributes, type AttributeDef } from "@shared/attributes";
 import { CONDITIONS, CONDITION_INFO, LIMITS, type Condition } from "@shared/constants";
 import { priceSchema } from "@shared/schemas";
 import { Icon } from "@/components/icons";
@@ -22,6 +22,9 @@ import { applyDraftPatch, draftStorageKey, emptyDraft, hasContent, parseDraft, t
 import { attributesFor, categoryLabel, chainOf, childrenOf } from "@/lib/taxonomy";
 import { formatLocalized } from "@/lib/i18n/format";
 import { cn } from "@/lib/cn";
+import { SHELL } from "@/lib/layout";
+import { ListingCard } from "@/components/ListingCard";
+import type { ListingCard as Card } from "@/lib/api/types";
 
 const STEPS = ["Kategori", "Fotoğraflar", "Ürün bilgileri", "Fiyat ve konum", "Önizleme"] as const;
 const DELIVERY_GROUP = "Teslimat";
@@ -262,35 +265,108 @@ export function SellWizard({ userId, categories, attributes, regions, defaultCit
 
   const priceNumber = Number(normalizePrice(draft.price));
 
+  const facts = highlightFacts(detailDefs, draft.attributes, locale, 2);
+  const previewCard: Card = {
+    id: "preview",
+    refNo: 0,
+    slug: "",
+    title: draft.title.trim() || t("Başlık burada görünecek"),
+    price: Number.isFinite(priceNumber) ? priceNumber : 0,
+    currency: draft.currency,
+    city: draft.city || t("Bölge"),
+    district: draft.district || null,
+    condition: draft.condition,
+    status: "active",
+    featured: false,
+    negotiable: draft.negotiable,
+    viewCount: 0,
+    createdAt: new Date().toISOString(),
+    publishedAt: null,
+    category: null,
+    image: draft.photos[0]?.urls ?? null,
+    photoCount: draft.photos.length,
+    facts,
+    factsEn: facts,
+    seller: { id: "", name: "", isStore: false, storeVerified: false },
+  };
+  const summary = [
+    chain.length ? chain.map((c) => categoryLabel(c, locale)).join(" › ") : "",
+    draft.photos.length ? t(`${draft.photos.length} fotoğraf`) : "",
+    draft.title.trim(),
+    draft.price ? `${Number.isFinite(priceNumber) ? formatLocalized("formatPrice", [priceNumber, draft.currency], locale) : draft.price}${draft.city ? ` · ${draft.city}` : ""}` : "",
+    "",
+  ];
+  const STEP_HINT = [
+    "Doğru kategori, alıcıların seni filtrelerle bulmasını sağlar.",
+    "İlk fotoğraf kapak olur; ürünün tamamını göstersin.",
+    "Alıcıların ilk soracağı şeyler.",
+    "Bölge ve fiyat, alıcıların ilk filtresi.",
+    "İlan alıcılara böyle görünecek.",
+  ];
+
   return (
-    <div ref={top} className="mx-auto max-w-3xl scroll-mt-20 px-4 pb-32 pt-5 sm:px-6 sm:pt-8">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("İlan ver")}</h1>
-        <span className="text-[13px] text-muted" aria-live="polite">
-          {t(`Adım ${step + 1} / ${STEPS.length}`)} · {t(STEPS[step])}
-        </span>
-      </div>
-      <ol className="mt-3 grid grid-cols-5 gap-1.5" aria-label={t("İlerleme")}>
-        {STEPS.map((s, i) => (
-          <li key={s}>
-            <button
-              type="button"
-              onClick={() => go(i)}
-              disabled={i > step + 1}
-              aria-current={i === step ? "step" : undefined}
-              aria-label={t(s)}
-              className={cn("block h-1.5 w-full rounded-full transition-colors", i <= step ? "bg-accent" : "bg-border")}
-            />
-            <span className={cn("mt-1.5 hidden text-[12px] sm:block", i === step ? "font-semibold text-text" : "text-muted")}>{t(s)}</span>
-          </li>
-        ))}
-      </ol>
+    <div ref={top} className="scroll-mt-32 pb-32">
+      <div className={cn(SHELL, "grid gap-8 pt-5 sm:pt-8 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)_320px] xl:gap-12")}>
+        {/* Stepper */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-[150px]">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">{t("Yeni ilan")}</p>
+            <ol className="relative mt-4" aria-label={t("İlerleme")}>
+              <span className="absolute bottom-5 left-[17px] top-5 w-px bg-border" aria-hidden />
+              {STEPS.map((label, i) => {
+                const doneStep = i < step;
+                const current = i === step;
+                return (
+                  <li key={label} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => go(i)}
+                      disabled={i > step + 1}
+                      aria-current={current ? "step" : undefined}
+                      className="group flex w-full items-start gap-3 py-2.5 text-left disabled:cursor-not-allowed"
+                    >
+                      <span
+                        className={cn(
+                          "relative z-10 grid h-9 w-9 flex-shrink-0 place-items-center rounded-full text-[14px] font-bold tabular ring-4 ring-surface",
+                          current ? "bg-brand text-on-brand" : doneStep ? "bg-accent text-on-accent" : "border border-border-strong bg-surface text-muted",
+                        )}
+                      >
+                        {doneStep ? <Icon name="check" className="h-4 w-4" /> : i + 1}
+                      </span>
+                      <span className="min-w-0 pt-1">
+                        <span className={cn("block text-[15px]", current ? "font-bold" : doneStep ? "font-semibold" : "text-muted")}>{t(label)}</span>
+                        {summary[i] && doneStep ? <span className="block truncate text-[12.5px] text-muted">{summary[i]}</span> : null}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="mt-6 flex items-center gap-2 text-[12.5px] text-muted">
+              <Icon name="check" className="h-4 w-4 text-success" />
+              {t("Taslağın bu cihazda otomatik kaydediliyor.")}
+            </p>
+          </div>
+        </aside>
+
+        <div className="min-w-0">
+          {/* Step header (all sizes); segmented progress on phones */}
+          <div className="lg:hidden">
+            <div className="flex gap-1" aria-hidden>
+              {STEPS.map((label, i) => (
+                <span key={label} className={cn("h-1.5 flex-1 rounded-full", i < step ? "bg-accent" : i === step ? "bg-brand" : "bg-border")} />
+              ))}
+            </div>
+          </div>
+          <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-muted lg:mt-0" aria-live="polite">
+            {t(`Adım ${step + 1} / ${STEPS.length}`)}
+          </p>
+          <h1 className="mt-1 text-[28px] font-bold leading-tight tracking-[-0.025em] sm:text-[36px]">{t(step === 0 ? "Ne satıyorsun?" : STEPS[step])}</h1>
+          <p className="mt-1.5 text-[15px] text-muted">{t(STEP_HINT[step])}</p>
 
       <div className="mt-7">
         {step === 0 ? (
           <section>
-            <h2 className="text-lg font-semibold">{t("Ne satıyorsun?")}</h2>
-            <p className="mt-1 text-[14px] text-muted">{t("Doğru kategori, alıcıların seni filtrelerle bulmasını sağlar.")}</p>
             {errors.category ? <p className="mt-3 text-[13px] font-medium text-danger" data-error="true">{errors.category}</p> : null}
             <div className="mt-4">
               <CategoryPicker
@@ -311,18 +387,17 @@ export function SellWizard({ userId, categories, attributes, regions, defaultCit
 
         {step === 1 ? (
           <section>
-            <h2 className="text-lg font-semibold">{t("Fotoğraflar")}</h2>
-            <p className="mt-1 mb-4 text-[14px] text-muted">{t("Gün ışığında, ürünün tamamını ve varsa kusurlarını gösteren fotoğraflar en hızlı satar.")}</p>
+            <p className="mb-4 text-[14px] text-muted">{t("Gün ışığında, ürünün tamamını ve varsa kusurlarını gösteren fotoğraflar en hızlı satar.")}</p>
             <PhotoManager photos={draft.photos} onChange={(photos) => set({ photos })} error={errors.photos} />
           </section>
         ) : null}
 
         {step === 2 ? (
           <section className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-lg font-semibold">{t("Ürün bilgileri")}</h2>
-              <p className="mt-1 text-[14px] text-muted">{chain.map((c) => categoryLabel(c, locale)).join(" › ")}</p>
-            </div>
+            <p className="-mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-[13px] font-medium">
+              <Icon name="grid" className="h-3.5 w-3.5" />
+              {chain.map((c) => categoryLabel(c, locale)).join(" › ")}
+            </p>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="title" className="text-[13px] font-semibold">
                 {t("Başlık")} <span className="text-danger">*</span>
@@ -417,7 +492,6 @@ export function SellWizard({ userId, categories, attributes, regions, defaultCit
 
         {step === 3 ? (
           <section className="flex flex-col gap-6">
-            <h2 className="text-lg font-semibold">{t("Fiyat ve konum")}</h2>
             <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="price" className="text-[13px] font-semibold">
@@ -503,39 +577,61 @@ export function SellWizard({ userId, categories, attributes, regions, defaultCit
 
         {step === 4 ? (
           <section>
-            <h2 className="text-lg font-semibold">{t("Son kontrol")}</h2>
-            <p className="mt-1 text-[14px] text-muted">{t("İlanın alıcılara böyle görünecek. Düzeltmek istediğin adıma dokun.")}</p>
-            <div className="mt-5 grid gap-5 sm:grid-cols-[240px_1fr]">
-              <div className="overflow-hidden rounded-card border border-border">
-                <div className="aspect-[4/3] bg-brand-soft">
-                  <MediaImage urls={draft.photos[0]?.urls} alt="" max="md" />
-                </div>
-                <div className="p-3">
-                  <p className="text-lg font-bold tabular">{Number.isFinite(priceNumber) ? formatLocalized("formatPrice", [priceNumber, draft.currency], locale) : "—"}</p>
-                  <p className="mt-0.5 line-clamp-2 text-[14px] font-medium">{draft.title}</p>
-                  <p className="mt-1 text-[12px] text-muted">{draft.district ? `${draft.city} · ${draft.district}` : draft.city}</p>
-                </div>
-              </div>
-              <dl className="divide-y divide-border rounded-card border border-border text-[14px]">
-                {[
-                  { step: 0, label: "Kategori", value: chain.map((c) => categoryLabel(c, locale)).join(" › ") },
-                  { step: 1, label: "Fotoğraflar", value: t(`${draft.photos.length} fotoğraf`) },
-                  { step: 2, label: "Durum", value: locale === "en" && draft.condition ? CONDITION_INFO[draft.condition as Condition]?.en : draft.condition },
-                  { step: 2, label: "Özellikler", value: t(`${Object.keys(validateAttributes(detailDefs, draft.attributes).values).length} özellik girildi`) },
-                  { step: 3, label: "Pazarlık", value: t(draft.negotiable ? "Açık" : "Kapalı") },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between gap-3 px-4 py-3">
-                    <dt className="text-muted">{t(row.label)}</dt>
-                    <dd className="flex min-w-0 items-center gap-2 text-right">
-                      <span className="truncate font-medium">{row.value}</span>
-                      <button type="button" onClick={() => go(row.step)} className="flex-shrink-0 text-[13px] font-semibold text-accent">
-                        {t("Düzenle")}
-                      </button>
-                    </dd>
+            <article className="overflow-hidden rounded-[20px] border border-border">
+              <div className={cn("grid h-[300px] gap-1.5 sm:h-[380px]", draft.photos.length >= 3 ? "grid-cols-3 grid-rows-2" : draft.photos.length === 2 ? "grid-cols-2" : "grid-cols-1")}>
+                {draft.photos.slice(0, 3).map((p, i) => (
+                  <div key={p.key} className={cn("relative bg-brand-soft", draft.photos.length >= 3 && i === 0 && "col-span-2 row-span-2")}>
+                    <MediaImage urls={p.urls} alt="" max="md" className="absolute inset-0" />
                   </div>
                 ))}
-              </dl>
-            </div>
+              </div>
+              <div className="p-5 sm:p-7">
+                <div className="flex flex-wrap items-center gap-2 text-[13px]">
+                  {draft.condition ? <span className="rounded-full bg-brand px-2.5 py-1 font-semibold text-on-brand">{locale === "en" ? CONDITION_INFO[draft.condition as Condition]?.en : draft.condition}</span> : null}
+                  {draft.negotiable ? <span className="rounded-full border border-accent px-2.5 py-0.5 font-semibold text-accent">{t("Pazarlığa açık")}</span> : null}
+                  <span className="text-muted">{chain.map((c) => categoryLabel(c, locale)).join(" › ")}</span>
+                </div>
+                <h2 className="mt-3 text-[24px] font-bold leading-tight tracking-[-0.02em] sm:text-[30px]">{draft.title}</h2>
+                <p className="mt-1 text-[28px] font-bold tracking-tight tabular">{Number.isFinite(priceNumber) ? formatLocalized("formatPrice", [priceNumber, draft.currency], locale) : "—"}</p>
+                <p className="mt-1 flex items-center gap-1.5 text-[14px] text-muted">
+                  <Icon name="pin" className="h-4 w-4" />
+                  {draft.district ? `${draft.city}, ${draft.district}` : draft.city}
+                </p>
+                {specificationGroups(detailDefs, draft.attributes, locale).flatMap((g) => g.rows).length ? (
+                  <dl className="mt-5 grid grid-cols-2 border-y border-border sm:grid-cols-4">
+                    {specificationGroups(detailDefs, draft.attributes, locale)
+                      .flatMap((g) => g.rows)
+                      .slice(0, 4)
+                      .map((r, i) => (
+                        <div key={r.key} className={cn("py-3 pr-3", i > 0 && "sm:border-l sm:border-border sm:pl-4")}>
+                          <dt className="text-[11.5px] font-medium uppercase tracking-[0.08em] text-muted">{r.label}</dt>
+                          <dd className="mt-0.5 truncate font-semibold">{r.value}</dd>
+                        </div>
+                      ))}
+                  </dl>
+                ) : null}
+                {draft.description.trim() ? <p className="mt-5 line-clamp-4 whitespace-pre-line text-[15px] leading-relaxed">{draft.description.trim()}</p> : null}
+              </div>
+            </article>
+
+            <dl className="mt-5 divide-y divide-border rounded-[16px] border border-border text-[14px]">
+              {[
+                { step: 0, label: "Kategori", value: chain.map((c) => categoryLabel(c, locale)).join(" › ") },
+                { step: 1, label: "Fotoğraflar", value: t(`${draft.photos.length} fotoğraf`) },
+                { step: 2, label: "Özellikler", value: t(`${Object.keys(validateAttributes(detailDefs, draft.attributes).values).length} özellik girildi`) },
+                { step: 3, label: "Fiyat ve konum", value: summary[3] },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <dt className="text-muted">{t(row.label)}</dt>
+                  <dd className="flex min-w-0 items-center gap-3 text-right">
+                    <span className="truncate font-medium">{row.value}</span>
+                    <button type="button" onClick={() => go(row.step)} className="flex-shrink-0 text-[13px] font-semibold underline underline-offset-4 hover:text-accent">
+                      {t("Düzenle")}
+                    </button>
+                  </dd>
+                </div>
+              ))}
+            </dl>
             <Notice className="mt-5" icon="shield">
               {t("Yayınlamadan önce kısa bir inceleme yapıyoruz. İlanın kurallara uygunsa genellikle aynı gün yayına girer.")}{" "}
               <Link href="/kosullar" className="font-semibold underline underline-offset-2">
@@ -547,19 +643,48 @@ export function SellWizard({ userId, categories, attributes, regions, defaultCit
         ) : null}
       </div>
 
+        </div>
+
+        {/* Live preview */}
+        <aside className="hidden xl:block" aria-label={t("Önizleme")}>
+          <div className="sticky top-[150px]">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">{t("Alıcılar böyle görecek")}</p>
+            <div className="pointer-events-none mt-4" aria-hidden>
+              <ListingCard listing={previewCard} />
+            </div>
+            <ul className="mt-6 space-y-2.5 text-[13.5px]">
+              {[
+                { ok: Boolean(draft.categoryId), label: "Kategori seçildi" },
+                { ok: draft.photos.length >= 3, label: "En az 3 fotoğraf" },
+                { ok: draft.title.trim().length >= 10, label: "Açıklayıcı bir başlık" },
+                { ok: Boolean(draft.price && draft.city), label: "Fiyat ve bölge" },
+                { ok: draft.description.trim().length >= 40, label: "Kısa bir açıklama" },
+              ].map((c) => (
+                <li key={c.label} className={cn("flex items-center gap-2.5", c.ok ? "text-text" : "text-muted")}>
+                  <span className={cn("grid h-5 w-5 place-items-center rounded-full", c.ok ? "bg-success text-white" : "border border-border-strong")}>
+                    {c.ok ? <Icon name="check" className="h-3 w-3" /> : null}
+                  </span>
+                  {t(c.label)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
+
       {step > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-          <div className="mx-auto flex max-w-3xl items-center gap-2">
-            <Button variant="outline" onClick={() => go(step - 1)} icon={<Icon name="back" className="h-4 w-4" />}>
+          <div className={cn(SHELL, "flex items-center gap-2 !px-0")}>
+            <Button variant="secondary" onClick={() => go(step - 1)} icon={<Icon name="back" className="h-4 w-4" />}>
               {t("Geri")}
             </Button>
             <span className="hidden flex-1 text-center text-[12px] text-muted sm:block">{t("Taslağın bu cihazda otomatik kaydediliyor.")}</span>
             {step < 4 ? (
-              <Button className="ml-auto" onClick={() => go(step + 1)} iconEnd={<Icon name="arrow" className="h-4 w-4" />}>
-                {t("Devam")}
+              <Button className="ml-auto" size="lg" onClick={() => go(step + 1)} iconEnd={<Icon name="arrow" className="h-4 w-4" />}>
+                {t(`Devam: ${STEPS[step + 1]}`)}
               </Button>
             ) : (
-              <Button variant="accent" className="ml-auto" size="lg" loading={publishing} onClick={publish}>
+              <Button className="ml-auto" size="lg" loading={publishing} onClick={publish}>
                 {t("İlanı yayınla")}
               </Button>
             )}

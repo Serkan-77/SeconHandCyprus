@@ -116,7 +116,8 @@ export function PhotoManager({
           void add(e.dataTransfer.files);
         }}
         className={cn(
-          "grid grid-cols-3 gap-2.5 rounded-card border-2 border-dashed p-2.5 transition sm:grid-cols-4 lg:grid-cols-5",
+          "grid grid-cols-3 gap-2.5 rounded-[20px] transition sm:grid-cols-4",
+          count === 0 ? "border-2 border-dashed p-3" : "",
           dropHover ? "border-accent bg-accent-soft" : error ? "border-danger/60" : "border-border-strong",
         )}
       >
@@ -132,12 +133,12 @@ export function PhotoManager({
               if (dragging !== null) move(dragging, i);
               setDragging(null);
             }}
-            className={cn("group relative aspect-square overflow-hidden rounded-[10px] bg-brand-soft", dragging === i && "opacity-40")}
+            className={cn("group relative aspect-square overflow-hidden rounded-[14px] bg-brand-soft", i === 0 && "col-span-2 row-span-2", dragging === i && "opacity-40")}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.urls.sm} alt={t(`Fotoğraf ${i + 1}`)} className="h-full w-full object-cover" draggable={false} />
+            <img src={i === 0 ? p.urls.md : p.urls.sm} alt={t(`Fotoğraf ${i + 1}`)} className="h-full w-full object-cover" draggable={false} />
             {i === 0 ? (
-              <span className="absolute left-1.5 top-1.5 rounded-md bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-on-brand">{t("Kapak")}</span>
+              <span className="absolute left-2.5 top-2.5 rounded-full bg-brand px-2.5 py-1 text-[12px] font-semibold text-on-brand">{t("Kapak fotoğrafı")}</span>
             ) : null}
             <button
               type="button"
@@ -175,7 +176,7 @@ export function PhotoManager({
           </div>
         ))}
         {pending.map((p) => (
-          <div key={p.id} className="relative aspect-square overflow-hidden rounded-[10px] bg-brand-soft">
+          <div key={p.id} className="relative aspect-square overflow-hidden rounded-[14px] bg-brand-soft">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.preview} alt="" className={cn("h-full w-full object-cover", p.error ? "opacity-30" : "opacity-60")} />
             {p.error ? (
@@ -192,15 +193,35 @@ export function PhotoManager({
             )}
           </div>
         ))}
-        {count < max ? (
+        {count === 0 ? (
+          <div className="col-span-full flex min-h-[340px] flex-col items-center justify-center px-6 py-10 text-center">
+            <span className="grid h-16 w-16 place-items-center rounded-full bg-brand text-on-brand">
+              <Icon name="camera" className="h-8 w-8" />
+            </span>
+            <p className="mt-5 text-[20px] font-bold tracking-tight">{t("Fotoğrafları buraya sürükle")}</p>
+            <p className="mt-1 text-[14px] text-muted">{t("ya da cihazından seç; en fazla 10 fotoğraf")}</p>
+            <button type="button" onClick={() => input.current?.click()} className="mt-5 inline-flex h-12 items-center gap-2 rounded-[14px] bg-brand px-6 text-[15px] font-semibold text-on-brand hover:opacity-90">
+              <Icon name="plus" className="h-5 w-5" />
+              {t("Fotoğraf seç")}
+            </button>
+            <ul className="mt-8 grid gap-3 text-left text-[13px] text-muted sm:grid-cols-3 sm:gap-6">
+              {["Gün ışığında çek", "Ürünün tamamını göster", "Kusurları saklama"].map((tip) => (
+                <li key={tip} className="flex items-center gap-2">
+                  <Icon name="check" className="h-4 w-4 flex-shrink-0 text-success" />
+                  {t(tip)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : count < max ? (
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-[10px] bg-bg text-center text-[13px] font-medium text-muted transition hover:bg-brand-soft hover:text-text"
+            className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-[14px] border-2 border-dashed border-border-strong text-center text-[13px] font-semibold transition hover:border-brand"
           >
-            <Icon name="camera" className="h-7 w-7" />
-            {photos.length ? t("Ekle") : t("Fotoğraf ekle")}
-            <span className="text-[11px] text-subtle tabular">
+            <Icon name="plus" className="h-7 w-7" />
+            {t("Fotoğraf ekle")}
+            <span className="text-[11px] font-normal text-muted tabular">
               {count} / {max}
             </span>
           </button>
