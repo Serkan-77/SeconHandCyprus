@@ -42,7 +42,7 @@ export function MediaImage({
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : undefined}
       decoding="async"
-      className={cn("h-full w-full object-cover", className)}
+      className={cn("h-full w-full", !/(^|\s)object-(contain|fill|none|scale-down)(\s|$)/.test(className ?? "") && "object-cover", className)}
     />
   );
 }

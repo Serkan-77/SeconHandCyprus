@@ -15,7 +15,7 @@
   --bg: #fafafa; /* the occasional off-white section band */
   --surface: #ffffff;
   --surface-2: #fafafa;
-  --band: #f4f4f6; /* soft section band */
+  --band: #ebecef; /* section band: a light grey that clearly separates sections */
   --text: #0a0a0a;
   --muted: #52525b;
   --subtle: #71717a;
@@ -47,7 +47,7 @@
   --bg: #0b0d10;
   --surface: #15181d;
   --surface-2: #1b1f25;
-  --band: #111419;
+  --band: #14171c;
   --text: #f3f5f8;
   --muted: #a3acb9;
   --subtle: #7d8795;

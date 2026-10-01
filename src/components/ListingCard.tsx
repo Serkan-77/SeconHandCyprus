@@ -193,16 +193,31 @@ export function ListingCard({
 /** The product grid: 2 columns on phones up to 7 on very wide screens. */
 export const GRID = "grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 md:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-7";
 
+/** For a grid that shares its row with a side column: 2, 3, 4 or 6 columns (12 cards always fill whole rows). */
+export const GRID_NARROW = "grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4 3xl:grid-cols-6";
+
 /**
  * `fill`: render only whole rows. 12 cards fill 2, 3, 4 and 6 columns; the
- * 7-column width shows 14 when they are there.
+ * full-width grid shows 14 at its 7-column width when they are there.
  */
-export function ListingGrid({ items, priorityCount = 0, className, fill = false }: { items: Card[]; priorityCount?: number; className?: string; fill?: boolean }) {
-  const shown = fill ? items.slice(0, items.length >= 14 ? 14 : Math.max(12, items.length)) : items;
+export function ListingGrid({
+  items,
+  priorityCount = 0,
+  className,
+  fill = false,
+  narrow = false,
+}: {
+  items: Card[];
+  priorityCount?: number;
+  className?: string;
+  fill?: boolean;
+  narrow?: boolean;
+}) {
+  const shown = fill ? items.slice(0, !narrow && items.length >= 14 ? 14 : 12) : items;
   return (
-    <div className={cn(GRID, className)}>
+    <div className={cn(narrow ? GRID_NARROW : GRID, className)}>
       {shown.map((item, i) => (
-        <ListingCard key={item.id} listing={item} priority={i < priorityCount} className={fill && i >= 12 ? "hidden 3xl:flex" : undefined} />
+        <ListingCard key={item.id} listing={item} priority={i < priorityCount} className={fill && !narrow && i >= 12 ? "hidden 3xl:flex" : undefined} />
       ))}
     </div>
   );

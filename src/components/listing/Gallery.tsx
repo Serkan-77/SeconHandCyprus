@@ -60,7 +60,16 @@ export function Gallery({ photos, title, badge }: { photos: Photo[]; title: stri
               tiles.length === 4 && i === 3 && "col-span-2",
             )}
           >
-            <MediaImage urls={p.urls} alt={i === 0 ? title : ""} priority={i === 0} sizes={i === 0 ? "(min-width: 1280px) 50vw, 60vw" : "25vw"} className="absolute inset-0 transition duration-500 group-hover:scale-[1.03]" />
+            {tiles.length <= 2 ? (
+              // One or two wide tiles would crop the photo hard: show it whole over a blurred copy of itself.
+              <>
+                <MediaImage urls={p.urls} alt="" max="sm" sizes="400px" className="absolute inset-0 scale-110 opacity-70 blur-2xl" />
+                <span className="absolute inset-0 bg-black/20" aria-hidden />
+                <MediaImage urls={p.urls} alt={i === 0 ? title : ""} priority={i === 0} sizes={tiles.length === 1 ? "(min-width: 1280px) 70vw, 90vw" : "50vw"} className="absolute inset-0 object-contain transition duration-500 group-hover:scale-[1.02]" />
+              </>
+            ) : (
+              <MediaImage urls={p.urls} alt={i === 0 ? title : ""} priority={i === 0} sizes={i === 0 ? "(min-width: 1280px) 50vw, 60vw" : "25vw"} className="absolute inset-0 transition duration-500 group-hover:scale-[1.03]" />
+            )}
           </button>
         ))}
         {badge ? <div className="pointer-events-none absolute left-4 top-4">{badge}</div> : null}
@@ -69,8 +78,8 @@ export function Gallery({ photos, title, badge }: { photos: Photo[]; title: stri
           onClick={() => open(0)}
           className="absolute bottom-4 right-4 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-[14px] font-semibold text-[#0a0a0a] shadow-md hover:bg-white/90"
         >
-          <Icon name="grid" className="h-4 w-4" />
-          {t(`Tüm fotoğraflar (${count})`)}
+          <Icon name={count > 1 ? "grid" : "zoom"} className="h-4 w-4" />
+          {count > 1 ? t(`Tüm fotoğraflar (${count})`) : t("Büyüt")}
         </button>
       </div>
 

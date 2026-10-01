@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { Icon, type IconName } from "@/components/icons";
-import { ListingCard, ListingGrid, ListingRail } from "@/components/ListingCard";
+import { ListingCard, ListingGrid } from "@/components/ListingCard";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { AdSlot } from "@/components/AdSlot";
 import { JsonLd } from "@/components/JsonLd";
@@ -66,12 +66,13 @@ export default async function HomePage() {
   const counts = countByTop(tree, all.facets);
   const popular = [...tree].filter((c) => (counts.get(c.id) ?? 0) > 0).sort((a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0));
 
-  const [collections, regionTotals, nearby, stores] = await Promise.all([
+  const [collections, regionTotals, stores, storeListings] = await Promise.all([
     Promise.all(popular.slice(0, 4).map(async (c) => ({ category: c, result: await searchPublic({ category: c.slug, pageSize: 4 }, 60) }))),
     Promise.all(taxonomy.regions.map(async (r) => [r.name, (await searchPublic({ city: r.name, pageSize: 1 }, 60)).total] as const)),
-    region ? searchPublic({ city: region, pageSize: 12 }) : Promise.resolve(null),
-    apiServer<{ stores: PublicProfile[] }>("/stores?pageSize=6", { anonymous: true, revalidate: 120 }).catch(() => ({ stores: [] as PublicProfile[] })),
+    apiServer<{ stores: PublicProfile[] }>("/stores?pageSize=3", { anonymous: true, revalidate: 120 }).catch(() => ({ stores: [] as PublicProfile[] })),
+    searchPublic({ stores: 1, pageSize: 48 }, 120),
   ]);
+  const hasStores = stores.stores.length > 0;
 
   // Showcase first; when there are few, the newest listings complete the mosaic (without a Vitrin badge).
   const featuredIds = new Set(featured.items.map((i) => i.id));
@@ -165,27 +166,42 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Newest listings: the dense product grid. */}
-      {latest.items.length ? (
-        <div className="band-soft mt-10 py-[88px]">
-          <section className={cn(SHELL, "reveal")} aria-labelledby="latest-heading">
-            <Eyebrow>{t("Az önce eklendi")}</Eyebrow>
-            <SectionHead id="latest-heading" title={t("Yeni eklenenler")} meta={t("Bugünden geriye")} href="/ilanlar?sirala=yeni" linkLabel={t("Tümünü gör")} />
-            <ListingGrid items={latest.items} fill />
-          </section>
+      {/* Stores on the left, the newest listings on the right, on one grey band. */}
+      <div className="band-soft mt-10 py-[88px]">
+        <div className={cn(SHELL, "reveal grid gap-12", hasStores && "xl:grid-cols-[340px_minmax(0,1fr)] xl:gap-12")}>
+          {latest.items.length ? (
+            <section className="min-w-0 xl:order-2" aria-labelledby="latest-heading">
+              <Eyebrow>{t("Az önce eklendi")}</Eyebrow>
+              <SectionHead id="latest-heading" title={t("Yeni eklenenler")} meta={t("Bugünden geriye")} href="/ilanlar?sirala=yeni" linkLabel={t("Tümünü gör")} />
+              <ListingGrid items={latest.items} fill narrow={hasStores} />
+            </section>
+          ) : null}
+          {hasStores ? (
+            <section className="min-w-0 xl:sticky xl:top-[150px] xl:order-1 xl:self-start" aria-labelledby="stores-heading">
+              <Eyebrow>{t("İşletmeler")}</Eyebrow>
+              <SectionHead id="stores-heading" title={t("Mağazalar")} href="/magazalar" linkLabel={t("Tümü")} />
+              <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 xl:mx-0 xl:grid xl:gap-7 xl:overflow-visible xl:px-0">
+                {stores.stores.map((store) => (
+                  <StoreCollection key={store.id} store={store} items={storeListings.items.filter((i) => i.seller.id === store.id)} t={t} />
+                ))}
+                <Link href="/hesabim/magaza" className="flex w-[260px] flex-shrink-0 items-center gap-3 rounded-[20px] border-2 border-dashed border-border-strong p-4 transition hover:border-brand xl:w-auto">
+                  <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-brand text-on-brand">
+                    <Icon name="store" className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block text-[15px] font-bold">{t("Mağazanı aç")}</span>
+                    <span className="block text-[13px] text-muted">{t("İşletmen için ücretsiz mağaza sayfası.")}</span>
+                  </span>
+                </Link>
+              </div>
+            </section>
+          ) : null}
         </div>
-      ) : null}
-
-      {nearby && nearby.items.length ? (
-        <section className={cn(SHELL, "mt-14")} aria-labelledby="near-heading">
-          <SectionHead id="near-heading" title={t(`${region} yakınında`)} meta={`${nearby.total} ${t("ilan")}`} href={`/ilanlar?sehir=${encodeURIComponent(region!)}`} linkLabel={t("Tümünü gör")} />
-          <ListingRail items={nearby.items} />
-        </section>
-      ) : null}
+      </div>
 
       {/* Category collections: real photos of what is listed in each popular category. */}
       {collections.length ? (
-        <section className={cn(SHELL, "reveal mt-6")} aria-labelledby="collections-heading">
+        <section className={cn(SHELL, "reveal mt-4")} aria-labelledby="collections-heading">
           <Eyebrow>{t("Keşfet")}</Eyebrow>
           <SectionHead id="collections-heading" title={t("Popüler kategoriler")} href="/kategori" linkLabel={t("Tüm kategoriler")} />
           <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 xl:grid-cols-4">
@@ -201,8 +217,6 @@ export default async function HomePage() {
       </div>
 
       <RegionsBand regions={taxonomy.regions} totals={new Map(regionTotals)} current={region} t={t} />
-
-      {stores.stores.length ? <StoresRow stores={stores.stores} t={t} /> : null}
 
       <div className={cn(SHELL, "mt-14")}>
         <RecentlyViewed />
@@ -328,33 +342,43 @@ function RegionsBand({ regions, totals, current, t }: { regions: Region[]; total
   );
 }
 
-function StoresRow({ stores, t }: { stores: PublicProfile[]; t: Translate }) {
+/** A store like a category collection: its own newest photos as a mosaic, then name, place and count. */
+function StoreCollection({ store, items, t }: { store: PublicProfile; items: Card[]; t: Translate }) {
+  const name = store.store?.name ?? store.name;
+  const photos = items.filter((i) => i.image).slice(0, 4);
+  const cells = [...photos, ...Array.from({ length: Math.max(0, 4 - photos.length) }, () => null)];
   return (
-    <section className={cn(SHELL, "reveal mt-20")} aria-labelledby="stores-heading">
-      <Eyebrow>{t("İşletmeler")}</Eyebrow>
-      <SectionHead id="stores-heading" title={t("Mağazalar")} meta={t("İşletmelerden ikinci el")} href="/magazalar" linkLabel={t("Tüm mağazalar")} />
-      <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 xl:mx-0 xl:grid xl:grid-cols-4 xl:px-0">
-        {stores.map((s) => (
-          <Link key={s.id} href={`/satici/${s.id}`} className="flex w-[280px] flex-shrink-0 items-center gap-4 rounded-[24px] bg-surface p-4 shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:shadow-md xl:w-auto">
-            <Avatar name={s.store?.name ?? s.name} src={s.avatar} size="lg" />
-            <div className="min-w-0">
-              <p className="flex items-center gap-1.5 truncate text-[16px] font-bold">
-                <span className="truncate">{s.store?.name ?? s.name}</span>
-                {s.store?.verified ? <Icon name="verified" className="h-4 w-4 flex-shrink-0 text-accent" /> : null}
-              </p>
-              <p className="text-[13px] text-muted">
-                {s.region ?? t("Kıbrıs")} · <span className="tabular">{s.stats.activeListings}</span> {t("ilan")}
-              </p>
-              {s.store?.hours ? <p className="mt-0.5 truncate text-[12px] text-subtle">{s.store.hours}</p> : null}
-            </div>
-          </Link>
-        ))}
-        <Link href="/hesabim/magaza" className="flex w-[280px] flex-shrink-0 flex-col justify-center rounded-[24px] border-2 border-dashed border-border-strong p-4 transition hover:border-brand xl:w-auto">
-          <p className="text-[16px] font-bold">{t("Mağazanı aç")}</p>
-          <p className="mt-0.5 text-[13px] text-muted">{t("İşletmen için ücretsiz mağaza sayfası.")}</p>
+    <article className="group w-[260px] flex-shrink-0 xl:w-auto">
+      <Link href={`/satici/${store.id}`} className="block overflow-hidden rounded-[24px] shadow-sm ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
+        <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-1 bg-surface">
+          {cells.map((item, i) =>
+            item?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={item.id} src={item.image.sm} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+            ) : (
+              <span key={i} className="grid place-items-center bg-brand-soft">
+                <Icon name="store" className="h-7 w-7 text-subtle" />
+              </span>
+            ),
+          )}
+        </div>
+      </Link>
+      <div className="mt-3 flex items-center gap-2.5">
+        <Avatar name={name} src={store.avatar} size="sm" />
+        <Link href={`/satici/${store.id}`} className="flex min-w-0 flex-1 items-center gap-1.5 text-[16px] font-bold tracking-tight hover:text-accent">
+          <span className="truncate" translate="no">
+            {name}
+          </span>
+          {store.store?.verified ? <Icon name="verified" className="h-4 w-4 flex-shrink-0 text-accent" /> : null}
         </Link>
+        <span className="text-[13px] text-muted tabular">
+          {store.stats.activeListings} {t("ilan")}
+        </span>
       </div>
-    </section>
+      <p className="mt-1 truncate pl-[46px] text-[13px] text-muted">
+        {[store.region, store.store?.hours].filter(Boolean).join(" · ")}
+      </p>
+    </article>
   );
 }
 
