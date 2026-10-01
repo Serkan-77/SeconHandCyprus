@@ -90,6 +90,9 @@
   display: block;
 }
 @theme inline {
+  /* Very wide desktops get one more product column. */
+  --breakpoint-3xl: 112.5rem;
+
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 
   --color-bg: var(--bg);

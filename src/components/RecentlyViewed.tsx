@@ -4,7 +4,7 @@
 // the server. The listing page records a minimal snapshot of each card.
 import { useSyncExternalStore } from "react";
 import type { ListingCard } from "@/lib/api/types";
-import { ListingCard as Card } from "@/components/ListingCard";
+import { ListingRail } from "@/components/ListingCard";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 
 const KEY = "kie-recent-v1";
@@ -51,8 +51,8 @@ export function RecentlyViewed({ excludeId, title = "Son baktıkların" }: { exc
   if (items.length < 2) return null;
   return (
     <section aria-labelledby="recent-heading">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 id="recent-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
+      <div className="mb-4 flex items-end justify-between gap-4 sm:mb-5">
+        <h2 id="recent-heading" className="text-[22px] font-bold leading-tight tracking-[-0.02em] sm:text-[26px]">
           {t(title)}
         </h2>
         <button
@@ -63,18 +63,12 @@ export function RecentlyViewed({ excludeId, title = "Son baktıkların" }: { exc
               listeners.forEach((l) => l());
             } catch {}
           }}
-          className="text-[13px] font-medium text-muted hover:text-text"
+          className="border-b-2 border-transparent pb-0.5 text-[14px] font-semibold text-muted hover:border-brand hover:text-text"
         >
           {t("Temizle")}
         </button>
       </div>
-      <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
-        {items.map((item) => (
-          <div key={item.id} className="w-[46%] flex-shrink-0 snap-start sm:w-[31%] lg:w-[23%] xl:w-[18.5%]">
-            <Card listing={item} />
-          </div>
-        ))}
-      </div>
+      <ListingRail items={items} />
     </section>
   );
 }
