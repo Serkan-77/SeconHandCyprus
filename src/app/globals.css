@@ -41,6 +41,13 @@
   --shadow-md: 0 4px 16px -4px rgb(10 10 10 / 0.12), 0 2px 4px rgb(10 10 10 / 0.04);
   --shadow-lg: 0 18px 48px -12px rgb(10 10 10 / 0.28);
   color-scheme: light;
+  /* Real header height; the header updates it as it resizes. Sticky bars sit under it. */
+  --header-h: 130px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 134px;
+  }
 }
 
 .dark {

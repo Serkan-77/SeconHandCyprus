@@ -39,7 +39,7 @@ export default async function CategoriesPage() {
       </div>
 
       {/* Jump bar */}
-      <nav aria-label={t("Bölümler")} className="sticky top-[130px] z-20 border-b border-border bg-surface/95 backdrop-blur lg:top-[134px]">
+      <nav aria-label={t("Bölümler")} className="sticky top-[calc(var(--header-h)-1px)] z-20 border-y border-border bg-surface">
         <ul className={cn(SHELL, "no-scrollbar flex h-14 items-center gap-2 overflow-x-auto")}>
           {tree.map((c) => (
             <li key={c.id} className="flex-shrink-0">

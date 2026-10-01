@@ -157,7 +157,7 @@ export async function Results({ params, category }: { params: WebParams; categor
       </div>
 
       {/* Sticky toolbar: all filters, quick toggles, region, sort */}
-      <div className="z-30 border-b border-border bg-surface/95 backdrop-blur lg:sticky lg:top-[134px]">
+      <div className="sticky top-[calc(var(--header-h)-1px)] z-30 border-y border-border bg-surface">
         <div className={cn(SHELL, "no-scrollbar flex h-16 items-center gap-2 overflow-x-auto")}>
           <FiltersButton {...filterProps} activeCount={activeCount} className="lg:hidden" />
           <FiltersButton {...filterProps} activeCount={activeCount} side="left" className="hidden lg:flex" />

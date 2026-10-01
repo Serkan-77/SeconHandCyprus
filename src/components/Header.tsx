@@ -306,6 +306,18 @@ export function Header({
   const pathname = usePathname();
   const focusMode = pathname.startsWith("/mesajlar") || pathname.startsWith("/ilan-ver") || pathname.startsWith("/yonetim");
   const megaRef = useClickOutside(megaOpen, () => setMegaOpen(false));
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Publish the header's real height so sticky bars below it attach with no gap.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const apply = () => document.documentElement.style.setProperty("--header-h", `${el.getBoundingClientRect().height}px`);
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Close panels on navigation.
   const [lastPath, setLastPath] = useState(pathname);
@@ -323,7 +335,7 @@ export function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-surface">
+    <header ref={headerRef} className="sticky top-0 z-40 bg-surface">
       {/* Main bar */}
       <div className="border-b border-border">
         <div className={cn(SHELL, "flex h-[60px] items-center gap-3 lg:h-[84px] lg:gap-6")}>
