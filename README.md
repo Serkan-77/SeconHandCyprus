@@ -1,30 +1,32 @@
 # Kıbrıs İkinci Elcim
 
-Kıbrıs için ikinci el alım-satım pazaryeri. Bu repo bir **Next.js web
-uygulamasıdır** ve mobil tarayıcılar dahil tüm cihazlarda çalışır. Native mobil
-uygulama gelecek bir aşama olarak planlanmıştır ve bu repoda yer almaz.
+Kıbrıs için ikinci el alım-satım pazaryeri — www.kibrisikincielcim.com.
+v2: Supabase'ten bağımsız, kendi sunucumuzda çalışan **Next.js web +
+Fastify API + PostgreSQL**. Web mobil tarayıcılar dahil her cihazda çalışır;
+aynı API ileride native mobil uygulamaya da hizmet eder.
 
 Özellikler:
 
-- ilan verme ve moderasyon (admin onayı)
-- arama ve filtreler, favoriler
-- alıcı-satıcı mesajlaşması (Realtime)
-- iki taraflı buluşma onayı ve değerlendirme
-- şikayet, engelleme ve yaptırımlar
-- telefon doğrulama talebi, hesap silme
-- yasal sayfalar
-- isteğe bağlı Google AdSense (varsayılan kapalı)
+- kategori ağacı ve kategoriye özel özellikler (marka, model, beden, km…) ile filtreler
+- adım adım ilan verme (taslak kaydı), moderasyon (admin onayı)
+- arama, sıralama, vitrin; favoriler; mağaza sayfaları
+- alıcı-satıcı mesajlaşması (WebSocket, anlık), iki taraflı buluşma onayı ve değerlendirme
+- şikayet, engelleme, yaptırımlar, telefon/mağaza doğrulama talepleri
+- yönetim paneli: ilanlar, kullanıcılar, şikayetler, kategoriler ve özellikler, duyurular, denetim kaydı
+- e-posta/şifre ve isteğe bağlı Google ile giriş; Türkçe/İngilizce arayüz, koyu tema
+- isteğe bağlı Google AdSense (CMP hazır olana kadar kapalı)
 
-## Stack
+## Belgeler
 
-- **Next.js 16** (App Router, Server Actions, `src/proxy.ts`), **React 19**, **TypeScript**
-- **Tailwind CSS 4**
-- **Supabase**:
-  - Postgres, RLS policy'leri, tetikleyiciler ve RPC'ler
-  - Auth (e-posta/şifre, isteğe bağlı Google)
-  - Storage (`listing-images`, `avatars`)
-  - Realtime (mesajlar)
-- **Zod** (sunucu tarafı doğrulama), **Playwright** (e2e)
+| Belge | İçerik |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | bileşenler, kararlar, veri modeli, istek akışı |
+| [docs/SECURITY.md](docs/SECURITY.md) | güvenlik modeli ve onu doğrulayan testler |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | VDS kurulumu, Caddy, güncelleme, loglar |
+| [docs/BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md) | yedekler, haftalık geri yükleme tatbikatı, felaket kurtarma |
+| [docs/MIGRATION.md](docs/MIGRATION.md) | Supabase'ten veri taşıma, canlıya geçiş, geri dönüş planı |
+| [docs/i18n.md](docs/i18n.md) | arayüz metinleri ve İngilizce katalog |
+| [PROJECT_STATE.md](PROJECT_STATE.md) | güncel durum ve sıradaki adım |
 
 > Bu Next.js sürümünde API'ler ve dosya yapısı eski sürümlerden farklıdır. Kod
 > yazmadan önce `node_modules/next/dist/docs/` içindeki ilgili rehberi oku
@@ -33,103 +35,58 @@ uygulama gelecek bir aşama olarak planlanmıştır ve bu repoda yer almaz.
 ## Klasör yapısı
 
 | Yol | İçerik |
-| --- | --- |
-| `src/app` | Sayfalar ve route'lar (Türkçe URL'ler: `/ilanlar`, `/ilan/[slug]`, `/mesajlar`, `/yonetim` …) |
-| `src/lib` | Supabase istemcileri, server action'lar (`actions/`), doğrulama, CSP, env kontrolü |
-| `src/components` | UI bileşenleri |
-| `supabase/migrations` | Veritabanı şeması: `0001` → `0013`, sırayla uygulanır |
-| `scripts` | Seed, e2e, güvenlik, integration ve production smoke scriptleri |
-| `tests` | Unit testler (`node --test`) |
-| `docs` | Production deployment rehberi ve launch checklist |
+|---|---|
+| `src/app` | sayfalar (Türkçe URL'ler: `/ilanlar`, `/ilan/[slug]`, `/ilan-ver`, `/mesajlar`, `/hesabim`, `/yonetim` …) |
+| `src/components` | UI kiti (`ui/`), arama, ilan, ilan verme, mesajlar, hesap, yönetim bileşenleri |
+| `src/lib` | API istemcisi (`api/`), i18n, CSP, arama parametreleri, taslak, yardımcılar |
+| `api/` | Fastify API: `src/modules/*`, `test/`, `scripts/` (seed, Supabase içe aktarma) |
+| `shared/` | web ve API'nin ortak sabitleri, zod şemaları, özellik motoru |
+| `db/` | `migrations/` (0001–0006), `init/` (roller) |
+| `deploy/` | Dockerfile'lar, `docker-compose.yml`, `Caddyfile`, `ops/` (yedek, tatbikat, sağlık) |
+| `migration/` | Supabase → PostgreSQL prova düzeneği |
+| `supabase/migrations` | **eski** şema (yalnız referans ve içe aktarma provası için) |
+| `tests/`, `scripts/` | web unit testleri; smoke, responsive ve dil kontrolleri |
 
-## Yerel kurulum
+## Yerel geliştirme
 
-Gereksinimler: Node.js 24+ ve bir **development** Supabase projesi.
+Gereksinimler: Node.js 24+, Docker.
 
 ```bash
-npm ci
-cp .env.example .env.local        # değerleri development projesinden doldur
+npm ci && (cd api && npm ci)
+docker compose -f docker-compose.dev.yml up -d          # PostgreSQL, 127.0.0.1:55432
+cp api/.env.example api/.env                            # JWT_SECRET, INTERNAL_API_TOKEN, SEED_PASSWORD doldur
+cp .env.example .env.local                              # INTERNAL_API_TOKEN aynı değer
+npm --prefix api run migrate
+npm --prefix api run seed                               # demo veri (admin/magaza/satici/alici@demo.kibrisikincielcim.test)
+npm run dev:api                                         # API → http://localhost:4000
+npm run dev                                             # web → http://localhost:3000
 ```
 
-1. Development projesinin SQL Editor'ünde `supabase/migrations/0001` → `0013`'ü
-   sırayla çalıştır. Repodaki dosyaları kullan; bir dosya hata verirse dur.
-2. Demo veri istersen `.env.local`'e aşağıdakileri ekle ve `npm run seed`
-   çalıştır. Seed demo kullanıcıları siler ve yeniden oluşturur:
-   - `SUPABASE_SECRET_KEY`
-   - `SEED_PASSWORD`
-   - `ALLOW_DESTRUCTIVE_TESTS=1`
-   - `DEV_SUPABASE_PROJECT_REF=<dev ref>`
-3. Sunucuyu başlat: `npm run dev` → http://localhost:3000
-
-### Ortam değişkenleri
-
-- Yerel: [`.env.example`](.env.example)
-- Production: [`.env.production.example`](.env.production.example)
-
-Zorunlu olanlar:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_SITE_URL`
-
-Production build, bu değişkenler eksik veya hatalıysa ya da bir `NEXT_PUBLIC_`
-değişkeninde secret anahtar varsa durur. `.env*` dosyaları commit edilmez;
-yalnızca iki şablon repodadır.
+Yerelde e-postalar gönderilmez; doğrulama ve sıfırlama bağlantıları API
+konsoluna yazılır (`MAIL_TRANSPORT=log`).
 
 ## Komutlar
 
-| Komut | Açıklama | Veri yazar mı? |
-| --- | --- | --- |
-| `npm run dev` / `build` / `start` | Geliştirme sunucusu, production build, production sunucusu | – |
-| `npm run lint` | ESLint | – |
-| `npm run typecheck` | `tsc --noEmit` | – |
-| `npm test` | Unit testler | – |
-| `npm run security` | `security:p0` + `security:p1`: RLS, yetki, moderasyon, hız sınırı ve kötüye kullanım senaryoları | **evet (dev)** |
-| `npm run security:p0` / `security:p1` | Güvenlik testlerini ayrı ayrı çalıştırır | **evet (dev)** |
-| `npm run integration` | Sohbet sayfalama ve gelen kutusu | **evet (dev)** |
-| `npm run e2e` | Tarayıcıyla uçtan uca akış. Çalışan bir sunucu gerekir (`E2E_BASE_URL`, varsayılan localhost:3000). | **evet (dev)** |
-| `npm run responsive` | Ekran görüntüleri ve taşma kontrolü (demo hesabı) | – (yalnızca dev) |
-| `npm run seed` | Demo veriyi sıfırlar | **evet (dev)** |
-| `npm run smoke` / `smoke:local` | Production smoke testi. **Salt okuma, production'da güvenli.** | hayır |
-
-"Veri yazar" diye işaretli scriptler `scripts/lib/dev-guard.mjs` ile korunur.
-Yalnızca şu koşulların hepsi sağlanırsa çalışırlar; aksi halde veritabanına
-bağlanmadan çıkarlar:
-
-- `ALLOW_DESTRUCTIVE_TESTS=1`
-- Supabase proje ref'i `DEV_SUPABASE_PROJECT_REF` ile aynı
-- `NEXT_PUBLIC_SITE_URL` localhost
-- ortam production değil
-
-Yazdıkları test verisini kendileri temizler.
-
-## Güvenlik
-
-- **Veritabanı kuralları:** Tüm tablolarda RLS açık. Kritik kolonlar tetikleyicilerle
-  kilitli. Hız sınırları ve girdi kısıtları veritabanında da uygulanır.
-  Ayrıntılar migration dosyalarının başındaki açıklamalarda.
-- **CSP ve başlıklar:**
-  - Her istekte nonce'lu CSP (`src/lib/csp.ts`, `src/proxy.ts`)
-  - Güvenlik başlıkları `next.config.ts`'te
-  - Açık yönlendirme koruması `src/lib/safeRedirect.ts`'te
-- **Güvenlik testleri:** `npm run security` saldırı senaryolarını development
-  veritabanına karşı gerçek API üzerinden dener:
-  - başkasının ilanını ve verisini değiştirme veya okuma
-  - admin işlemleri
-  - Storage klasörleri
-  - hız sınırları
-  - kanıt koruma, hesap silme
+| Komut | Açıklama |
+|---|---|
+| `npm run dev` / `dev:api` | web / API geliştirme sunucusu |
+| `npm run build` | web production build |
+| `npm run lint`, `npm run typecheck` | ESLint, `tsc` (API: `cd api && npx tsc --noEmit -p .`) |
+| `npm test` | web unit testleri |
+| `npm run test:api` | API testleri: güvenlik ve davranış (kendi `kie_test` veritabanını kurar) |
+| `npm run test:all` | ikisi birden |
+| `npm run responsive` | Playwright: 33 sayfa × 5 genişlik taşma kontrolü (çalışan dev sunucusu) |
+| `npm run test:i18n` | Playwright: dil değiştirme, form koruma, tema, sayfalar |
+| `npm run smoke` | **salt okuma** canlı site kontrolü; production'da güvenli |
+| `bash migration/rehearsal/rehearse.sh` | Supabase içe aktarma provası, uçtan uca |
 
 ## Production
 
-- [docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md):
-  - env
-  - migration sırası ve doğrulama sorgusu
-  - Supabase Auth/Storage/backup checklist'i
-  - AdSense/CMP
-  - hesap silme davranışı
-- [docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md): adım adım launch sırası ve
-  manuel launch testi
+Kısaca: VDS'te `docker compose -f deploy/docker-compose.yml --env-file
+/srv/kibrisikincielcim/.env up -d --build`, host Caddy'de
+`deploy/Caddyfile`, yedekler için systemd zamanlayıcıları. Ayrıntı
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md); canlıya geçiş
+[docs/MIGRATION.md](docs/MIGRATION.md).
 
-Google AdSense, sertifikalı bir CMP kurulup `NEXT_PUBLIC_ADSENSE_CMP_READY=1`
-yapılana kadar kapalıdır.
+Gizli bilgiler hiçbir zaman repoya girmez: şablonlar `.env.example`,
+`api/.env.example`, `deploy/.env.example`.
