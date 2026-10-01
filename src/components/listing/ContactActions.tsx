@@ -113,8 +113,8 @@ export function ContactActions(props: Props) {
 function FavoriteInline({ id }: { id: string }) {
   const { t } = useLocale();
   return (
-    <div className="flex flex-1 items-center justify-center gap-2 rounded-button bg-brand-soft">
-      <FavoriteHeart id={id} className="!bg-transparent !shadow-none !ring-0" />
+    <div className="flex flex-1 items-center justify-center gap-2 rounded-button border border-brand bg-surface">
+      <FavoriteHeart id={id} className="!bg-transparent !text-text !shadow-none !ring-0" />
       <span className="pr-3 text-[14px] font-semibold">{t("Kaydet")}</span>
     </div>
   );

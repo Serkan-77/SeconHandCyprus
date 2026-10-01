@@ -10,16 +10,18 @@
  * Every foreground/background pair below meets WCAG AA (4.5:1) for text.
  */
 :root {
-  --bg: #f4f5f7;
+  /* White canvas, near-black ink, one blue accent. Greys are neutral and
+     reserved for quiet details (meta text, hairlines, hover), not surfaces. */
+  --bg: #fafafa; /* the occasional off-white section band */
   --surface: #ffffff;
-  --surface-2: #f9fafb;
-  --text: #0f1216;
-  --muted: #5b6573;
-  --subtle: #8a93a0;
-  --border: #e1e4ea;
-  --border-strong: #c9ced7;
-  --brand: #0f1216;
-  --brand-soft: #eef0f4;
+  --surface-2: #fafafa;
+  --text: #0a0a0a;
+  --muted: #52525b;
+  --subtle: #71717a;
+  --border: #e4e4e7;
+  --border-strong: #b4b4bb;
+  --brand: #0a0a0a;
+  --brand-soft: #f4f4f5;
   --on-brand: #ffffff;
   --accent: #1d56cf;
   --accent-hover: #1848b0;
@@ -33,10 +35,10 @@
   --warning-soft: #fff5d6;
   --danger: #c02929;
   --danger-soft: #fdecec;
-  --overlay: rgb(10 12 16 / 0.48);
-  --shadow-sm: 0 1px 2px rgb(15 18 22 / 0.06);
-  --shadow-md: 0 4px 16px -4px rgb(15 18 22 / 0.12), 0 2px 4px rgb(15 18 22 / 0.04);
-  --shadow-lg: 0 18px 48px -12px rgb(15 18 22 / 0.28);
+  --overlay: rgb(10 10 10 / 0.5);
+  --shadow-sm: 0 1px 2px rgb(10 10 10 / 0.06);
+  --shadow-md: 0 4px 16px -4px rgb(10 10 10 / 0.12), 0 2px 4px rgb(10 10 10 / 0.04);
+  --shadow-lg: 0 18px 48px -12px rgb(10 10 10 / 0.28);
   color-scheme: light;
 }
 
@@ -71,39 +73,11 @@
   color-scheme: dark;
 }
 
-/* No explicit choice: follow the operating system. */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --bg: #0b0d10;
-    --surface: #15181d;
-    --surface-2: #1b1f25;
-    --text: #f3f5f8;
-    --muted: #a3acb9;
-    --subtle: #7d8795;
-    --border: #2a2f37;
-    --border-strong: #3a414c;
-    --brand: #f3f5f8;
-    --brand-soft: #232830;
-    --on-brand: #0f1216;
-    --accent: #8fb0ff;
-    --accent-hover: #a9c2ff;
-    --accent-soft: #1b2640;
-    --on-accent: #0b0d10;
-    --sand: #f0bf73;
-    --sand-soft: #2e2415;
-    --success: #6fd3a0;
-    --success-soft: #11291d;
-    --warning: #f2c94c;
-    --warning-soft: #2b2410;
-    --danger: #ff8a8a;
-    --danger-soft: #331517;
-    --overlay: rgb(0 0 0 / 0.62);
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-    --shadow-md: 0 6px 20px -6px rgb(0 0 0 / 0.6);
-    --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.75);
-    color-scheme: dark;
-  }
-}
+/*
+ * Light is the default for everyone, whatever the OS prefers. Dark applies
+ * only when the visitor chose it (cookie → class="dark" rendered by the
+ * server, so there is no flash).
+ */
 
 /* Logo variant follows the same theme rules as the colour tokens above. */
 .logo-dark {
@@ -115,15 +89,6 @@
 .dark .logo-dark {
   display: block;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .logo-light {
-    display: none;
-  }
-  :root:not(.light) .logo-dark {
-    display: block;
-  }
-}
-
 @theme inline {
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 
@@ -200,8 +165,14 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
-* {
-  border-color: var(--border);
+/* Default hairline colour. In the base layer so border-* utilities
+   (border-brand, border-accent, …) can override it. */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
 }
 
 button,

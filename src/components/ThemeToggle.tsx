@@ -4,24 +4,15 @@ import { useSyncExternalStore } from "react";
 import { Icon } from "@/components/icons";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 
-const media = () => window.matchMedia("(prefers-color-scheme: dark)");
-
+// Dark only when chosen (class rendered by the server from the "theme" cookie).
 function subscribe(callback: () => void) {
   const observer = new MutationObserver(callback);
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-  const mq = media();
-  mq.addEventListener("change", callback);
-  return () => {
-    observer.disconnect();
-    mq.removeEventListener("change", callback);
-  };
+  return () => observer.disconnect();
 }
 
 function getSnapshot() {
-  const cls = document.documentElement.classList;
-  if (cls.contains("dark")) return true;
-  if (cls.contains("light")) return false;
-  return media().matches;
+  return document.documentElement.classList.contains("dark");
 }
 
 function getServerSnapshot() {
@@ -39,6 +30,7 @@ export function ThemeToggle({ className, compact = false }: { className?: string
     cls.remove("dark", "light");
     cls.add(next);
     document.cookie = `theme=${next}; path=/; max-age=31536000; samesite=lax`;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "dark" ? "#0b0d10" : "#ffffff");
   }
 
   return (

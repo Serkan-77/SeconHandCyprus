@@ -54,7 +54,7 @@ export function AccountNav({ unread }: { unread: { messages: number; notificatio
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={cn("flex h-11 items-center gap-3 rounded-button px-3 text-[14px]", active ? "bg-brand-soft font-semibold" : "text-muted hover:bg-bg hover:text-text")}
+                  className={cn("flex h-11 items-center gap-3 rounded-button px-3 text-[14px]", active ? "bg-brand font-semibold text-on-brand" : "text-muted hover:bg-brand-soft hover:text-text")}
                 >
                   <Icon name={item.icon} className="h-[18px] w-[18px]" />
                   <span className="flex-1">{t(item.label)}</span>

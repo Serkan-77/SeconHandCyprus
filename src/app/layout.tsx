@@ -25,15 +25,16 @@ const inter = Inter({
   display: "swap",
 });
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#15181d" },
-  ],
-};
+export async function generateViewport(): Promise<Viewport> {
+  const dark = (await cookies()).get("theme")?.value === "dark";
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    // Browser chrome matches the theme actually shown (light unless chosen).
+    themeColor: dark ? "#0b0d10" : "#ffffff",
+  };
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -64,10 +65,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Per-request CSP nonce from src/proxy.ts; Next.js applies it to its own scripts.
   const nonce = requestHeaders.get("x-nonce") ?? undefined;
   const region = cookieStore.get(REGION_COOKIE)?.value ?? null;
-  // An explicit theme choice lives in a cookie so the server renders the right
-  // class; without one, CSS follows prefers-color-scheme.
-  const theme = cookieStore.get("theme")?.value;
-  const themeClass = theme === "dark" || theme === "light" ? theme : "";
+  // Light by default, for every visitor, whatever the OS prefers. Dark only
+  // when chosen; the choice lives in a cookie so the server renders the right
+  // class and the first paint is already correct (no flash).
+  const themeClass = cookieStore.get("theme")?.value === "dark" ? "dark" : "light";
   const restricted =
     me && (me.status === "restricted" || me.status === "suspended") && (!me.statusUntil || new Date(me.statusUntil) > new Date());
   const tree = buildTree(taxonomy.categories).map(function strip(c): import("@/components/Header").NavCategory {

@@ -294,11 +294,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </div>
               </Link>
               <dl className="mt-4 grid grid-cols-2 gap-2 text-center">
-                <div className="rounded-button bg-bg px-2 py-2.5">
+                <div className="rounded-button border border-border px-2 py-2.5">
                   <dt className="text-[12px] text-muted">{t("Yayındaki ilan")}</dt>
                   <dd className="font-bold tabular">{seller.activeListings}</dd>
                 </div>
-                <div className="rounded-button bg-bg px-2 py-2.5">
+                <div className="rounded-button border border-border px-2 py-2.5">
                   <dt className="text-[12px] text-muted">{t("Satılan")}</dt>
                   <dd className="font-bold tabular">{seller.soldListings}</dd>
                 </div>

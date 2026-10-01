@@ -44,7 +44,7 @@ const columns = [
 export async function Footer() {
   const { t } = await getI18n();
   return (
-    <footer className="mt-16 hidden border-t border-border bg-bg px-4 pt-12 sm:px-6 lg:block">
+    <footer className="dark mt-16 hidden bg-bg px-4 pt-12 text-text sm:px-6 lg:block">
       <div className="mx-auto grid max-w-[1320px] grid-cols-[1.6fr_repeat(4,1fr)] gap-10">
         <div>
           <Link href="/" className="inline-flex items-center" aria-label={t("Ana sayfa")}>

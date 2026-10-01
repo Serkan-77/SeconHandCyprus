@@ -247,7 +247,7 @@ export function Header({
           )}
           <Link
             href="/ilan-ver"
-            className="hidden h-10 items-center gap-1.5 rounded-button bg-accent px-4 text-[14px] font-semibold text-on-accent transition hover:bg-accent-hover lg:flex"
+            className="hidden h-10 items-center gap-1.5 rounded-button bg-brand px-4 text-[14px] font-semibold text-on-brand transition hover:opacity-90 lg:flex"
           >
             <Icon name="plus" className="h-4 w-4" />
             {t("İlan ver")}
@@ -415,7 +415,7 @@ export function MobileTabBar({ signedIn, unread: serverUnread }: { signedIn: boo
                 aria-current={active ? "page" : undefined}
                 className={cn("flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium", active ? "text-text" : "text-muted")}
               >
-                <span className={cn("relative grid place-items-center", sell ? "h-9 w-12 rounded-full bg-accent text-on-accent" : "h-6 w-6")}>
+                <span className={cn("relative grid place-items-center", sell ? "h-9 w-12 rounded-full bg-brand text-on-brand" : "h-6 w-6")}>
                   <Icon name={tab.icon} className={sell ? "h-5 w-5" : "h-[22px] w-[22px]"} strokeWidth={active ? 2.2 : 1.8} />
                   {tab.badge ? <CountDot count={tab.badge} className="-right-2.5 -top-1" /> : null}
                 </span>

@@ -72,8 +72,8 @@ export default async function HomePage() {
       <JsonLd data={siteSchema} />
 
       {/* Entry: what the site is, and the fastest way in (category shortcuts). */}
-      <section className="overflow-hidden rounded-hero border border-border bg-bg">
-        <div className="grid items-center gap-6 px-5 py-7 sm:px-10 sm:py-10 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
+      <section>
+        <div className="grid items-center gap-6 py-2 sm:py-4 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
           <div>
             <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-accent">{t("Kıbrıs'ın ikinci el pazarı")}</p>
             <h1 className="mt-3 text-[30px] font-bold leading-[1.1] tracking-[-0.02em] sm:text-[42px]">
@@ -86,7 +86,7 @@ export default async function HomePage() {
               <LinkButton href="/ilanlar" size="lg" iconEnd={<Icon name="arrow" className="h-4 w-4" />}>
                 {t("İlanlara göz at")}
               </LinkButton>
-              <LinkButton href="/ilan-ver" size="lg" variant="outline" icon={<Icon name="plus" className="h-4 w-4" />}>
+              <LinkButton href="/ilan-ver" size="lg" variant="secondary" icon={<Icon name="plus" className="h-4 w-4" />}>
                 {t("Ücretsiz ilan ver")}
               </LinkButton>
             </div>
@@ -227,8 +227,8 @@ export default async function HomePage() {
             { icon: "handshake", title: "Buluş ve değerlendir", desc: "Ürünü görerek al. Buluşmayı iki taraf onaylayınca birbirinizi değerlendirin." },
           ] as { icon: IconName; title: string; desc: string }[]
         ).map((step, i) => (
-          <div key={step.title} className="flex gap-4 rounded-card bg-bg p-5">
-            <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-surface text-accent shadow-sm">
+          <div key={step.title} className="flex gap-4 rounded-card border border-border bg-surface p-5">
+            <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-brand text-on-brand">
               <Icon name={step.icon} className="h-5 w-5" />
             </span>
             <div>
