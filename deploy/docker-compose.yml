@@ -74,6 +74,7 @@ services:
       DATABASE_URL: postgres://kie_app:${KIE_APP_PASSWORD}@db:5432/kibrisikincielcim
       DATABASE_POOL_MAX: "15"
       SITE_URL: ${SITE_URL:?set SITE_URL}
+      EXTRA_ORIGINS: ${EXTRA_ORIGINS:-}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN}
       TRUST_PROXY_HOPS: "1"
