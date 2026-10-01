@@ -2,6 +2,7 @@
 // per-user actions (block, report). Only public profile fields leave here:
 // no e-mail, phone, role, status or settings.
 import type { FastifyInstance } from "fastify";
+import { ANON, withActor } from "../db/pool.ts";
 import { notFound, validation } from "../lib/errors.ts";
 import { requireViewer } from "../http/context.ts";
 import { imageUrls } from "../storage/images.ts";
@@ -31,6 +32,7 @@ type PublicProfileRow = {
   ratingCount: number | null;
   activeListings: number | null;
   soldListings: number | null;
+  emailVerified?: boolean | null;
 };
 
 export function presentProfile(row: PublicProfileRow, mediaUrl: string) {
@@ -56,7 +58,7 @@ export function presentProfile(row: PublicProfileRow, mediaUrl: string) {
           hours: row.storeHours,
         }
       : null,
-    phoneReviewed: row.phoneVerified,
+    emailVerified: Boolean(row.emailVerified),
     // Hidden sellers' profiles stay reachable (old links, conversations) but say so.
     unavailable: sanctioned,
     stats: {
@@ -79,7 +81,8 @@ export async function userRoutes(app: FastifyInstance) {
       const [row] = await sql<PublicProfileRow[]>`
         select p.id, p.display_name, p.avatar_url, p.region, p.bio, p.created_at, p.account_type, p.store_name,
                p.store_verified, p.store_address, p.store_phone, p.store_website, p.store_hours, p.phone_verified,
-               p.status, p.status_until, s.rating_avg, s.rating_count, s.active_listings, s.sold_listings
+               p.status, p.status_until, s.rating_avg, s.rating_count, s.active_listings, s.sold_listings,
+               (select u.email_verified_at is not null from auth.users u where u.id = p.id) as email_verified
         from profiles p left join seller_stats s on s.seller_id = p.id where p.id = ${id}`;
       if (!row) throw notFound("Kullanıcı bulunamadı.");
       const listings = await sql<CardRow[]>`
@@ -177,6 +180,20 @@ export async function userRoutes(app: FastifyInstance) {
       }
     });
     return { ok: true };
+  });
+
+  // Public, aggregate numbers for the about page (no personal data).
+  let statsCache: { at: number; value: Record<string, number> } | null = null;
+  app.get("/stats", async (_req, reply) => {
+    if (!statsCache || Date.now() - statsCache.at > 5 * 60_000) {
+      const [row] = await withActor(db, ANON, (sql) => sql<Record<string, number>[]>`
+        select (select count(*)::int from listings where status = 'active') as active_listings,
+               (select count(*)::int from profiles) as members,
+               (select count(*)::int from profiles where account_type = 'store') as stores`);
+      statsCache = { at: Date.now(), value: row };
+    }
+    reply.header("cache-control", "public, max-age=300");
+    return statsCache.value;
   });
 
   // Support tickets can be sent signed in or anonymously.

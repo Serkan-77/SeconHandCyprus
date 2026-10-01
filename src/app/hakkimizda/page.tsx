@@ -4,8 +4,7 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Icon, type IconName } from "@/components/icons";
 import { LinkButton } from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { apiServer } from "@/lib/api/server";
 import { regionNames } from "@/lib/regions";
 import { SITE } from "@/lib/site";
 
@@ -39,14 +38,12 @@ const principles: { icon: IconName; title: string; desc: string }[] = [
 ];
 
 async function stats() {
-  if (!isSupabaseConfigured) return null;
-  const supabase = await createClient();
-  // Only publicly visible numbers: sold listings are hidden from visitors by RLS.
-  const [{ count: listings }, { count: members }] = await Promise.all([
-    supabase.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-  ]);
-  return { listings: listings ?? 0, members: members ?? 0 };
+  try {
+    const r = await apiServer<{ activeListings: number; members: number }>("/stats", { anonymous: true, revalidate: 300 });
+    return { listings: r.activeListings, members: r.members };
+  } catch {
+    return null;
+  }
 }
 
 export default async function AboutPage() {

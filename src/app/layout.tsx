@@ -1,34 +1,37 @@
-
-import * as I18n from "@/components/i18n/Localized";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { Suspense } from "react";
 import { cookies, headers } from "next/headers";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { Header } from "@/components/Header";
+import { Header, MobileTabBar } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { FavoritesProvider } from "@/components/FavoritesProvider";
-import { LiveUpdates } from "@/components/LiveUpdates";
-import { getCategories, getFavoriteIds, getUnreadCounts, getViewer } from "@/lib/queries";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { RealtimeProvider } from "@/components/realtime/Realtime";
+import { ToastProvider } from "@/components/ui/Toast";
+import { LocaleProvider } from "@/components/i18n/LocaleProvider";
+import { getFavoriteIds, getMe, getTaxonomy, getUnread } from "@/lib/api/server";
+import { buildTree } from "@/lib/taxonomy";
 import { REGION_COOKIE } from "@/lib/regions";
 import { ADSENSE_CLIENT, adsEnabled, adsenseConfigured } from "@/lib/ads";
 import { SITE } from "@/lib/site";
-import { LocaleProvider } from "@/components/i18n/LocaleProvider";
-import { LOCALE_COOKIE, parseLocale } from "@/lib/i18n/translate";
+import { getI18n } from "@/lib/i18n/server";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#181b20" },
+    { media: "(prefers-color-scheme: dark)", color: "#15181d" },
   ],
 };
 
@@ -48,66 +51,68 @@ export const metadata: Metadata = {
   ...(adsenseConfigured ? { other: { "google-adsense-account": ADSENSE_CLIENT } } : {}),
 };
 
-
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [viewer, categories, favoriteIds, unread, cookieStore, requestHeaders] = await Promise.all([
-    getViewer(),
-    getCategories(),
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [me, taxonomy, favoriteIds, unread, cookieStore, requestHeaders, { locale, t }] = await Promise.all([
+    getMe(),
+    getTaxonomy(),
     getFavoriteIds(),
-    getUnreadCounts(),
+    getUnread(),
     cookies(),
     headers(),
+    getI18n(),
   ]);
   // Per-request CSP nonce from src/proxy.ts; Next.js applies it to its own scripts.
   const nonce = requestHeaders.get("x-nonce") ?? undefined;
   const region = cookieStore.get(REGION_COOKIE)?.value ?? null;
-  // Explicit theme choice lives in a cookie so the server renders the right
+  // An explicit theme choice lives in a cookie so the server renders the right
   // class; without one, CSS follows prefers-color-scheme.
   const theme = cookieStore.get("theme")?.value;
   const themeClass = theme === "dark" || theme === "light" ? theme : "";
-  const locale = parseLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   const restricted =
-    viewer &&
-    (viewer.profile.status === "restricted" || viewer.profile.status === "suspended") &&
-    (!viewer.profile.statusUntil || new Date(viewer.profile.statusUntil) > new Date());
+    me && (me.status === "restricted" || me.status === "suspended") && (!me.statusUntil || new Date(me.statusUntil) > new Date());
+  const tree = buildTree(taxonomy.categories).map(function strip(c): import("@/components/Header").NavCategory {
+    return { id: c.id, slug: c.slug, name: c.name, nameEn: c.nameEn, icon: c.icon, children: c.children.map(strip) };
+  });
 
   return (
     <html lang={locale} className={`${inter.variable} antialiased ${themeClass}`}>
-      <body className="flex min-h-screen flex-col bg-surface font-sans text-text">
+      <body className="flex min-h-dvh flex-col bg-surface font-sans text-text">
         <LocaleProvider initialLocale={locale}>
-        <I18n.a
-          href="#main-content"
-          className="fixed left-4 top-[-100px] z-[100] rounded bg-brand px-3 py-2 text-on-brand focus:top-3"
-        >
-          İçeriğe atla
-        </I18n.a>
-        <OfflineBanner />
-        {!isSupabaseConfigured ? (
-          <I18n.div className="bg-accent-soft px-4 py-2 text-center text-xs text-accent">
-            Veritabanı bağlantısı yapılandırılmadı: <I18n.code>.env.local</I18n.code> içine Supabase anahtarlarını ekle.
-          </I18n.div>
-        ) : null}
-        {restricted ? (
-          <I18n.div className="bg-brand-soft px-4 py-2 text-center text-xs">
-            Hesabın kısıtlı. İlan verme ve mesajlaşma geçici olarak kapalı.{" "}
-            <I18n.Link href="/hesap-kisitlandi" className="font-semibold text-accent">
-              Ayrıntılar
-            </I18n.Link>
-          </I18n.div>
-        ) : null}
-        <Header
-          viewer={viewer ? { name: viewer.profile.displayName, isAdmin: viewer.profile.role === "admin" } : null}
-          categories={categories.map((c) => ({ icon: c.icon, name: c.name, slug: c.slug }))}
-          region={region}
-          unread={unread}
-        />
-        <FavoritesProvider userKey={viewer?.user.id ?? "guest"} initialIds={favoriteIds}>
-          <I18n.main id="main-content" tabIndex={-1} className="flex-1">
-            {children}
-          </I18n.main>
-        </FavoritesProvider>
-        <Footer />
-        {viewer ? <LiveUpdates key={viewer.user.id} userId={viewer.user.id} /> : null}
+          <ToastProvider>
+            <RealtimeProvider userId={me?.id ?? null}>
+              <a
+                href="#main-content"
+                className="fixed left-4 top-[-100px] z-[100] rounded-button bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand focus:top-3"
+              >
+                {t("İçeriğe atla")}
+              </a>
+              <OfflineBanner />
+              {restricted ? (
+                <div className="bg-warning-soft px-4 py-2 text-center text-[13px] text-text">
+                  {t("Hesabın kısıtlı. İlan verme ve mesajlaşma geçici olarak kapalı.")}{" "}
+                  <a href="/hesap-kisitlandi" className="font-semibold underline underline-offset-2">
+                    {t("Ayrıntılar")}
+                  </a>
+                </div>
+              ) : null}
+              <Suspense>
+                <Header
+                  viewer={me ? { name: me.accountType === "store" && me.store.name ? me.store.name : me.displayName, avatar: me.avatar, isAdmin: me.role === "admin" } : null}
+                  categories={tree}
+                  region={region}
+                  unread={unread}
+                />
+              </Suspense>
+              <FavoritesProvider userKey={me?.id ?? "guest"} initialIds={favoriteIds}>
+                <main id="main-content" tabIndex={-1} className="pb-safe flex-1 outline-none">
+                  {children}
+                </main>
+              </FavoritesProvider>
+              <Footer />
+              <MobileTabBar signedIn={Boolean(me)} unread={unread} />
+            </RealtimeProvider>
+          </ToastProvider>
+        </LocaleProvider>
         {adsEnabled ? (
           <Script
             id="adsense"
@@ -118,8 +123,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
           />
         ) : null}
-        <Analytics />
-        </LocaleProvider>
       </body>
     </html>
   );

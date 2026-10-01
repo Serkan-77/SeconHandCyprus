@@ -4,8 +4,9 @@
 //
 // phone_verified only means an admin manually reviewed a number, so public
 // components and pages must neither read it nor show verification wording.
-// The user's own trust centre (/hesabim), the admin panel (/yonetim) and the
-// design-system showcase (/sistem) are out of scope.
+// The user's own account area (/hesabim, components/account), the admin panel
+// (/yonetim) and the design-system showcase (/sistem) are out of scope. The
+// API's public payloads are checked in api/test (no phone flag leaves them).
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -14,8 +15,8 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const PRIVATE_DIRS = ["src/app/yonetim", "src/app/hesabim", "src/app/sistem", "src/components/admin"];
-const FORBIDDEN = [/phone_?verified/i, /Doğrulandı/, /Doğrulanmış/, /doğrulanmış satıcı/i, /verified seller/i];
+const PRIVATE_DIRS = ["src/app/yonetim", "src/app/hesabim", "src/app/sistem", "src/components/admin", "src/components/account"];
+const FORBIDDEN = [/phone_?verified/i, /phoneReviewed/, /Doğrulandı/, /Doğrulanmış/, /doğrulanmış satıcı/i, /verified seller/i];
 
 function sourceFiles(dir) {
   return readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
@@ -30,9 +31,10 @@ const publicFiles = [...sourceFiles("src/app"), ...sourceFiles("src/components")
   .filter((p) => !PRIVATE_DIRS.some((dir) => p.startsWith(`${dir}/`)));
 
 test("there are public files to check", () => {
-  assert.ok(publicFiles.some((p) => p.endsWith("SellerCard.tsx")));
-  assert.ok(publicFiles.some((p) => p.endsWith("SellerHeader.tsx")));
-  assert.ok(publicFiles.some((p) => p.endsWith("ChatView.tsx")));
+  assert.ok(publicFiles.some((p) => p.endsWith("satici/[id]/page.tsx")));
+  assert.ok(publicFiles.some((p) => p.endsWith("ilan/[slug]/page.tsx")));
+  assert.ok(publicFiles.some((p) => p.endsWith("ChatThread.tsx")));
+  assert.ok(publicFiles.some((p) => p.endsWith("ListingCard.tsx")));
 });
 
 test("no public component or page shows a verification badge or reads phone_verified", () => {

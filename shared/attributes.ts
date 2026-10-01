@@ -136,9 +136,10 @@ export function validateAttributes(
         break;
       }
       case "select": {
-        const s = String(v);
-        if (!def.options.some((o) => o.value === s)) errors[def.key] = `${def.label} için listeden bir seçenek seç.`;
-        else values[def.key] = s;
+        // One value only: String(["a"]) would otherwise pass as "a".
+        const s = typeof v === "string" || typeof v === "number" ? String(v) : null;
+        if (s === null || !def.options.some((o) => o.value === s)) errors[def.key] = `${def.label} için listeden bir seçenek seç.`;
+        else values[def.key] = s!;
         break;
       }
       case "multiselect": {

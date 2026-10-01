@@ -1,47 +1,55 @@
 "use client";
-import * as I18n from "@/components/i18n/Localized";
 
-
-import { useId, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
+/** An on/off switch (role="switch"). Controlled when `checked` is passed. */
 export function Switch({
   label,
+  checked: controlled,
   defaultChecked = false,
   onChange,
+  disabled,
+  id,
 }: {
   label: string;
+  checked?: boolean;
   defaultChecked?: boolean;
   onChange?: (checked: boolean) => void;
+  disabled?: boolean;
+  id?: string;
 }) {
-  const [checked, setChecked] = useState(defaultChecked);
-  const id = useId();
+  const { t } = useLocale();
+  const [inner, setInner] = useState(defaultChecked);
+  const checked = controlled ?? inner;
 
   function toggle() {
     const next = !checked;
-    setChecked(next);
+    if (controlled === undefined) setInner(next);
     onChange?.(next);
   }
 
   return (
-    <I18n.button
+    <button
       id={id}
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label={label}
+      aria-label={t(label)}
+      disabled={disabled}
       onClick={toggle}
       className={cn(
-        "relative h-[26px] w-11 flex-shrink-0 rounded-full transition-colors",
-        checked ? "bg-brand" : "bg-border",
+        "relative h-7 w-12 flex-shrink-0 rounded-full transition-colors disabled:opacity-50",
+        checked ? "bg-accent" : "bg-border-strong",
       )}
     >
       <span
         className={cn(
-          "absolute top-[3px] h-5 w-5 rounded-full bg-white transition-all",
-          checked ? "left-[21px]" : "left-[3px]",
+          "absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-[left]",
+          checked ? "left-[23px]" : "left-[3px]",
         )}
       />
-    </I18n.button>
+    </button>
   );
 }

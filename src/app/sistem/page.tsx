@@ -1,101 +1,133 @@
-
-import * as I18n from "@/components/i18n/Localized";
-import { Icon } from "@/components/icons";
-import { Badge } from "@/components/ui/Badge";
+import type { Metadata } from "next";
+import { Icon, type IconName } from "@/components/icons";
 import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Field } from "@/components/ui/Field";
-import { getCategories } from "@/lib/queries";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FormError, Notice } from "@/components/ui/FormError";
+import { Stars } from "@/components/ui/Stars";
+import { getTaxonomy } from "@/lib/api/server";
+import { buildTree } from "@/lib/taxonomy";
 
-export const metadata = { title: "Tasarım sistemi", robots: { index: false } };
+// A living reference of the design system: tokens and components as they
+// render in the current theme. Not indexed.
+export const metadata: Metadata = { title: "Tasarım sistemi", robots: { index: false } };
 
-const swatches = [
-  { name: "Surface", cls: "bg-surface border border-border" },
-  { name: "Bg", cls: "bg-bg" },
-  { name: "Brand", cls: "bg-brand" },
-  { name: "Brand soft", cls: "bg-brand-soft" },
-  { name: "Accent", cls: "bg-accent" },
-  { name: "Accent soft", cls: "bg-accent-soft" },
+const COLORS = [
+  ["bg", "Sayfa zemini"],
+  ["surface", "Yüzey"],
+  ["brand-soft", "Nötr yumuşak"],
+  ["brand", "Mürekkep (ana eylem)"],
+  ["accent", "Akdeniz mavisi (bağlantı, seçili)"],
+  ["accent-soft", "Mavi yumuşak"],
+  ["sand", "Kum (Vitrin)"],
+  ["success", "Başarı"],
+  ["warning", "Uyarı"],
+  ["danger", "Hata"],
 ];
 
-export default async function SystemPage() {
-  const categories = await getCategories();
+export default async function DesignSystem() {
+  const taxonomy = await getTaxonomy();
+  const icons = [...new Set(buildTree(taxonomy.categories).flatMap((c) => [c.icon, ...c.children.map((s) => s.icon)]))] as IconName[];
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pb-16 sm:px-6">
-      <I18n.h1 className="my-8 text-3xl font-bold tracking-tight sm:text-[40px]">
-        Bileşenler & tasarım kuralları
-      </I18n.h1>
+    <div className="mx-auto flex max-w-[1100px] flex-col gap-12 px-4 py-10 sm:px-6">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Tasarım sistemi</h1>
+        <p className="mt-2 max-w-2xl text-[15px] text-muted">
+          Mürekkep ve kâğıt nötrleri markayı taşır; tek bir Akdeniz mavisi eylemleri ve bağlantıları, kum tonu yalnızca Vitrin&apos;i işaretler. Durum renkleri
+          (başarı, uyarı, hata) yalnızca durum bildirmek için kullanılır.
+        </p>
+      </header>
 
-      <section className="mb-12">
-        <I18n.h2 className="mb-4 text-lg font-semibold">Renkler</I18n.h2>
-        <I18n.div className="flex flex-wrap gap-3">
-          {swatches.map((s) => (
-            <div key={s.name} className="w-[120px] overflow-hidden rounded-xl border border-border">
-              <div className={`h-[76px] ${s.cls}`} />
-              <I18n.small className="block p-2.5 text-[10px]">{s.name}</I18n.small>
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">Renkler</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {COLORS.map(([token, label]) => (
+            <div key={token} className="overflow-hidden rounded-card border border-border">
+              <div className="h-16" style={{ background: `var(--${token})` }} />
+              <p className="px-3 py-2 text-[12px]">
+                <code>{token}</code>
+                <span className="block text-muted">{label}</span>
+              </p>
             </div>
           ))}
-        </I18n.div>
-        <I18n.p className="mt-3 text-xs text-muted">
-          Siyah ve beyaz baskın; mavi bağlantı, odak, seçili durum ve küçük vurgular içindir.
-        </I18n.p>
-      </section>
-
-      <section className="mb-12">
-        <I18n.h2 className="mb-4 text-lg font-semibold">Tipografi</I18n.h2>
-        <div className="flex flex-col gap-4">
-          <I18n.p className="text-[40px] font-bold leading-tight">Display / 40</I18n.p>
-          <I18n.p className="text-[28px] font-bold leading-tight">Başlık 1 / 28</I18n.p>
-          <I18n.p className="text-[22px] font-semibold leading-tight">Başlık 2 / 22</I18n.p>
-          <I18n.p className="text-lg font-semibold leading-tight">Başlık 3 / 18</I18n.p>
-          <I18n.p className="text-base">Gövde metni / 16</I18n.p>
-          <I18n.p className="text-sm text-muted">Küçük metin / 14</I18n.p>
-          <I18n.p className="text-xs uppercase tracking-wide text-muted">Caption / 12</I18n.p>
-        </div>
-      </section>
-
-      <section className="mb-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
-        <div>
-          <I18n.h2 className="mb-4 text-lg font-semibold">Butonlar</I18n.h2>
-          <div className="flex flex-col gap-3">
-            <Button>Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="danger">Danger</Button>
-          </div>
-        </div>
-        <div>
-          <I18n.h2 className="mb-4 text-lg font-semibold">Rozetler</I18n.h2>
-          <div className="flex flex-wrap gap-2">
-            <Badge kind="accent" icon={<Icon name="check" className="h-3 w-3" />}>
-              Doğrulandı
-            </Badge>
-            <Badge kind="neutral">Az kullanılmış</Badge>
-            <Badge kind="danger">Kısıtlı</Badge>
-          </div>
-          <I18n.h2 className="mb-4 mt-8 text-lg font-semibold">Avatarlar</I18n.h2>
-          <div className="flex items-center gap-3">
-            <Avatar initials="SE" />
-            <Avatar initials="DA" large />
-          </div>
-        </div>
-        <div>
-          <I18n.h2 className="mb-4 text-lg font-semibold">Form alanı</I18n.h2>
-          <Field label="Örnek alan" placeholder="Değer gir" />
         </div>
       </section>
 
       <section>
-        <I18n.h2 className="mb-4 text-lg font-semibold">Kategori ikonları</I18n.h2>
-        <I18n.div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
-          {categories.map((c) => (
-            <div key={c.slug} className="flex flex-col items-center gap-2 rounded-xl border border-border p-4">
-              <Icon name={c.icon} className="h-6 w-6" />
-              <I18n.span className="text-[10px] text-muted">{c.name}</I18n.span>
-            </div>
+        <h2 className="mb-4 text-lg font-semibold">Tipografi</h2>
+        <div className="space-y-2">
+          <p className="text-[38px] font-bold leading-tight tracking-tight">Başlık 38 / bold</p>
+          <p className="text-[28px] font-bold tracking-tight">Sayfa başlığı 28</p>
+          <p className="text-[20px] font-bold">Bölüm başlığı 20</p>
+          <p className="text-[15px]">Gövde metni 15 — okunaklı satır aralığı ve yeterli kontrast.</p>
+          <p className="text-[13px] text-muted">İkincil metin 13 — tarih, konum, yardımcı açıklamalar.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle">Etiket 11 — en küçük boyut</p>
+          <p className="text-[24px] font-bold tabular">18.500 TL · 1.250 €</p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">Düğmeler</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button>Birincil</Button>
+          <Button variant="accent">Vurgu</Button>
+          <Button variant="secondary">İkincil</Button>
+          <Button variant="outline">Çerçeveli</Button>
+          <Button variant="ghost">Sade</Button>
+          <Button variant="danger">Tehlikeli</Button>
+          <Button loading>Yükleniyor</Button>
+          <Button size="sm" icon={<Icon name="plus" className="h-4 w-4" />}>
+            Küçük
+          </Button>
+          <Button size="lg">Büyük</Button>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">Rozetler, yıldızlar, avatarlar</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge>Nötr</Badge>
+          <Badge kind="accent">Pazarlığa açık</Badge>
+          <Badge kind="sand" icon={<Icon name="spark" className="h-3 w-3" />}>
+            Vitrin
+          </Badge>
+          <Badge kind="success">Yayında</Badge>
+          <Badge kind="warning">İncelemede</Badge>
+          <Badge kind="danger">Reddedildi</Badge>
+          <Badge kind="outline">Taslak</Badge>
+          <Stars value={4.5} size="md" />
+          <Avatar name="Deniz Kaya" size="md" />
+          <Avatar name="Girne Ev" size="lg" />
+        </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2">
+        <Notice>Bilgi notu: ne olacağını önceden söyler.</Notice>
+        <Notice tone="success" icon="check">
+          Başarı: işlem tamamlandı.
+        </Notice>
+        <Notice tone="warning">Uyarı: dikkat gerektiren bir durum.</Notice>
+        <FormError>Hata: ne ters gittiğini ve nasıl düzeltileceğini söyler.</FormError>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">Boş durum</h2>
+        <EmptyState icon="heart" title="Henüz favorin yok" action={<Button>İlanlara göz at</Button>}>
+          Beğendiğin ilanlardaki kalbe dokun; hepsi burada toplanır.
+        </EmptyState>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">Kategori simgeleri</h2>
+        <div className="flex flex-wrap gap-2">
+          {icons.map((name) => (
+            <span key={name} className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-card border border-border text-[10px] text-muted">
+              <Icon name={name} className="h-5 w-5 text-text" />
+              {name}
+            </span>
           ))}
-        </I18n.div>
+        </div>
       </section>
     </div>
   );

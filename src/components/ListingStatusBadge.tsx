@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
-import type { ListingStatus } from "@/lib/queries";
+import type { ListingStatus } from "@/lib/api/types";
 
 export const statusLabel: Record<ListingStatus, string> = {
   active: "Yayında",
@@ -10,7 +10,8 @@ export const statusLabel: Record<ListingStatus, string> = {
   draft: "Taslak",
 };
 
+const kinds = { active: "success", pending: "warning", rejected: "danger", sold: "neutral", removed: "outline", draft: "outline" } as const;
+
 export function ListingStatusBadge({ status }: { status: ListingStatus }) {
-  const kind = status === "active" || status === "pending" ? "accent" : status === "rejected" ? "danger" : "neutral";
-  return <Badge kind={kind}>{statusLabel[status]}</Badge>;
+  return <Badge kind={kinds[status]}>{statusLabel[status]}</Badge>;
 }

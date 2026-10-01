@@ -3,9 +3,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 // Unread badges between page loads. The server renders the counts with each
-// page; LiveUpdates overrides them here when a message or notification comes
-// in, without re-rendering the whole page. A newer server count (after a
-// navigation) takes over again.
+// page; realtime events override them here without re-rendering the page. A
+// newer server count (after a navigation) takes over again.
 
 export type UnreadCounts = { messages: number; notifications: number };
 
@@ -22,7 +21,7 @@ function subscribe(callback: () => void) {
   return () => listeners.delete(callback);
 }
 
-/** The server's counts, or fresher live ones when LiveUpdates has them. */
+/** The server's counts, or fresher live ones when realtime has them. */
 export function useUnreadCounts(server: UnreadCounts): UnreadCounts {
   const current = useSyncExternalStore(subscribe, () => live, () => null);
   useEffect(() => {

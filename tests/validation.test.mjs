@@ -1,25 +1,31 @@
-// P1-06: server-side validation schemas (the DB CHECKs mirror them in 0009).
+// P1-06: request validation (shared/schemas.ts), used by the API
+// (authoritative) and the web forms. The database CHECKs mirror the limits.
 //
 //   npm test
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { LIMITS } from "../shared/constants.ts";
 import {
-  LIMITS,
+  emailSchema,
   listingCreateSchema,
   listingUpdateSchema,
+  loginSchema,
   messageSchema,
+  passwordSchema,
   phoneSchema,
   profileSchema,
   ratingSchema,
   reportSchema,
+  signupSchema,
+  storeSchema,
   supportSchema,
-} from "../src/lib/validation.ts";
+} from "../shared/schemas.ts";
 
 const MB = "x".repeat(1024 * 1024);
 const listing = {
   title: "Ahşap berjer",
-  categorySlug: "mobilya",
+  categoryId: 1001,
   condition: "Az kullanılmış",
   description: "Temiz",
   price: "1500",
@@ -27,7 +33,7 @@ const listing = {
   city: "Girne",
   district: " Alsancak ",
   negotiable: false,
-  photos: ["u/1.jpg"],
+  photos: ["l/2026/10/0b0e4a8e-7c1d-4f5e-9a3b-2c6d8e1f0a4b"],
   submissionKey: "0b0e4a8e-7c1d-4f5e-9a3b-2c6d8e1f0a4b",
 };
 const ok = (schema, value) => {
@@ -46,6 +52,7 @@ test("valid listing parses; text trimmed, price coerced, empty district becomes 
   assert.equal(d.price, 1500);
   assert.equal(d.district, "Alsancak");
   assert.equal(ok(listingCreateSchema, { ...listing, district: "   " }).district, null);
+  assert.equal(ok(listingCreateSchema, { ...listing, price: 1499.999 }).price, 1500);
 });
 
 test("listing abuse: whitespace title, megabyte description, invalid city, bad price, photo count", () => {
@@ -56,8 +63,10 @@ test("listing abuse: whitespace title, megabyte description, invalid city, bad p
   for (const price of ["-1", "abc", "1e12", "Infinity", ""]) bad(listingCreateSchema, { ...listing, price });
   bad(listingCreateSchema, { ...listing, currency: "USD" });
   bad(listingCreateSchema, { ...listing, condition: "Mükemmel" });
+  bad(listingCreateSchema, { ...listing, categoryId: 0 });
+  bad(listingCreateSchema, { ...listing, categoryId: "mobilya" });
   bad(listingCreateSchema, { ...listing, photos: [] }, /En az 1/);
-  bad(listingCreateSchema, { ...listing, photos: Array(LIMITS.maxPhotos + 1).fill("u/x.jpg") }, /En fazla 10/);
+  bad(listingCreateSchema, { ...listing, photos: Array(LIMITS.maxPhotos + 1).fill("k") }, /En fazla 10/);
   bad(listingCreateSchema, { ...listing, submissionKey: "" });
   bad(listingCreateSchema, { ...listing, submissionKey: "not-a-uuid" });
   bad(listingUpdateSchema, { title: "  ab  ", price: 1, city: "Girne", description: "" }, /en az 3/);
@@ -71,8 +80,8 @@ test("profile: display name 2-40 trimmed, bio 500, region from the list or empty
   bad(profileSchema, { name: "Deniz", region: "", bio: MB });
 });
 
-test("phone: spaces removed, 10-15 digits with optional +", () => {
-  assert.equal(ok(phoneSchema, "+90 533 811 22 33"), "+905338112233");
+test("phone: spaces and punctuation removed, 10-15 digits with optional +", () => {
+  assert.equal(ok(phoneSchema, "+90 (533) 811-22-33"), "+905338112233");
   for (const v of ["12345", "+90abc", "0".repeat(16), "   "]) bad(phoneSchema, v);
 });
 
@@ -90,4 +99,27 @@ test("message, rating, report and support limits", () => {
   bad(supportSchema, { email: "a@b.co", topic: "Diğer", message: "kısa" }, /en az 10/);
   bad(supportSchema, { email: "a@b.co", topic: "   ", message: "0123456789 yeterli" });
   ok(supportSchema, { email: " user@example.com ", topic: "Diğer", message: "Yeterince uzun bir mesaj." });
+});
+
+test("sign-up and sign-in input", () => {
+  const s = ok(signupSchema, { email: " Ayse@Example.COM ", password: "uzun-ve-guclu-1", name: " Ayşe ", region: "", phone: "" });
+  assert.equal(s.email, "ayse@example.com", "e-mail is normalised");
+  assert.equal(s.region, null);
+  assert.equal(s.phone, null);
+  bad(signupSchema, { email: "ayse@example.com", password: "kisa", name: "Ayşe" }, /en az 8/);
+  bad(passwordSchema, "12345678", /yaygın/);
+  bad(passwordSchema, "x".repeat(LIMITS.passwordMax + 1));
+  bad(emailSchema, "a@b");
+  bad(loginSchema, { email: "a@b.co", password: "" });
+});
+
+test("store profile: name required, optional fields become null, website gets a scheme", () => {
+  const parsed = ok(storeSchema, { storeName: " Girne Mobilya ", address: "", phone: "", website: "", hours: "" });
+  assert.deepEqual(parsed, { storeName: "Girne Mobilya", address: null, phone: null, website: null, hours: null });
+  bad(storeSchema, { storeName: "x", address: "", phone: "", website: "", hours: "" });
+  const full = ok(storeSchema, { storeName: "Dükkan", address: "", phone: "+90 533 123 45 67", website: "ornek.com", hours: "" });
+  assert.equal(full.website, "https://ornek.com");
+  assert.equal(full.phone, "+905331234567");
+  bad(storeSchema, { storeName: "Dükkan", address: "", phone: "123", website: "", hours: "" });
+  bad(storeSchema, { storeName: "Dükkan", address: "", phone: "", website: "not a url", hours: "" });
 });

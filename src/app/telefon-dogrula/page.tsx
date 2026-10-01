@@ -1,11 +1,7 @@
-import { redirect } from "next/navigation";
-import { VerifyPhoneForm } from "./VerifyPhoneForm";
-import { AUTH_METHODS } from "@/lib/site";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata = { title: "Telefonunu doğrula" };
-
-export default async function VerifyPhonePage({ searchParams }: { searchParams: Promise<{ tel?: string }> }) {
-  const { tel } = await searchParams;
-  if (!tel || !AUTH_METHODS.phone) redirect("/giris");
-  return <VerifyPhoneForm phone={tel} />;
+// Phone (SMS) sign-in was never switched on in production and is not part of
+// the new authentication; old links land on the normal sign-in page.
+export default function PhoneLoginRemoved() {
+  permanentRedirect("/giris");
 }

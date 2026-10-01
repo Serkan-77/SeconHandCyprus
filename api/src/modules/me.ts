@@ -4,7 +4,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withActor } from "../db/pool.ts";
-import { forbidden, validation } from "../lib/errors.ts";
+import { forbidden, notFound, validation } from "../lib/errors.ts";
 import { requireViewer } from "../http/context.ts";
 import { verifyPassword } from "../auth/passwords.ts";
 import { imageUrls } from "../storage/images.ts";
@@ -183,7 +183,8 @@ export async function meRoutes(app: FastifyInstance) {
       const [row] = await sql<(CardRow & { description: string; rejectReason: string | null })[]>`
         select ${sql.unsafe(CARD_COLUMNS)}, l.description, l.reject_reason
         from listings l join profiles p on p.id = l.seller_id where l.id = ${id} and l.seller_id = ${v.id}`;
-      if (!row) throw forbidden("Bu ilan senin değil.");
+      // Someone else's listing looks the same as a missing one.
+      if (!row) throw notFound("İlan bulunamadı.");
       const images = await sql<{ id: string; path: string; position: number }[]>`
         select id, path, position from listing_images where listing_id = ${id} order by position, created_at`;
       return {

@@ -1,48 +1,36 @@
-import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { publicImageUrl } from "@/lib/supabase/env";
-import { getViewer } from "@/lib/queries";
-import { ManageListing } from "./ManageListing";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { EditListing } from "@/components/account/EditListing";
+import { apiServerOrNull, getTaxonomy } from "@/lib/api/server";
+import type { ImageUrls, ListingStatus } from "@/lib/api/types";
+import { attributesFor } from "@/lib/taxonomy";
 
-export const metadata = { title: "İlanı yönet" };
+export const metadata: Metadata = { title: "İlanı düzenle" };
 
-export default async function ManageListingPage({ params }: { params: Promise<{ id: string }> }) {
+type Editable = {
+  id: string;
+  slug: string;
+  status: ListingStatus;
+  title: string;
+  price: number;
+  currency: string;
+  condition: string;
+  city: string;
+  district: string | null;
+  description: string;
+  negotiable: boolean;
+  attributes: Record<string, unknown>;
+  rejectReason: string | null;
+  category: { id: number } | null;
+  categoryPath: { name: string; nameEn: string | null }[];
+  images: { id: string; key: string; urls: ImageUrls | null }[];
+};
+
+export default async function EditListingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const viewer = await getViewer();
-  if (!viewer) redirect(`/giris-gerekli?returnTo=/hesabim/ilanlar/${id}`);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-
-  const supabase = await createClient();
-  const { data: listing } = await supabase
-    .from("listings")
-    .select("*, images:listing_images(id, path, position)")
-    .eq("id", id)
-    .eq("seller_id", viewer.user.id)
-    .maybeSingle();
-  if (!listing) notFound();
-
-  const images = [...(listing.images ?? [])]
-    .sort((a, b) => a.position - b.position)
-    .map((i) => ({ id: i.id as string, url: publicImageUrl(i.path) }));
-
-  return (
-    <ManageListing
-      listing={{
-        id: listing.id,
-        slug: listing.slug,
-        title: listing.title,
-        price: String(Number(listing.price)),
-        currency: listing.currency,
-        city: listing.city,
-        district: listing.district ?? "",
-        description: listing.description,
-        negotiable: listing.negotiable,
-        details: listing.details ?? {},
-        status: listing.status,
-        rejectReason: listing.reject_reason,
-        viewCount: listing.view_count,
-      }}
-      images={images}
-    />
-  );
+  const [data, taxonomy] = await Promise.all([apiServerOrNull<{ listing: Editable }>(`/me/listings/${id}`), getTaxonomy()]);
+  if (!data) notFound();
+  const defs = data.listing.category ? attributesFor(taxonomy.categories, taxonomy.attributes, data.listing.category.id) : [];
+  return <EditListing listing={data.listing} defs={defs} />;
 }

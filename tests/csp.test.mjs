@@ -6,8 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildCsp, createNonce } from "../src/lib/csp.ts";
 
-const SUPABASE = "https://abcdefghijklmnop.supabase.co";
-const base = { nonce: "bm9uY2U=", supabaseUrl: SUPABASE, dev: false, https: true, ads: false };
+const base = { nonce: "bm9uY2U=", dev: false, https: true, ads: false };
 
 function directives(csp) {
   return Object.fromEntries(
@@ -30,13 +29,20 @@ test("production policy: nonce + strict-dynamic, no inline or eval scripts", () 
   assert.ok("upgrade-insecure-requests" in d);
 });
 
-test("Supabase REST/Realtime, Google OAuth form chain and avatars are allowed", () => {
+test("same-origin API and realtime; no third-party data hosts by default", () => {
   const d = directives(buildCsp(base));
-  assert.ok(d["connect-src"].includes(SUPABASE));
-  assert.ok(d["connect-src"].includes("wss://abcdefghijklmnop.supabase.co"));
-  assert.ok(d["form-action"].includes(SUPABASE));
-  assert.ok(d["form-action"].includes("https://accounts.google.com"));
+  assert.deepEqual(d["connect-src"], ["'self'"]);
+  assert.deepEqual(d["form-action"], ["'self'"]);
   assert.ok(d["img-src"].includes("https://lh3.googleusercontent.com"));
+  assert.ok(!buildCsp(base).includes("supabase"));
+});
+
+test("a separate realtime origin and Google sign-in are added only when configured", () => {
+  const d = directives(buildCsp({ ...base, connect: ["ws://localhost:4000/api/v1/ws"], googleSignIn: true }));
+  assert.ok(d["connect-src"].includes("ws://localhost:4000"));
+  assert.ok(d["form-action"].includes("https://accounts.google.com"));
+  const bad = directives(buildCsp({ ...base, connect: ["not a url"] }));
+  assert.deepEqual(bad["connect-src"], ["'self'"]);
 });
 
 test("development adds only unsafe-eval; http sites skip upgrade-insecure-requests", () => {

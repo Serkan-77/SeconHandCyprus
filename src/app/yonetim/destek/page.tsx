@@ -1,55 +1,53 @@
+import Link from "next/link";
+import { AdminAction } from "@/components/admin/AdminKit";
+import { apiServer } from "@/lib/api/server";
+import { getI18n } from "@/lib/i18n/server";
 
-import * as I18n from "@/components/i18n/Localized";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { Badge } from "@/components/ui/Badge";
-import { Icon } from "@/components/icons";
-import { createClient } from "@/lib/supabase/server";
+export const metadata = { title: "Destek talepleri" };
 
-export const metadata = { title: "Yönetim · Destek", robots: { index: false } };
+type Row = { id: string; email: string; topic: string; message: string; status: string; createdAt: string; userId: string | null; displayName: string | null };
 
-export default async function AdminSupportPage() {
-  return (
-    <AdminShell>
-      <Tickets />
-    </AdminShell>
-  );
-}
-
-async function Tickets() {
-  const supabase = await createClient();
-  const { data: tickets } = await supabase
-    .from("support_tickets")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
+export default async function AdminSupport() {
+  const [{ t, f }, { items }] = await Promise.all([getI18n(), apiServer<{ items: Row[] }>("/admin/support")]);
   return (
     <>
-      <div>
-        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Destek talepleri</I18n.h1>
-        <I18n.p className="mt-1.5 text-xs text-muted">Destek formundan gelen talepler. Yanıtlar e-posta ile verilir.</I18n.p>
-      </div>
-      {!tickets || tickets.length === 0 ? (
-        <I18n.div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted">
-          <Icon name="mail" className="h-8 w-8" />
-          Henüz destek talebi yok.
-        </I18n.div>
-      ) : (
-        <I18n.div className="overflow-hidden rounded-xl border border-border bg-surface">
-          {tickets.map((t) => (
-            <article key={t.id} className="flex flex-col gap-2 border-b border-border p-5 last:border-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <I18n.b className="text-sm">{t.topic}</I18n.b>
-                <Badge kind={t.status === "open" ? "accent" : "neutral"}>{t.status === "open" ? "Açık" : "Kapalı"}</Badge>
-                <I18n.span className="ml-auto text-[10px] text-muted"><I18n.Formatted kind="timeAgo" args={[t.created_at]} /></I18n.span>
+      <h1 className="text-2xl font-bold tracking-tight">{t("Destek talepleri")}</h1>
+      {items.length ? (
+        <ul className="flex flex-col gap-3">
+          {items.map((r) => (
+            <li key={r.id} className={`rounded-card border border-border p-4 ${r.status === "closed" ? "opacity-60" : ""}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold">{t(r.topic)}</p>
+                <span className="text-[13px] text-muted">{f("timeAgo", r.createdAt)}</span>
               </div>
-              <I18n.a href={`mailto:${t.email}?subject=${encodeURIComponent(`Destek talebin: ${t.topic}`)}`} className="text-xs text-accent">
-                {t.email}
-              </I18n.a>
-              <I18n.p className="whitespace-pre-line text-[13px] text-muted">{t.message}</I18n.p>
-            </article>
+              <p className="mt-1 text-[13px] text-muted">
+                <a href={`mailto:${r.email}?subject=${encodeURIComponent(`Destek talebiniz: ${r.topic}`)}`} className="text-accent hover:underline" translate="no">
+                  {r.email}
+                </a>
+                {r.userId ? (
+                  <>
+                    {" · "}
+                    <Link href={`/yonetim/kullanicilar/${r.userId}`} className="hover:underline" translate="no">
+                      {r.displayName}
+                    </Link>
+                  </>
+                ) : (
+                  ` · ${t("üye değil")}`
+                )}
+              </p>
+              <p className="mt-2 whitespace-pre-line text-[14px]" translate="no">
+                {r.message}
+              </p>
+              {r.status === "open" ? (
+                <div className="mt-3">
+                  <AdminAction label="Kapat" path={`/admin/support/${r.id}/close`} done="Talep kapatıldı." />
+                </div>
+              ) : null}
+            </li>
           ))}
-        </I18n.div>
+        </ul>
+      ) : (
+        <p className="rounded-card border border-dashed border-border-strong p-10 text-center text-[14px] text-muted">{t("Destek talebi yok.")}</p>
       )}
     </>
   );

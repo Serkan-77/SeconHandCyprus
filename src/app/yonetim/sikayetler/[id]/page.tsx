@@ -1,126 +1,132 @@
-
-import * as I18n from "@/components/i18n/Localized";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminCard } from "@/components/admin/AdminKit";
+import { ResolveReport } from "@/components/admin/ResolveReport";
+import { MediaImage } from "@/components/ui/MediaImage";
 import { LinkButton } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { createClient } from "@/lib/supabase/server";
-import { one } from "@/lib/queries";
-import { formatDate } from "@/lib/format";
-import { reportStatus } from "@/lib/adminLabels";
-import { snapshotLabel, type ReportSnapshot } from "@/lib/reportSnapshot";
-import { ResolveReportForm } from "./ResolveReportForm";
+import { apiServerOrNull } from "@/lib/api/server";
+import type { ImageUrls } from "@/lib/api/types";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Yönetim · Şikayet", robots: { index: false } };
+type Report = {
+  id: string;
+  reason: string;
+  detail: string | null;
+  status: string;
+  createdAt: string;
+  resolvedAt: string | null;
+  resolutionNote: string | null;
+  listingId: string | null;
+  reportedUserId: string | null;
+  reporterId: string | null;
+  listingTitle: string | null;
+  listingSlug: string | null;
+  listingStatus: string | null;
+  listingSellerId: string | null;
+  reportedName: string | null;
+  reporterName: string | null;
+  targetSnapshot: {
+    capturedAt?: string;
+    captured_at?: string;
+    listing?: { title: string; description?: string; price?: number; currency?: string; city?: string; seller_name?: string; seller_id?: string; ref_no?: number };
+    user?: { id: string; display_name: string };
+  } | null;
+};
 
-export default async function AdminReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export const metadata = { title: "Şikayet" };
+
+export default async function AdminReport({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return (
-    <AdminShell>
-      <ReportDetail id={id} />
-    </AdminShell>
-  );
-}
-
-async function ReportDetail({ id }: { id: string }) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const supabase = await createClient();
-  const { data: report } = await supabase
-    .from("reports")
-    .select(
-      "*, listing:listings(id, title, status), reported:profiles!reports_reported_user_id_fkey(id, display_name), reporter:profiles!reports_reporter_id_fkey(id, display_name)",
-    )
-    .eq("id", id)
-    .maybeSingle();
-  if (!report) notFound();
-
-  const listing = one(report.listing) as { id: string; title: string; status: string } | null;
-  const reported = one(report.reported) as { id: string; display_name: string } | null;
-  const reporter = one(report.reporter) as { id: string; display_name: string } | null;
-  const snapshot = report.target_snapshot as ReportSnapshot | null;
-  const snapListing = snapshot?.listing;
-  const s = reportStatus[report.status];
+  const [data, { t, f }] = await Promise.all([apiServerOrNull<{ report: Report; snapshotImages: (ImageUrls | null)[] }>(`/admin/reports/${id}`), getI18n()]);
+  if (!data) notFound();
+  const r = data.report;
+  const snap = r.targetSnapshot;
 
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Şikayet inceleme</I18n.h1>
-          <Badge kind={s.kind}>{s.label}</Badge>
-        </div>
-        <LinkButton href="/yonetim/sikayetler" variant="outline" full={false} className="min-h-10 text-xs">
-          Kuyruğa dön
-        </LinkButton>
+      <Link href="/yonetim/sikayetler" className="text-[13px] text-muted hover:text-text">
+        ← {t("Şikayetler")}
+      </Link>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{t(r.reason)}</h1>
+        <p className="mt-1 text-[14px] text-muted">
+          {t(r.status)} · {f("formatLongDate", r.createdAt)} · {t("Şikayet eden:")} {r.reporterName ?? t("silinmiş hesap")}
+        </p>
       </div>
-
-      <I18n.div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <I18n.div className="rounded-xl border border-border bg-surface p-5">
-          <I18n.h2 className="text-sm font-semibold">{report.reason}</I18n.h2>
-          <I18n.p className="mt-2 text-xs text-muted">
-            Hedef:{" "}
-            {listing ? (
-              <I18n.Link href={`/yonetim/ilanlar/${listing.id}`} className="text-accent">
-                İlan · <I18n.Raw>{listing.title}</I18n.Raw>
-              </I18n.Link>
-            ) : reported ? (
-              <I18n.Link href={`/yonetim/kullanicilar/${reported.id}`} className="text-accent">
-                Kullanıcı · <I18n.Raw>{reported.display_name}</I18n.Raw>
-              </I18n.Link>
+      <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
+        <div className="flex flex-col gap-6">
+          <AdminCard title="Şikayet">
+            <p className="whitespace-pre-line text-[14px]" translate="no">
+              {r.detail || t("Ayrıntı yazılmamış.")}
+            </p>
+          </AdminCard>
+          <AdminCard title="Şikayet edilen (dosyalandığı andaki kayıt)">
+            {snap?.listing ? (
+              <div className="flex flex-col gap-3 text-[14px]">
+                <p className="font-semibold" translate="no">
+                  {snap.listing.title} {snap.listing.ref_no ? <span className="text-muted">· KB{snap.listing.ref_no}</span> : null}
+                </p>
+                <p className="text-muted">
+                  {snap.listing.price != null ? f("formatPrice", snap.listing.price, snap.listing.currency ?? "TL") : ""} · {snap.listing.city} · {t("Satıcı:")} <span translate="no">{snap.listing.seller_name}</span>
+                </p>
+                {snap.listing.description ? (
+                  <p className="line-clamp-6 whitespace-pre-line" translate="no">
+                    {snap.listing.description}
+                  </p>
+                ) : null}
+                {data.snapshotImages.length ? (
+                  <ul className="grid grid-cols-4 gap-2">
+                    {data.snapshotImages.map((u, i) => (
+                      <li key={i} className="aspect-square overflow-hidden rounded-md bg-brand-soft">
+                        <MediaImage urls={u} alt="" max="sm" sizes="120px" />
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : snap?.user ? (
+              <p className="text-[14px]" translate="no">
+                {snap.user.display_name}
+              </p>
             ) : (
-              snapshotLabel(snapshot)
+              <p className="text-[14px] text-muted">—</p>
             )}
-          </I18n.p>
-          <I18n.p className="mt-1 text-xs text-muted">
-            Bildiren:{" "}
-            {reporter ? (
-              <I18n.Link href={`/yonetim/kullanicilar/${reporter.id}`} className="text-accent">
-                <I18n.Raw>{reporter.display_name}</I18n.Raw>
-              </I18n.Link>
+          </AdminCard>
+        </div>
+        <div className="flex flex-col gap-6">
+          <AdminCard title="İşlem">
+            {r.status === "resolved" ? (
+              <p className="text-[14px]">
+                {t("Çözüldü:")} {r.resolvedAt ? f("formatLongDate", r.resolvedAt) : ""}
+                {r.resolutionNote ? <span className="mt-1 block text-muted">{r.resolutionNote}</span> : null}
+              </p>
             ) : (
-              "Silinmiş kullanıcı"
-            )}{" "}
-            · <I18n.Formatted kind="formatDate" args={[report.created_at]} />
-          </I18n.p>
-          <I18n.p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed">
-            {report.detail || <I18n.span className="text-muted">Bildiren kullanıcı ek açıklama bırakmadı.</I18n.span>}
-          </I18n.p>
-          {snapListing ? (
-            <I18n.div className="mt-4 rounded-lg border border-border p-3 text-xs">
-              <I18n.p className="font-semibold">
-                Şikayet anındaki ilan{listing ? "" : " (ilan silinmiş)"}
-                {snapshot?.captured_at ? ` · ${formatDate(snapshot.captured_at)}` : ""}
-              </I18n.p>
-              <I18n.p className="mt-1">
-                {snapListing.title}
-                {snapListing.ref_no ? ` · #${snapListing.ref_no}` : ""}
-                {snapListing.price != null ? ` · ${snapListing.price} ${snapListing.currency ?? ""}` : ""}
-                {snapListing.city ? ` · ${snapListing.city}` : ""}
-              </I18n.p>
-              <I18n.p className="mt-1 text-muted">
-                Satıcı:{" "}
-                {snapListing.seller_id ? (
-                  <I18n.Link href={`/yonetim/kullanicilar/${snapListing.seller_id}`} className="text-accent">
-                    {snapListing.seller_name ?? "—"}
-                  </I18n.Link>
-                ) : (
-                  (snapListing.seller_name ?? "—")
-                )}
-                {snapListing.images?.length ? ` · ${snapListing.images.length} fotoğraf` : ""}
-              </I18n.p>
-              {snapListing.description ? (
-                <I18n.p className="mt-2 whitespace-pre-line text-muted">{snapListing.description}</I18n.p>
+              <ResolveReport id={r.id} status={r.status} />
+            )}
+          </AdminCard>
+          <AdminCard title="Bağlantılar">
+            <div className="flex flex-wrap gap-2">
+              {r.listingId ? (
+                <LinkButton href={`/yonetim/ilanlar/${r.listingId}`} size="sm" variant="outline">
+                  {t("İlanı incele")}
+                </LinkButton>
               ) : null}
-            </I18n.div>
-          ) : null}
-          {report.resolution_note ? (
-            <I18n.p className="mt-4 rounded-lg bg-brand-soft p-3 text-xs">
-              <I18n.b>Moderasyon notu:</I18n.b> {report.resolution_note}
-              {report.resolved_at ? ` · ${formatDate(report.resolved_at)}` : ""}
-            </I18n.p>
-          ) : null}
-        </I18n.div>
-        {report.status !== "resolved" ? <ResolveReportForm id={report.id} status={report.status} /> : null}
-      </I18n.div>
+              {r.listingSellerId ?? r.reportedUserId ? (
+                <LinkButton href={`/yonetim/kullanicilar/${r.listingSellerId ?? r.reportedUserId}`} size="sm" variant="outline">
+                  {t("Kullanıcıyı aç")}
+                </LinkButton>
+              ) : null}
+              {r.reporterId ? (
+                <LinkButton href={`/yonetim/kullanicilar/${r.reporterId}`} size="sm" variant="ghost">
+                  {t("Şikayet edeni aç")}
+                </LinkButton>
+              ) : null}
+            </div>
+            {!r.listingId && snap?.listing ? <p className="mt-3 text-[13px] text-muted">{t("İlan silinmiş; yukarıdaki kayıt şikayet anındaki halidir.")}</p> : null}
+          </AdminCard>
+        </div>
+      </div>
     </>
   );
 }

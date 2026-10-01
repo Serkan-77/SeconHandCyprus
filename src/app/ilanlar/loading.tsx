@@ -1,22 +1,15 @@
-
-import * as I18n from "@/components/i18n/Localized";
-import { ListingGridSkeleton, Skeleton } from "@/components/ui/Skeleton";
+import { ListingGridSkeleton } from "@/components/ListingCard";
 
 export default function ResultsLoading() {
   return (
-    <I18n.div className="mx-auto max-w-[1328px] px-4 pb-16 sm:px-6" aria-busy="true" aria-label="İlanlar yükleniyor">
-      <div className="py-5">
-        <Skeleton className="h-3 w-32" />
+    <div className="mx-auto max-w-[1320px] px-4 pb-16 pt-6 sm:px-6" aria-busy="true">
+      <div className="skeleton h-4 w-40" />
+      <div className="skeleton mt-4 h-8 w-72 max-w-full" />
+      <div className="skeleton mt-2 h-4 w-24" />
+      <div className="mt-6 grid gap-8 lg:grid-cols-[260px_1fr]">
+        <div className="skeleton hidden h-[560px] rounded-card lg:block" />
+        <ListingGridSkeleton count={8} />
       </div>
-      <Skeleton className="mb-3 h-8 w-72 max-w-full" />
-      <Skeleton className="mb-7 h-3 w-28" />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[244px_minmax(0,1fr)] lg:gap-9">
-        <Skeleton className="hidden h-[560px] rounded-xl lg:block" />
-        <div>
-          <Skeleton className="mb-6 h-12 w-full" />
-          <ListingGridSkeleton count={6} />
-        </div>
-      </div>
-    </I18n.div>
+    </div>
   );
 }

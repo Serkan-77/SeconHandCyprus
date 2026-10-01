@@ -1,7 +1,8 @@
-
-import * as I18n from "@/components/i18n/Localized";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { Icon } from "@/components/icons";
 import { SITE } from "@/lib/site";
+import { getI18n } from "@/lib/i18n/server";
 
 const columns = [
   {
@@ -14,21 +15,25 @@ const columns = [
     ],
   },
   {
-    title: "Senin alanın",
+    title: "Satış yap",
     links: [
-      { href: "/ilan-ver/fotograflar", label: "İlan ver" },
-      { href: "/one-cikar", label: "İlanını öne çıkar" },
+      { href: "/ilan-ver", label: "İlan ver" },
+      { href: "/hesabim/ilanlar", label: "İlanlarım" },
       { href: "/hesabim/magaza", label: "Mağaza aç" },
-      { href: "/hesabim", label: "Hesabım" },
-      { href: "/giris", label: "Giriş yap" },
+      { href: "/one-cikar", label: "İlanını öne çıkar" },
     ],
   },
   {
-    title: "Yanındayız",
+    title: "Yardım",
     links: [
-      { href: "/hakkimizda", label: "Hakkımızda" },
       { href: "/yardim", label: "Yardım & güvenlik" },
       { href: "/destek", label: "Destek" },
+      { href: "/hakkimizda", label: "Hakkımızda" },
+    ],
+  },
+  {
+    title: "Yasal",
+    links: [
       { href: "/kosullar", label: "Kullanım koşulları" },
       { href: "/gizlilik", label: "Gizlilik bildirimi" },
       { href: "/cerez-politikasi", label: "Çerez politikası" },
@@ -36,37 +41,44 @@ const columns = [
   },
 ];
 
-export function Footer() {
+export async function Footer() {
+  const { t } = await getI18n();
   return (
-    <footer className="mt-13 border-t border-border bg-bg px-4 pt-10 sm:px-6">
-      <I18n.div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.2fr] lg:gap-12">
-        <div className="flex items-center justify-between sm:col-span-2 sm:block lg:col-span-1">
-          <I18n.Link href="/" className="flex items-center">
-            <Logo className="h-8 sm:h-10" />
-          </I18n.Link>
-          <I18n.p className="mt-0 text-xs text-muted sm:mt-5 sm:text-lg sm:leading-snug">
-            Adadan eşyalara,
-            <br className="hidden sm:inline" /> yeni hikâyelere.
-          </I18n.p>
+    <footer className="mt-16 hidden border-t border-border bg-bg px-4 pt-12 sm:px-6 lg:block">
+      <div className="mx-auto grid max-w-[1320px] grid-cols-[1.6fr_repeat(4,1fr)] gap-10">
+        <div>
+          <Link href="/" className="inline-flex items-center" aria-label={t("Ana sayfa")}>
+            <Logo className="h-9" />
+          </Link>
+          <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-muted">{t("Kıbrıs'ın ikinci el pazarı. Ücretsiz ilan ver, satıcıyla doğrudan konuş, güvenle buluş.")}</p>
+          <p className="mt-4 flex items-center gap-2 text-[13px] text-muted">
+            <Icon name="shield" className="h-4 w-4" />
+            {t("Ödemeyi ürünü görmeden yapma.")}{" "}
+            <Link href="/yardim" className="font-medium text-accent hover:underline">
+              {t("Güvenlik ipuçları")}
+            </Link>
+          </p>
         </div>
         {columns.map((col) => (
-          <I18n.div key={col.title}>
-            <I18n.h3 className="mb-2.5 text-[13px] font-semibold">{col.title}</I18n.h3>
-            {col.links.map((link) => (
-              <I18n.Link
-                key={link.href}
-                href={link.href}
-                className="flex min-h-8 items-center text-xs font-normal text-muted"
-              >
-                {link.label}
-              </I18n.Link>
-            ))}
-          </I18n.div>
+          <div key={col.title}>
+            <h3 className="mb-3 text-[13px] font-semibold">{t(col.title)}</h3>
+            <ul className="space-y-1">
+              {col.links.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="flex min-h-8 items-center text-[13px] text-muted hover:text-text">
+                    {t(link.label)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </I18n.div>
-      <div className="mx-auto mt-9 flex max-w-[1280px] flex-wrap items-center gap-3 border-t border-border py-4 text-[10px] text-muted">
-        <I18n.span>© 2026 {SITE.name}</I18n.span>
-        <I18n.span>TL / EUR</I18n.span>
+      </div>
+      <div className="mx-auto mt-10 flex max-w-[1320px] flex-wrap items-center justify-between gap-3 border-t border-border py-5 text-[12px] text-muted">
+        <span>
+          © {new Date().getFullYear()} {SITE.name}
+        </span>
+        <span>{t("Fiyatlar TL ve € olarak, satıcının belirttiği şekliyle gösterilir.")}</span>
       </div>
     </footer>
   );

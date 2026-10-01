@@ -1,50 +1,37 @@
+import { AnnouncementComposer } from "@/components/admin/AnnouncementComposer";
+import { AdminCard } from "@/components/admin/AdminKit";
+import { apiServer } from "@/lib/api/server";
+import { getI18n } from "@/lib/i18n/server";
 
-import * as I18n from "@/components/i18n/Localized";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { createClient } from "@/lib/supabase/server";
-import { AnnouncementComposer } from "./AnnouncementComposer";
+export const metadata = { title: "Duyurular" };
 
-export const metadata = { title: "Yönetim · Duyurular", robots: { index: false } };
+type Row = { id: string; audience: string; title: string; body: string; recipients: number; createdAt: string };
 
-export default async function AdminAnnouncementsPage() {
+export default async function AdminAnnouncements() {
+  const [{ t, f }, { items }] = await Promise.all([getI18n(), apiServer<{ items: Row[] }>("/admin/announcements")]);
   return (
-    <AdminShell>
-      <Announcements />
-    </AdminShell>
-  );
-}
-
-async function Announcements() {
-  const supabase = await createClient();
-  const { data: history } = await supabase
-    .from("announcements")
-    .select("id, audience, title, body, recipients, created_at")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  return (
-    <div className="grid grid-cols-1 gap-8 xl:grid-cols-[520px_1fr]">
-      <AnnouncementComposer />
-      <I18n.section>
-        <I18n.h2 className="mb-3 text-base font-semibold">Gönderilmiş duyurular</I18n.h2>
-        {history && history.length ? (
-          <I18n.div className="overflow-hidden rounded-xl border border-border bg-surface">
-            {history.map((a) => (
-              <article key={a.id} className="border-b border-border p-4 last:border-0">
-                <I18n.span className="text-[10px] text-muted">
-                  {a.audience} · {a.recipients} kişi · <I18n.Formatted kind="formatDate" args={[a.created_at]} />
-                </I18n.span>
-                <I18n.h3 className="mt-1 text-sm font-semibold">{a.title}</I18n.h3>
-                <I18n.p className="mt-1 text-xs text-muted">{a.body}</I18n.p>
-              </article>
-            ))}
-          </I18n.div>
-        ) : (
-          <I18n.p className="rounded-xl border border-dashed border-border py-10 text-center text-xs text-muted">
-            Henüz duyuru gönderilmedi.
-          </I18n.p>
-        )}
-      </I18n.section>
-    </div>
+    <>
+      <h1 className="text-2xl font-bold tracking-tight">{t("Duyurular")}</h1>
+      <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <AnnouncementComposer />
+        <AdminCard title="Gönderilenler">
+          {items.length ? (
+            <ul className="divide-y divide-border">
+              {items.map((a) => (
+                <li key={a.id} className="py-3">
+                  <p className="font-medium" translate="no">{a.title}</p>
+                  <p className="line-clamp-2 text-[13px] text-muted" translate="no">{a.body}</p>
+                  <p className="text-[12px] text-subtle">
+                    {t(a.audience)} · {t(`${a.recipients} kişi`)} · {f("formatDate", a.createdAt)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[14px] text-muted">{t("Henüz duyuru gönderilmedi.")}</p>
+          )}
+        </AdminCard>
+      </div>
+    </>
   );
 }

@@ -2,52 +2,105 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Kıbrıs İkinci Elcim design tokens.
+ * Ink-and-paper neutrals carry the brand; one Mediterranean blue marks
+ * actions and links; a warm sand tone marks the editorial showcase (Vitrin).
+ * Semantic colours (success/warning/danger) are only used for states.
+ * Every foreground/background pair below meets WCAG AA (4.5:1) for text.
+ */
 :root {
-  --bg: #f5f6f8;
+  --bg: #f4f5f7;
   --surface: #ffffff;
-  --text: #111318;
-  --muted: #66707e;
-  --border: #dce0e6;
-  --brand: #111318;
-  --brand-soft: #eef1f5;
+  --surface-2: #f9fafb;
+  --text: #0f1216;
+  --muted: #5b6573;
+  --subtle: #8a93a0;
+  --border: #e1e4ea;
+  --border-strong: #c9ced7;
+  --brand: #0f1216;
+  --brand-soft: #eef0f4;
   --on-brand: #ffffff;
-  --accent: #2458d3;
-  --accent-soft: #edf2fe;
+  --accent: #1d56cf;
+  --accent-hover: #1848b0;
+  --accent-soft: #eaf1ff;
   --on-accent: #ffffff;
-  --danger: #242932;
+  --sand: #9a5b12;
+  --sand-soft: #fdf3e2;
+  --success: #17794a;
+  --success-soft: #e7f6ee;
+  --warning: #8a5a00;
+  --warning-soft: #fff5d6;
+  --danger: #c02929;
+  --danger-soft: #fdecec;
+  --overlay: rgb(10 12 16 / 0.48);
+  --shadow-sm: 0 1px 2px rgb(15 18 22 / 0.06);
+  --shadow-md: 0 4px 16px -4px rgb(15 18 22 / 0.12), 0 2px 4px rgb(15 18 22 / 0.04);
+  --shadow-lg: 0 18px 48px -12px rgb(15 18 22 / 0.28);
   color-scheme: light;
 }
 
 .dark {
-  --bg: #0d0f12;
-  --surface: #181b20;
-  --text: #f7f8fa;
-  --muted: #a7afba;
-  --border: #363b45;
-  --brand: #f7f8fa;
-  --brand-soft: #252a32;
-  --on-brand: #111318;
-  --accent: #9ab6ff;
-  --accent-soft: #202c46;
-  --on-accent: #0d0f12;
-  --danger: #f7f8fa;
+  --bg: #0b0d10;
+  --surface: #15181d;
+  --surface-2: #1b1f25;
+  --text: #f3f5f8;
+  --muted: #a3acb9;
+  --subtle: #7d8795;
+  --border: #2a2f37;
+  --border-strong: #3a414c;
+  --brand: #f3f5f8;
+  --brand-soft: #232830;
+  --on-brand: #0f1216;
+  --accent: #8fb0ff;
+  --accent-hover: #a9c2ff;
+  --accent-soft: #1b2640;
+  --on-accent: #0b0d10;
+  --sand: #f0bf73;
+  --sand-soft: #2e2415;
+  --success: #6fd3a0;
+  --success-soft: #11291d;
+  --warning: #f2c94c;
+  --warning-soft: #2b2410;
+  --danger: #ff8a8a;
+  --danger-soft: #331517;
+  --overlay: rgb(0 0 0 / 0.62);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 6px 20px -6px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.75);
   color-scheme: dark;
 }
 
 /* No explicit choice: follow the operating system. */
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --bg: #0d0f12;
-    --surface: #181b20;
-    --text: #f7f8fa;
-    --muted: #a7afba;
-    --border: #363b45;
-    --brand: #f7f8fa;
-    --brand-soft: #252a32;
-    --on-brand: #111318;
-    --accent: #9ab6ff;
-    --accent-soft: #202c46;
-    --danger: #f7f8fa;
+    --bg: #0b0d10;
+    --surface: #15181d;
+    --surface-2: #1b1f25;
+    --text: #f3f5f8;
+    --muted: #a3acb9;
+    --subtle: #7d8795;
+    --border: #2a2f37;
+    --border-strong: #3a414c;
+    --brand: #f3f5f8;
+    --brand-soft: #232830;
+    --on-brand: #0f1216;
+    --accent: #8fb0ff;
+    --accent-hover: #a9c2ff;
+    --accent-soft: #1b2640;
+    --on-accent: #0b0d10;
+    --sand: #f0bf73;
+    --sand-soft: #2e2415;
+    --success: #6fd3a0;
+    --success-soft: #11291d;
+    --warning: #f2c94c;
+    --warning-soft: #2b2410;
+    --danger: #ff8a8a;
+    --danger-soft: #331517;
+    --overlay: rgb(0 0 0 / 0.62);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 6px 20px -6px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.75);
     color-scheme: dark;
   }
 }
@@ -72,32 +125,79 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-text: var(--text);
   --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-soft: var(--brand-soft);
   --color-on-brand: var(--on-brand);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
+  --color-sand: var(--sand);
+  --color-sand-soft: var(--sand-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-overlay: var(--overlay);
 
-  --radius-field: 12px;
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --radius-field: 10px;
   --radius-button: 10px;
   --radius-card: 14px;
   --radius-hero: 20px;
-  --radius-sheet: 26px;
+  --radius-sheet: 22px;
   --radius-pill: 999px;
+
+  /* Type scale (px): 11 meta · 12 small · 13 secondary · 14/15 body · 17 · 20 · 24 · 30 · 38 */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.35;
+
+  --animate-fade-in: fade-in 160ms ease-out;
+  --animate-sheet-in: sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-pop: pop 260ms cubic-bezier(0.2, 0.8, 0.2, 1.4);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes pop {
+  40% {
+    transform: scale(1.22);
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   background: var(--surface);
   color: var(--text);
+  font-feature-settings: "cv11", "ss01";
 }
 
 * {
@@ -105,22 +205,31 @@ body {
 }
 
 button,
-a {
+a,
+[role="button"] {
   -webkit-tap-highlight-color: transparent;
 }
 
-button:focus-visible,
-a:focus-visible,
+button:not(:disabled),
+[role="button"] {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+::selection {
+  background: var(--accent-soft);
 }
 
 .no-scrollbar {
@@ -131,21 +240,41 @@ textarea:focus-visible {
   display: none;
 }
 
+/* Numbers in prices and counters line up. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keeps the last rows above the mobile tab bar and the iOS home indicator. */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 72px);
+}
+
+@media (min-width: 1024px) {
+  .pb-safe {
+    padding-bottom: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
 @keyframes pulse {
   50% {
-    opacity: 0.4;
+    opacity: 0.45;
   }
 }
 
 .skeleton {
-  background: var(--border);
+  background: var(--brand-soft);
   border-radius: 8px;
-  animation: pulse 1.8s infinite ease-in-out;
+  animation: pulse 1.6s infinite ease-in-out;
 }

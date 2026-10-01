@@ -1,31 +1,30 @@
 "use client";
-import * as I18n from "@/components/i18n/Localized";
 
-
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
-import { MapPreview } from "@/components/MapPreview";
-import { setRegion } from "@/lib/actions/account";
-import { nearestRegion, regionNames } from "@/lib/regions";
+import { Notice } from "@/components/ui/FormError";
+import { useLocale } from "@/components/i18n/LocaleProvider";
+import { REGION_COOKIE, nearestRegion } from "@/lib/regions";
+import { REGIONS } from "@shared/constants";
+import { cn } from "@/lib/cn";
 
 type GeoState = "idle" | "locating" | "denied" | "unavailable" | "found";
 
+/** The chosen region is a preference stored in a cookie on this device only. */
 export function LocationPicker({ current }: { current: string | null }) {
+  const { t } = useLocale();
+  const router = useRouter();
   const [geo, setGeo] = useState<GeoState>("idle");
   const [selected, setSelected] = useState<string | null>(current);
-  const [pending, startTransition] = useTransition();
-  const router = useRouter();
 
   function locateMe() {
-    if (!("geolocation" in navigator)) {
-      setGeo("unavailable");
-      return;
-    }
+    if (!("geolocation" in navigator)) return setGeo("unavailable");
     setGeo("locating");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        // Only the nearest region is kept; coordinates are never stored or sent.
         setSelected(nearestRegion(pos.coords.latitude, pos.coords.longitude));
         setGeo("found");
       },
@@ -35,72 +34,58 @@ export function LocationPicker({ current }: { current: string | null }) {
   }
 
   function apply(region: string | null) {
-    startTransition(async () => {
-      await setRegion(region ?? "");
-      router.push(region ? `/ilanlar?sehir=${encodeURIComponent(region)}` : "/ilanlar");
-    });
+    document.cookie = region
+      ? `${REGION_COOKIE}=${encodeURIComponent(region)}; path=/; max-age=31536000; samesite=lax`
+      : `${REGION_COOKIE}=; path=/; max-age=0; samesite=lax`;
+    router.push(region ? `/ilanlar?sehir=${encodeURIComponent(region)}` : "/ilanlar");
+    router.refresh();
   }
 
   return (
-    <I18n.div className="rounded-2xl border border-border bg-surface p-5 sm:p-7">
-      {geo === "denied" || geo === "unavailable" ? (
-        <div className="mb-6 flex items-start gap-3 rounded-xl bg-brand-soft p-4 text-xs leading-relaxed">
-          <Icon name="info" className="h-[18px] w-[18px] flex-shrink-0 text-accent" />
-          <I18n.span>
-            {geo === "denied"
-              ? "Konum izni verilmedi. Bölgeni aşağıdan elle seçebilirsin; istersen tarayıcı ayarlarından konum iznini tekrar açabilirsin."
-              : "Konumun şu anda alınamadı. Bölgeni aşağıdan elle seçebilirsin."}
-          </I18n.span>
-        </div>
-      ) : geo === "found" ? (
-        <div className="mb-6 flex items-start gap-3 rounded-xl bg-accent-soft p-4 text-xs leading-relaxed text-accent">
-          <Icon name="check" className="h-[18px] w-[18px] flex-shrink-0" />
-          <I18n.span>
-            Konumuna en yakın bölge: <I18n.b>{selected}</I18n.b>
-          </I18n.span>
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          icon={<Icon name="pin" className="h-4 w-4" />}
-          onClick={locateMe}
-          disabled={geo === "locating"}
-          className="mb-6"
-        >
-          {geo === "locating" ? "Konum alınıyor…" : "Konumumu kullan"}
-        </Button>
-      )}
-
-      <MapPreview label={selected ?? "Kıbrıs"} />
-
-      <I18n.fieldset className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <I18n.legend className="mb-3 text-[13px] font-medium">Bölge seç</I18n.legend>
-        {regionNames.map((region) => (
-          <I18n.button
-            key={region}
-            type="button"
-            aria-pressed={selected === region}
-            onClick={() => setSelected(region)}
-            className={
-              "min-h-11 rounded-button border px-3 text-xs " +
-              (selected === region ? "border-brand bg-brand text-on-brand" : "border-border bg-surface text-text")
-            }
-          >
-            {region}
-          </I18n.button>
-        ))}
-      </I18n.fieldset>
-
-      <I18n.div className="mt-7 flex flex-col gap-3 sm:flex-row">
-        <Button onClick={() => apply(selected)} disabled={!selected || pending}>
-          {selected ? `${selected} ilanlarını göster` : "Bir bölge seç"}
+    <div className="flex flex-col gap-5">
+      <Button variant="outline" onClick={locateMe} loading={geo === "locating"} icon={<Icon name="pin" className="h-4 w-4" />}>
+        {t("Konumumu kullan")}
+      </Button>
+      {geo === "denied" ? <Notice tone="warning">{t("Konum izni verilmedi. Bölgeni aşağıdan seçebilirsin.")}</Notice> : null}
+      {geo === "unavailable" ? <Notice tone="warning">{t("Konumun şu anda alınamadı. Bölgeni aşağıdan seçebilirsin.")}</Notice> : null}
+      {geo === "found" && selected ? (
+        <Notice tone="success" icon="check">
+          {t("Konumuna en yakın bölge:")} <strong>{selected}</strong>
+        </Notice>
+      ) : null}
+      {(["north", "south"] as const).map((side) => (
+        <fieldset key={side}>
+          <legend className="mb-2 text-[13px] font-semibold text-muted">{t(side === "north" ? "Kuzey Kıbrıs" : "Güney Kıbrıs")}</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="radiogroup">
+            {REGIONS.filter((r) => r.side === side).map((r) => (
+              <button
+                key={r.name}
+                type="button"
+                role="radio"
+                aria-checked={selected === r.name}
+                onClick={() => setSelected(r.name)}
+                className={cn(
+                  "flex min-h-12 items-center justify-between rounded-card border px-4 text-[15px] font-medium",
+                  selected === r.name ? "border-accent bg-accent-soft" : "border-border hover:border-border-strong",
+                )}
+              >
+                {r.name}
+                {selected === r.name ? <Icon name="check" className="h-4 w-4 text-accent" /> : null}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      ))}
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => apply(selected)} disabled={!selected}>
+          {t("Bu bölgedeki ilanları göster")}
         </Button>
         {current ? (
-          <Button variant="outline" full={false} onClick={() => apply(null)} disabled={pending} className="sm:min-w-[180px]">
-            Tüm Kıbrıs
+          <Button variant="ghost" onClick={() => apply(null)}>
+            {t("Tüm Kıbrıs")}
           </Button>
         ) : null}
-      </I18n.div>
-    </I18n.div>
+      </div>
+    </div>
   );
 }

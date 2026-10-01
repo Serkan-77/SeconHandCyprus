@@ -1,71 +1,44 @@
+import Link from "next/link";
+import { AdminAction } from "@/components/admin/AdminKit";
+import { apiServer } from "@/lib/api/server";
+import { getI18n } from "@/lib/i18n/server";
 
-import * as I18n from "@/components/i18n/Localized";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { Icon } from "@/components/icons";
-import { createClient } from "@/lib/supabase/server";
-import { one } from "@/lib/queries";
-import { VerificationActions } from "./VerificationActions";
+export const metadata = { title: "Telefon incelemesi" };
 
-export const metadata = { title: "Yönetim · Telefon incelemesi", robots: { index: false } };
+type Row = { id: string; kind: string; detail: string; status: string; createdAt: string; userId: string; displayName: string };
 
-export default async function AdminVerificationPage() {
-  return (
-    <AdminShell>
-      <Verifications />
-    </AdminShell>
-  );
-}
-
-async function Verifications() {
-  const supabase = await createClient();
-  const { data: requests } = await supabase
-    .from("verification_requests")
-    .select("id, kind, detail, created_at, user:profiles!verification_requests_user_id_fkey(id, display_name)")
-    .eq("status", "pending")
-    .order("created_at", { ascending: true });
-
+export default async function AdminVerifications() {
+  const [{ t, f }, { items }] = await Promise.all([getI18n(), apiServer<{ items: Row[] }>("/admin/verifications")]);
   return (
     <>
       <div>
-        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Manuel telefon incelemesi</I18n.h1>
-        <I18n.p className="mt-1.5 text-xs text-muted">
-          {requests?.length ?? 0} kullanıcının inceleme talebi bekliyor. Onay SMS doğrulaması değildir ve profillerde
-          rozet olarak gösterilmez.
-        </I18n.p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("Telefon incelemesi")}</h1>
+        <p className="mt-1 text-[14px] text-muted">{t("Onaylamadan önce numaranın kullanıcıya ait olduğunu makul bir şekilde kontrol et (ör. kullanıcıyı arayarak).")}</p>
       </div>
-
-      {!requests || requests.length === 0 ? (
-        <I18n.div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted">
-          <Icon name="check" className="h-8 w-8 text-accent" />
-          Bekleyen inceleme talebi yok.
-        </I18n.div>
-      ) : (
-        <I18n.div className="overflow-hidden rounded-xl border border-border bg-surface">
-          {requests.map((v) => {
-            const user = one(v.user) as { id: string; display_name: string } | null;
-            return (
-              <div key={v.id} className="flex flex-wrap items-center gap-4 border-b border-border p-5 last:border-0">
-                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
-                  <Icon name={v.kind === "phone" ? "phone" : "mail"} className="h-[18px] w-[18px]" />
-                </span>
-                <I18n.div className="min-w-0 flex-1">
-                  {user ? (
-                    <I18n.Link href={`/yonetim/kullanicilar/${user.id}`} className="text-sm font-semibold hover:text-accent">
-                      <I18n.Raw>{user.display_name}</I18n.Raw>
-                    </I18n.Link>
-                  ) : (
-                    <I18n.b className="text-sm">Silinmiş kullanıcı</I18n.b>
-                  )}
-                  <I18n.p className="mt-0.5 text-xs text-muted">
-                    {v.kind === "phone" ? "Telefon incelemesi" : "E-posta incelemesi"} · {v.detail}
-                  </I18n.p>
-                  <I18n.span className="text-[10px] text-muted"><I18n.Formatted kind="formatDate" args={[v.created_at]} /></I18n.span>
-                </I18n.div>
-                <VerificationActions id={v.id} />
+      {items.length ? (
+        <ul className="divide-y divide-border overflow-hidden rounded-card border border-border">
+          {items.map((r) => (
+            <li key={r.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium tabular">{r.detail}</p>
+                <p className="text-[13px] text-muted">
+                  <Link href={`/yonetim/kullanicilar/${r.userId}`} className="hover:underline" translate="no">
+                    {r.displayName}
+                  </Link>{" "}
+                  · {f("timeAgo", r.createdAt)} · {t(r.status)}
+                </p>
               </div>
-            );
-          })}
-        </I18n.div>
+              {r.status === "pending" ? (
+                <div className="flex gap-2">
+                  <AdminAction label="Onayla" path={`/admin/verifications/${r.id}`} body={{ approve: true }} variant="primary" icon="check" done="Onaylandı." />
+                  <AdminAction label="Reddet" path={`/admin/verifications/${r.id}`} body={{ approve: false }} done="Reddedildi." />
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="rounded-card border border-dashed border-border-strong p-10 text-center text-[14px] text-muted">{t("İnceleme talebi yok.")}</p>
       )}
     </>
   );

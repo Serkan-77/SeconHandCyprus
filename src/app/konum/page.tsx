@@ -1,22 +1,20 @@
-
-import * as I18n from "@/components/i18n/Localized";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { REGION_COOKIE } from "@/lib/regions";
+import { getI18n } from "@/lib/i18n/server";
 import { LocationPicker } from "./LocationPicker";
 
-export const metadata = { title: "Bölgeni seç" };
+export const metadata: Metadata = { title: "Bölgeni seç", robots: { index: false } };
 
 export default async function LocationPage() {
-  const current = (await cookies()).get(REGION_COOKIE)?.value ?? null;
-
+  const [{ t }, jar] = await Promise.all([getI18n(), cookies()]);
+  const current = jar.get(REGION_COOKIE)?.value ?? null;
   return (
-    <div className="mx-auto max-w-[760px] px-4 pb-16 sm:px-6">
-      <Breadcrumbs items={["Konum seç"]} />
-      <I18n.h1 className="mb-2 text-2xl font-semibold tracking-tight sm:text-[32px]">Bölgeni seç</I18n.h1>
-      <I18n.p className="mb-6 text-[13px] text-muted">
-        Yakınındaki ilanları görmek için bölgeni seç ya da konumunu paylaş. Seçimin bu cihazda hatırlanır.
-      </I18n.p>
+    <div className="mx-auto max-w-2xl px-4 pb-16 pt-4 sm:px-6 sm:pt-6">
+      <Breadcrumbs items={[t("Bölgeni seç")]} />
+      <h1 className="mt-3 text-2xl font-bold tracking-tight">{t("Bölgeni seç")}</h1>
+      <p className="mb-6 mt-1 text-[14px] text-muted">{t("Yakınındaki ilanları önce görmek için bölgeni seç. Seçimin yalnızca bu cihazda hatırlanır.")}</p>
       <LocationPicker current={current} />
     </div>
   );

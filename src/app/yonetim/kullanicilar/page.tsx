@@ -1,98 +1,111 @@
+import Link from "next/link";
+import { Avatar } from "@/components/ui/Avatar";
+import { Pagination } from "@/components/ui/Pagination";
+import { apiServer } from "@/lib/api/server";
+import type { ImageUrls } from "@/lib/api/types";
+import { getI18n } from "@/lib/i18n/server";
+import { cn } from "@/lib/cn";
 
-import * as I18n from "@/components/i18n/Localized";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { Badge } from "@/components/ui/Badge";
-import { createClient } from "@/lib/supabase/server";
-import { one } from "@/lib/queries";
-import { accountStatus } from "@/lib/adminLabels";
+export const metadata = { title: "Kullanıcılar" };
 
-export const metadata = { title: "Yönetim · Kullanıcılar", robots: { index: false } };
+type Row = {
+  id: string;
+  displayName: string;
+  avatar: ImageUrls | null;
+  region: string | null;
+  role: string;
+  status: string;
+  statusUntil: string | null;
+  createdAt: string;
+  accountType: string;
+  storeName: string | null;
+  storeVerified: boolean;
+  email: string;
+  emailVerifiedAt: string | null;
+  lastSignInAt: string | null;
+  activeListings: number;
+  soldListings: number;
+};
 
+const STATUS_TONE: Record<string, string> = { active: "text-success", warned: "text-warning", restricted: "text-danger", suspended: "text-danger" };
 
-export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
-  return (
-    <AdminShell>
-      <Users q={q} />
-    </AdminShell>
-  );
-}
-
-async function Users({ q }: { q?: string }) {
-  const supabase = await createClient();
-  let query = supabase
-    .from("profiles")
-    .select("id, display_name, role, status, created_at, private:profile_private(email)", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .limit(200);
-  if (q) query = query.ilike("display_name", `%${q.replace(/[%,]/g, " ")}%`);
-  const { data: users, count } = await query;
-  const ids = (users ?? []).map((u) => u.id);
-  const { data: statRows } = ids.length
-    ? await supabase.from("seller_stats").select("seller_id, active_listings, sold_listings").in("seller_id", ids)
-    : { data: [] };
+export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; filtre?: string; sayfa?: string }> }) {
+  const [{ q, filtre, sayfa }, { t, f }] = await Promise.all([searchParams, getI18n()]);
+  const page = Math.max(1, Number(sayfa) || 1);
+  const qs = new URLSearchParams({ page: String(page), pageSize: "30", ...(q ? { q } : {}), ...(filtre ? { filter: filtre } : {}) });
+  const { users } = await apiServer<{ users: Row[] }>(`/admin/users?${qs}`);
+  const filters = [
+    ["", "Tümü"],
+    ["sanctioned", "Yaptırımlı"],
+    ["stores", "Mağazalar"],
+    ["admins", "Yöneticiler"],
+  ] as const;
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kullanıcı yönetimi</I18n.h1>
-          <I18n.p className="mt-1.5 text-xs text-muted">{count ?? 0} kayıtlı kullanıcı.</I18n.p>
-        </div>
-        <form className="flex gap-2">
-          <I18n.input
-            name="q"
-            defaultValue={q}
-            placeholder="İsimle ara"
-            aria-label="Kullanıcı ara"
-            className="min-h-10 rounded-button border border-border bg-surface px-3 text-xs"
-          />
-          <I18n.button className="min-h-10 rounded-button bg-brand px-3 text-xs text-on-brand">Ara</I18n.button>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">{t("Kullanıcılar")}</h1>
+        <form className="flex h-10 items-center rounded-full border border-border-strong pl-3 pr-1" role="search">
+          {filtre ? <input type="hidden" name="filtre" value={filtre} /> : null}
+          <input name="q" defaultValue={q} placeholder={t("Ad, e-posta ya da mağaza")} aria-label={t("Kullanıcı ara")} className="h-full w-64 bg-transparent px-2 text-[14px] outline-none" />
         </form>
       </div>
-
-      <div className="overflow-auto rounded-xl border border-border bg-surface">
-        <table className="w-full min-w-[680px] text-left text-xs">
-          <thead>
-            <tr className="bg-bg text-[10px] text-muted">
-              <I18n.th className="p-3 font-medium">Kullanıcı</I18n.th>
-              <I18n.th className="p-3 font-medium">E-posta</I18n.th>
-              <I18n.th className="p-3 font-medium">Aktif / satılan</I18n.th>
-              <I18n.th className="p-3 font-medium">Üyelik</I18n.th>
-              <I18n.th className="p-3 font-medium">Durum</I18n.th>
-              <th className="p-3 font-medium" />
+      <div className="flex flex-wrap gap-1.5">
+        {filters.map(([key, label]) => (
+          <Link
+            key={key}
+            href={`/yonetim/kullanicilar${key || q ? `?${new URLSearchParams({ ...(key ? { filtre: key } : {}), ...(q ? { q } : {}) })}` : ""}`}
+            className={cn("flex h-9 items-center rounded-pill px-3.5 text-[13px] font-medium", (filtre ?? "") === key ? "bg-brand text-on-brand" : "bg-brand-soft text-muted")}
+          >
+            {t(label)}
+          </Link>
+        ))}
+      </div>
+      <div className="overflow-x-auto rounded-card border border-border">
+        <table className="w-full min-w-[720px] text-left text-[14px]">
+          <thead className="bg-bg text-[12px] uppercase tracking-wide text-muted">
+            <tr>
+              <th className="px-4 py-3 font-semibold">{t("Kullanıcı")}</th>
+              <th className="px-4 py-3 font-semibold">{t("Durum")}</th>
+              <th className="px-4 py-3 font-semibold">{t("İlan")}</th>
+              <th className="px-4 py-3 font-semibold">{t("Üyelik")}</th>
+              <th className="px-4 py-3 font-semibold">{t("Son giriş")}</th>
             </tr>
           </thead>
-          <I18n.tbody>
-            {(users ?? []).map((user) => {
-              const email = (one(user.private) as { email: string | null } | null)?.email;
-              const stats = (statRows ?? []).find((r) => r.seller_id === user.id);
-              const status = accountStatus[user.status] ?? accountStatus.active;
-              return (
-                <tr key={user.id} className="border-b border-border last:border-0">
-                  <I18n.td className="p-3 font-medium">
-                    <I18n.Raw>{user.display_name}</I18n.Raw>
-                    {user.role === "admin" ? <I18n.span className="ml-1.5 text-[10px] text-accent">yönetici</I18n.span> : null}
-                  </I18n.td>
-                  <I18n.td className="p-3 text-muted">{email ?? "—"}</I18n.td>
-                  <I18n.td className="p-3">
-                    {stats?.active_listings ?? 0} / {stats?.sold_listings ?? 0}
-                  </I18n.td>
-                  <I18n.td className="p-3 text-muted"><I18n.Formatted kind="formatDate" args={[user.created_at]} /></I18n.td>
-                  <td className="p-3">
-                    <Badge kind={status.kind}>{status.label}</Badge>
-                  </td>
-                  <td className="p-3">
-                    <I18n.Link href={`/yonetim/kullanicilar/${user.id}`} className="text-[11px] font-medium text-accent">
-                      Detay
-                    </I18n.Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </I18n.tbody>
+          <tbody className="divide-y divide-border">
+            {users.map((u) => (
+              <tr key={u.id} className="hover:bg-bg">
+                <td className="px-4 py-3">
+                  <Link href={`/yonetim/kullanicilar/${u.id}`} className="flex items-center gap-3">
+                    <Avatar name={u.displayName} src={u.avatar} size="sm" />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium" translate="no">
+                        {u.accountType === "store" && u.storeName ? u.storeName : u.displayName}
+                        {u.role === "admin" ? <span className="ml-1.5 rounded bg-accent-soft px-1 text-[11px] font-semibold text-accent">admin</span> : null}
+                      </span>
+                      <span className="block truncate text-[12px] text-muted" translate="no">
+                        {u.email}
+                        {u.emailVerifiedAt ? "" : ` · ${t("doğrulanmadı")}`}
+                      </span>
+                    </span>
+                  </Link>
+                </td>
+                <td className={cn("px-4 py-3 font-medium", STATUS_TONE[u.status])}>{t(u.status)}</td>
+                <td className="px-4 py-3 tabular">
+                  {u.activeListings} / {u.soldListings}
+                </td>
+                <td className="px-4 py-3 text-muted">{f("formatDate", u.createdAt)}</td>
+                <td className="px-4 py-3 text-muted">{u.lastSignInAt ? f("timeAgo", u.lastSignInAt) : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
+      <Pagination
+        page={page}
+        pages={users.length === 30 ? page + 1 : page}
+        href={(p) => `/yonetim/kullanicilar?${new URLSearchParams({ ...(q ? { q } : {}), ...(filtre ? { filtre } : {}), ...(p > 1 ? { sayfa: String(p) } : {}) })}`}
+      />
     </>
   );
 }

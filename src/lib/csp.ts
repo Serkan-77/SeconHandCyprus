@@ -1,26 +1,27 @@
 // Content-Security-Policy for HTML responses (P1-15), built per request in
 // src/proxy.ts with a fresh nonce. Next.js reads the nonce from the request's
-// CSP header and attaches it to its own scripts; every HTML page is rendered
-// dynamically (the root layout reads cookies), so each page gets its nonce.
+// CSP header and attaches it to its own scripts.
 //
 // - Scripts: only nonce'd scripts and what they load ('strict-dynamic'), no
-//   'unsafe-inline'. 'unsafe-eval' is added in development only (React uses
-//   eval for dev error stacks). JSON-LD <script type="application/ld+json">
-//   is a data block, not executed, so it needs no nonce.
+//   'unsafe-inline'. 'unsafe-eval' in development only (React dev stacks).
+//   JSON-LD is a data block, not executed, so it needs no nonce.
 // - Styles: 'unsafe-inline' is kept because the UI uses React style
 //   attributes, which a nonce cannot cover.
-// - Supabase: REST/Auth/Storage over https and Realtime over wss.
-// - Google OAuth: a no-JS form post is redirected to Supabase and then to
-//   accounts.google.com, and Chrome applies form-action to that chain.
-// - AdSense hosts are only added when ads are enabled. That includes Google's
-//   consent message (fundingchoicesmessages), which AdSense injects for EEA/UK visitors.
+// - API and realtime are same-origin (/api/v1, /api/v1/ws). A separate
+//   realtime origin (development: the API on :4000) is added explicitly.
+// - Images: own /media, data:/blob: previews, Google profile photos.
+// - AdSense hosts only when ads are enabled (including Google's consent
+//   message host for EEA/UK visitors).
 
 export type CspOptions = {
   nonce: string;
-  supabaseUrl: string;
   dev: boolean;
   https: boolean;
   ads: boolean;
+  /** Extra connect-src origins, e.g. ws://localhost:4000 in development. */
+  connect?: string[];
+  /** Google sign-in redirects through a form post. */
+  googleSignIn?: boolean;
 };
 
 const ADSENSE = {
@@ -48,30 +49,31 @@ const ADSENSE = {
 
 function origin(url: string) {
   try {
-    return new URL(url).origin;
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}`;
   } catch {
     return "";
   }
 }
 
-export function buildCsp({ nonce, supabaseUrl, dev, https, ads }: CspOptions): string {
-  const supabase = origin(supabaseUrl);
-  const supabaseWs = supabase.replace(/^http/, "ws");
+export function buildCsp({ nonce, dev, https, ads, connect = [], googleSignIn = false }: CspOptions): string {
   const list = (...items: (string | false | undefined)[]) => items.filter(Boolean).join(" ");
+  const extraConnect = connect.map(origin).filter(Boolean);
 
   const directives: [string, string][] = [
     ["default-src", "'self'"],
     ["script-src", list("'self'", `'nonce-${nonce}'`, "'strict-dynamic'", dev && "'unsafe-eval'", ...(ads ? ADSENSE.script : []))],
     ["style-src", "'self' 'unsafe-inline'"],
-    ["img-src", list("'self'", "data:", "blob:", supabase, "https://lh3.googleusercontent.com", ...(ads ? ADSENSE.img : []))],
+    ["img-src", list("'self'", "data:", "blob:", "https://lh3.googleusercontent.com", ...(ads ? ADSENSE.img : []))],
     ["font-src", "'self' data:"],
-    ["connect-src", list("'self'", supabase, supabaseWs, ...(ads ? ADSENSE.connect : []))],
+    ["connect-src", list("'self'", ...extraConnect, ...(ads ? ADSENSE.connect : []))],
     ["frame-src", ads ? ADSENSE.frame.join(" ") : "'none'"],
     ["object-src", "'none'"],
     ["base-uri", "'self'"],
-    ["form-action", list("'self'", supabase, "https://accounts.google.com")],
+    ["form-action", list("'self'", googleSignIn && "https://accounts.google.com")],
     ["frame-ancestors", "'none'"],
     ["manifest-src", "'self'"],
+    ["worker-src", "'self' blob:"],
   ];
   const policy = directives.map(([name, value]) => `${name} ${value}`);
   if (https) policy.push("upgrade-insecure-requests");

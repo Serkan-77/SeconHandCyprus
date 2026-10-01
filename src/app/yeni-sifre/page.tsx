@@ -1,12 +1,15 @@
-import { NewPasswordForm } from "@/components/NewPasswordForm";
-import { getViewer } from "@/lib/queries";
+import type { Metadata } from "next";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { NewPasswordForm } from "@/components/auth/AuthForms";
 
-export const metadata = { title: "Yeni şifre belirle" };
+// The token is in the URL: keep this page out of indexes and referrers.
+export const metadata: Metadata = { title: "Yeni şifre", robots: { index: false }, referrer: "no-referrer" };
 
 export default async function NewPasswordPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token } = await searchParams;
-  // The reset link signs the user in via /auth/callback before landing here;
-  // without a session the link was invalid or already used.
-  const viewer = await getViewer();
-  return <NewPasswordForm valid={token !== "expired" && Boolean(viewer)} />;
+  return (
+    <AuthShell title="Yeni şifre belirle">
+      <NewPasswordForm token={typeof token === "string" ? token : ""} />
+    </AuthShell>
+  );
 }

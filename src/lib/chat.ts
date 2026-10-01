@@ -1,60 +1,52 @@
-// Chat history paging (P1-11). The conversation opens on its newest messages
-// and older ones are loaded on demand, instead of always showing the oldest 500.
-// No "@/" imports so the helpers can be tested directly with node --test.
-import type { SupabaseClient } from "@supabase/supabase-js";
+// Chat message list helpers (pure; tested with node --test). Paging itself
+// is done by the API (keyset on created_at, id); these keep the client's list
+// ordered and free of duplicates while pages, live events and optimistic
+// sends arrive in any order.
 
-export const CHAT_PAGE_SIZE = 50;
-
-export type ChatMessageRow = { id: string; body: string; sender_id: string | null; created_at: string; read_at: string | null };
-
-const COLUMNS = "id, body, sender_id, created_at, read_at";
+export type ChatMessage = {
+  id: string;
+  senderId: string | null;
+  body: string;
+  createdAt: string;
+  readAt: string | null;
+  /** Client-only: an optimistic message that is still being sent, or failed. */
+  pending?: "sending" | "failed";
+  /** Client-only: temporary id of the optimistic copy a server message replaces. */
+  tempId?: string;
+};
 
 /** Chronological order; the id breaks ties between identical timestamps. */
-export function compareMessages(a: ChatMessageRow, b: ChatMessageRow) {
-  return a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+export function compareMessages(a: Pick<ChatMessage, "createdAt" | "id">, b: Pick<ChatMessage, "createdAt" | "id">) {
+  const ta = Date.parse(a.createdAt);
+  const tb = Date.parse(b.createdAt);
+  if (ta !== tb) return ta < tb ? -1 : 1;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
-/** Adds messages (older pages, live inserts) without duplicates, kept in order. */
-export function mergeMessages(current: ChatMessageRow[], incoming: ChatMessageRow[]) {
+/** Adds messages (older pages, live inserts, send results) without duplicates, kept in order. */
+export function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]) {
   const byId = new Map(current.map((m) => [m.id, m]));
-  for (const m of incoming) byId.set(m.id, { ...byId.get(m.id), ...m });
-  return [...byId.values()].sort(compareMessages);
+  for (const m of incoming) {
+    if (m.tempId) byId.delete(m.tempId);
+    byId.set(m.id, { ...byId.get(m.id), ...m, tempId: undefined, pending: m.pending });
+  }
+  // Optimistic copies sort by their send time among real messages; failed
+  // ones stay at the end so they are easy to retry.
+  return [...byId.values()].sort((a, b) => {
+    if (a.pending === "failed" && b.pending !== "failed") return 1;
+    if (b.pending === "failed" && a.pending !== "failed") return -1;
+    return compareMessages(a, b);
+  });
 }
 
-// Fetch one row more than needed to know whether older messages remain.
-function page(rows: ChatMessageRow[] | null, limit: number) {
-  const list = rows ?? [];
-  return { messages: list.slice(0, limit).reverse(), hasMore: list.length > limit };
+/** Marks my messages as read up to `at` (a read receipt from the other side). */
+export function applyReadReceipt(list: ChatMessage[], me: string, at: string) {
+  const t = Date.parse(at);
+  return list.map((m) => (m.senderId === me && !m.readAt && !m.pending && Date.parse(m.createdAt) <= t ? { ...m, readAt: at } : m));
 }
 
-/** The newest `limit` messages of a conversation, oldest first. RLS limits it to participants. */
-export async function fetchLatestMessages(supabase: SupabaseClient, conversationId: string, limit = CHAT_PAGE_SIZE) {
-  const { data, error } = await supabase
-    .from("messages")
-    .select(COLUMNS)
-    .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(limit + 1);
-  if (error) throw error;
-  return page(data as ChatMessageRow[], limit);
-}
-
-/** The `limit` messages just before `before` (keyset on created_at, id), oldest first. */
-export async function fetchOlderMessages(
-  supabase: SupabaseClient,
-  conversationId: string,
-  before: { created_at: string; id: string },
-  limit = CHAT_PAGE_SIZE,
-) {
-  const { data, error } = await supabase
-    .from("messages")
-    .select(COLUMNS)
-    .eq("conversation_id", conversationId)
-    .or(`created_at.lt.${before.created_at},and(created_at.eq.${before.created_at},id.lt.${before.id})`)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(limit + 1);
-  if (error) throw error;
-  return page(data as ChatMessageRow[], limit);
+/** Local calendar day key for date separators. */
+export function dayKey(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }

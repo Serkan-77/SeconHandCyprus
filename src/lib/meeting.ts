@@ -13,16 +13,17 @@ export const MEETING_TEXT: Record<Exclude<MeetingStage, "none">, string> = {
   confirmed: "Buluşma iki taraf tarafından onaylandı.",
 };
 
-/** Maps a conversation row to the signed-in user's point of view. */
-export function meetingFor(
-  row: { buyer_id: string; buyer_confirmed_at: string | null; seller_confirmed_at: string | null },
-  me: string,
-): MeetingState {
-  const iAmBuyer = row.buyer_id === me;
-  return {
-    mine: Boolean(iAmBuyer ? row.buyer_confirmed_at : row.seller_confirmed_at),
-    theirs: Boolean(iAmBuyer ? row.seller_confirmed_at : row.buyer_confirmed_at),
-  };
+type Row =
+  | { buyer_id: string | null; buyer_confirmed_at: string | null; seller_confirmed_at: string | null }
+  | { buyerId: string | null; buyerConfirmedAt: string | null; sellerConfirmedAt: string | null };
+
+/** Maps a conversation row (either key style) to the signed-in user's point of view. */
+export function meetingFor(row: Row, me: string): MeetingState {
+  const r = "buyer_id" in row
+    ? { buyer: row.buyer_id, b: row.buyer_confirmed_at, s: row.seller_confirmed_at }
+    : { buyer: row.buyerId, b: row.buyerConfirmedAt, s: row.sellerConfirmedAt };
+  const iAmBuyer = r.buyer === me;
+  return { mine: Boolean(iAmBuyer ? r.b : r.s), theirs: Boolean(iAmBuyer ? r.s : r.b) };
 }
 
 export function meetingStage({ mine, theirs }: MeetingState): MeetingStage {

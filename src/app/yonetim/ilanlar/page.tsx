@@ -1,138 +1,87 @@
-
-import * as I18n from "@/components/i18n/Localized";
-import { AdminShell } from "@/components/admin/AdminShell";
+import Link from "next/link";
+import { AdminAction, RejectButton } from "@/components/admin/AdminKit";
 import { ListingStatusBadge } from "@/components/ListingStatusBadge";
-import { Icon } from "@/components/icons";
-import { createClient } from "@/lib/supabase/server";
-import { LISTING_CARD_SELECT, one, toCard, type ListingStatus } from "@/lib/queries";
+import { MediaImage } from "@/components/ui/MediaImage";
+import { Pagination } from "@/components/ui/Pagination";
+import { apiServer } from "@/lib/api/server";
+import type { ListingCard } from "@/lib/api/types";
+import { getI18n } from "@/lib/i18n/server";
 import { cn } from "@/lib/cn";
 
-export const metadata = { title: "Yönetim · İlanlar", robots: { index: false } };
+export const metadata = { title: "İlan moderasyonu" };
 
-const filters: { key: string; label: string; statuses?: ListingStatus[] }[] = [
-  { key: "bekleyen", label: "Bekleyen", statuses: ["pending"] },
-  { key: "yayinda", label: "Yayında", statuses: ["active"] },
-  { key: "reddedilen", label: "Reddedilen", statuses: ["rejected"] },
-  { key: "hepsi", label: "Tümü" },
-];
+type Row = ListingCard & { reportCount: number };
 
-export default async function AdminListingsPage({ searchParams }: { searchParams: Promise<{ durum?: string; q?: string }> }) {
-  const { durum, q } = await searchParams;
-  const filter = filters.find((f) => f.key === durum) ?? filters[0];
-
-  return (
-    <AdminShell>
-      <ListingsTable filter={filter} q={q} />
-    </AdminShell>
-  );
-}
-
-async function ListingsTable({ filter, q }: { filter: (typeof filters)[number]; q?: string }) {
-  const supabase = await createClient();
-  let query = supabase
-    .from("listings")
-    .select(`${LISTING_CARD_SELECT}, seller:profiles!listings_seller_id_fkey(id, display_name)`, { count: "exact" })
-    .order("created_at", { ascending: filter.key === "bekleyen" })
-    .limit(100);
-  if (filter.statuses) query = query.in("status", filter.statuses);
-  if (q) query = query.ilike("title", `%${q.replace(/[%,]/g, " ")}%`);
-  const { data, count } = await query;
-  const rows = (data ?? []).map((row) => ({
-    ...toCard(row),
-    seller: one(row.seller) as { id: string; display_name: string } | null,
-  }));
+export default async function AdminListings({ searchParams }: { searchParams: Promise<{ durum?: string; q?: string; sayfa?: string }> }) {
+  const [{ durum, q, sayfa }, { t, f }] = await Promise.all([searchParams, getI18n()]);
+  const status = durum ?? "pending";
+  const page = Math.max(1, Number(sayfa) || 1);
+  const qs = new URLSearchParams({ status, page: String(page), pageSize: "30", ...(q ? { q } : {}) });
+  const data = await apiServer<{ listings: Row[]; total: number; counts: Record<string, number> }>(`/admin/listings?${qs}`);
+  const tabs = [
+    ["pending", "İncelemede", data.counts.pending],
+    ["active", "Yayında", data.counts.active],
+    ["rejected", "Reddedilen", data.counts.rejected],
+    ["hepsi", "Tümü", data.counts.all],
+  ] as const;
+  const href = (next: Record<string, string | undefined>) => {
+    const p = new URLSearchParams({ durum: status, ...(q ? { q } : {}) });
+    for (const [k, v] of Object.entries(next)) {
+      if (v) p.set(k, v);
+      else p.delete(k);
+    }
+    return `/yonetim/ilanlar?${p}`;
+  };
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">İlan moderasyonu</I18n.h1>
-          <I18n.p className="mt-1.5 text-xs text-muted">
-            {filter.key === "bekleyen" ? `İnceleme bekleyen ${count ?? 0} ilan var.` : `${count ?? 0} ilan.`}
-          </I18n.p>
-        </div>
-        <form className="flex gap-2">
-          <input type="hidden" name="durum" value={filter.key} />
-          <I18n.input
-            name="q"
-            defaultValue={q}
-            placeholder="Başlıkta ara"
-            aria-label="İlan başlığında ara"
-            className="min-h-10 rounded-button border border-border bg-surface px-3 text-xs"
-          />
-          <I18n.button className="min-h-10 rounded-button bg-brand px-3 text-xs text-on-brand">Ara</I18n.button>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">{t("İlan moderasyonu")}</h1>
+        <form className="flex h-10 items-center rounded-full border border-border-strong pl-3 pr-1" role="search">
+          <input type="hidden" name="durum" value={status} />
+          <input name="q" defaultValue={q} placeholder={t("Başlık ya da ilan no")} aria-label={t("İlan ara")} className="h-full w-56 bg-transparent px-2 text-[14px] outline-none" />
         </form>
       </div>
-
-      <I18n.div className="flex gap-0 overflow-x-auto border-b border-border">
-        {filters.map((f) => (
-          <I18n.Link
-            key={f.key}
-            href={`/yonetim/ilanlar?durum=${f.key}`}
-            className={cn(
-              "whitespace-nowrap border-b-2 px-3 py-3 text-xs",
-              f.key === filter.key ? "border-brand font-semibold text-brand" : "border-transparent text-muted",
-            )}
-          >
-            {f.label}
-          </I18n.Link>
+      <div className="flex flex-wrap gap-1.5">
+        {tabs.map(([key, label, n]) => (
+          <Link key={key} href={href({ durum: key, sayfa: undefined })} className={cn("flex h-9 items-center gap-1.5 rounded-pill px-3.5 text-[13px] font-medium", status === key ? "bg-brand text-on-brand" : "bg-brand-soft text-muted")}>
+            {t(label)} <span className="tabular opacity-70">{n}</span>
+          </Link>
         ))}
-      </I18n.div>
-
-      {rows.length === 0 ? (
-        <I18n.div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted">
-          <Icon name="check" className="h-8 w-8 text-accent" />
-          {filter.key === "bekleyen" ? "Moderasyon kuyruğu boş. Tüm ilanlar incelendi." : "Bu filtrede ilan yok."}
-        </I18n.div>
+      </div>
+      {data.listings.length ? (
+        <ul className="flex flex-col gap-2">
+          {data.listings.map((l) => (
+            <li key={l.id} className="flex flex-col gap-3 rounded-card border border-border p-3 sm:flex-row sm:items-center">
+              <Link href={`/yonetim/ilanlar/${l.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="h-16 w-20 flex-shrink-0 overflow-hidden rounded-md bg-brand-soft">
+                  <MediaImage urls={l.image} alt="" max="sm" sizes="80px" />
+                </span>
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <ListingStatusBadge status={l.status} />
+                    {l.reportCount ? <span className="rounded-md bg-danger-soft px-1.5 text-[11px] font-semibold text-danger">{t(`${l.reportCount} şikayet`)}</span> : null}
+                    <span className="text-[12px] text-subtle tabular">KB{l.refNo}</span>
+                  </span>
+                  <span className="mt-0.5 block truncate font-medium" translate="no">{l.title}</span>
+                  <span className="block truncate text-[12px] text-muted">
+                    <span translate="no">{l.seller.name}</span> · {l.category?.name} · {f("formatPrice", l.price, l.currency)} · {f("timeAgo", l.createdAt)}
+                  </span>
+                </span>
+              </Link>
+              {l.status === "pending" ? (
+                <div className="flex flex-shrink-0 gap-2">
+                  <AdminAction label="Onayla" path={`/admin/listings/${l.id}/approve`} variant="primary" icon="check" done="İlan yayına alındı." />
+                  <RejectButton listingId={l.id} />
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
       ) : (
-        <div className="overflow-auto rounded-xl border border-border bg-surface">
-          <table className="w-full min-w-[720px] text-left text-xs">
-            <thead>
-              <tr className="bg-bg text-[10px] text-muted">
-                <I18n.th className="p-3 font-medium">İlan</I18n.th>
-                <I18n.th className="p-3 font-medium">Satıcı</I18n.th>
-                <I18n.th className="p-3 font-medium">Kategori</I18n.th>
-                <I18n.th className="p-3 font-medium">Fiyat</I18n.th>
-                <I18n.th className="p-3 font-medium">Tarih</I18n.th>
-                <I18n.th className="p-3 font-medium">Durum</I18n.th>
-                <th className="p-3 font-medium" />
-              </tr>
-            </thead>
-            <I18n.tbody>
-              {rows.map((listing) => (
-                <tr key={listing.id} className="border-b border-border last:border-0">
-                  <td className="p-3">
-                    <div className="flex items-center gap-2.5">
-                      <I18n.Image src={listing.image} alt="" width={40} height={40} className="h-10 w-10 rounded-md object-cover" />
-                      <I18n.span className="max-w-[220px] truncate"><I18n.Raw>{listing.title}</I18n.Raw></I18n.span>
-                    </div>
-                  </td>
-                  <I18n.td className="p-3 text-muted">
-                    {listing.seller ? (
-                      <I18n.Link href={`/yonetim/kullanicilar/${listing.seller.id}`} className="hover:text-text">
-                        <I18n.Raw>{listing.seller.display_name}</I18n.Raw>
-                      </I18n.Link>
-                    ) : (
-                      "—"
-                    )}
-                  </I18n.td>
-                  <I18n.td className="p-3 text-muted">{listing.category.name}</I18n.td>
-                  <I18n.td className="p-3"><I18n.Formatted kind="formatPrice" args={[listing.price, listing.currency]} /></I18n.td>
-                  <I18n.td className="p-3 text-muted"><I18n.Formatted kind="formatDate" args={[listing.createdAt]} /></I18n.td>
-                  <td className="p-3">
-                    <ListingStatusBadge status={listing.status} />
-                  </td>
-                  <td className="p-3">
-                    <I18n.Link href={`/yonetim/ilanlar/${listing.id}`} className="text-[11px] font-medium text-accent">
-                      {listing.status === "pending" ? "İncele" : "Aç"}
-                    </I18n.Link>
-                  </td>
-                </tr>
-              ))}
-            </I18n.tbody>
-          </table>
-        </div>
+        <p className="rounded-card border border-dashed border-border-strong p-10 text-center text-[14px] text-muted">{t("Bu listede ilan yok.")}</p>
       )}
+      <Pagination page={page} pages={Math.ceil(data.total / 30)} href={(p) => href({ sayfa: p > 1 ? String(p) : undefined })} />
     </>
   );
 }

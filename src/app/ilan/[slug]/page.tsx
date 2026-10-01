@@ -1,72 +1,58 @@
-
-import * as I18n from "@/components/i18n/Localized";
 import type { Metadata } from "next";
 import { cache } from "react";
-import { after } from "next/server";
-import { notFound } from "next/navigation";
+import Link from "next/link";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { DetailGallery } from "@/components/DetailGallery";
-import { FavoriteButton } from "@/components/FavoriteButton";
-import { ReportListingButton } from "@/components/ReportListingButton";
-import { SellerCard } from "@/components/SellerCard";
-import { MapPreview } from "@/components/MapPreview";
-import { ListingGrid } from "@/components/ListingGrid";
-import { AdSlot } from "@/components/AdSlot";
-import { JsonLd } from "@/components/JsonLd";
-import { absoluteUrl } from "@/lib/site";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { MessageSellerButton } from "@/components/MessageSellerButton";
-import { LinkButton } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { Icon } from "@/components/icons";
-import { createClient } from "@/lib/supabase/server";
-import { publicImageUrl } from "@/lib/supabase/env";
-import { getSellerSummary, getViewer, one, searchListings } from "@/lib/queries";
-import { formatLongDate, formatPrice } from "@/lib/format";
-import { detailRows, type ListingDetails } from "@/lib/listingDetails";
+import { JsonLd } from "@/components/JsonLd";
+import { AdSlot } from "@/components/AdSlot";
+import { ListingGrid } from "@/components/ListingCard";
+import { RecentlyViewed } from "@/components/RecentlyViewed";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
+import { LinkButton } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/FormError";
+import { Stars } from "@/components/ui/Stars";
+import { Gallery } from "@/components/listing/Gallery";
+import { RegionMap } from "@/components/listing/RegionMap";
+import { ContactActions, MobileActionBar } from "@/components/listing/ContactActions";
+import { ReportDialog } from "@/components/listing/ReportDialog";
+import { ViewBeacon } from "@/components/listing/ViewBeacon";
+import { Description } from "@/components/listing/Description";
+import { apiServer, apiServerOrNull, getMe, getTaxonomy } from "@/lib/api/server";
+import type { ListingCard, ListingPage } from "@/lib/api/types";
+import { formatPrice } from "@/lib/format";
+import { absoluteUrl } from "@/lib/site";
+import { getI18n } from "@/lib/i18n/server";
+import { categoryLabel } from "@/lib/taxonomy";
+import { CONDITION_INFO, type Condition } from "@shared/constants";
 
-const getListing = cache(async (slug: string) => {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("listings")
-    .select("*, category:categories(name, slug), images:listing_images(id, path, position)")
-    .eq("slug", slug)
-    .maybeSingle();
-  return data;
-});
+const getListing = cache((slug: string) => apiServerOrNull<ListingPage>(`/listings/${encodeURIComponent(slug)}`));
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const listing = await getListing(slug);
-  if (!listing) return { title: "İlan bulunamadı" };
-  const images = [...(listing.images ?? [])].sort((a, b) => a.position - b.position);
+  const page = await getListing(slug);
+  if (!page) return { title: "İlan bulunamadı", robots: { index: false } };
+  const { listing } = page;
   const price = formatPrice(listing.price, listing.currency);
+  const where = listing.district ? `${listing.city}, ${listing.district}` : listing.city;
   return {
     title: `${listing.title} — ${price}`,
     alternates: { canonical: `/ilan/${listing.slug}` },
-    // Sold or pending listings stay reachable for their owner but should not be indexed.
+    // Sold, pending or hidden listings stay reachable for their owner but are not indexed.
     robots: listing.status === "active" ? undefined : { index: false, follow: true },
-    description: (listing.description || `${listing.title}, ${listing.city}`).slice(0, 160),
+    description: `${price} · ${where} · ${listing.condition}. ${listing.description}`.replace(/\s+/g, " ").slice(0, 160),
     openGraph: {
       title: `${listing.title} · ${price}`,
-      description: `${listing.city} · ${listing.condition}`,
+      description: `${where} · ${listing.condition}`,
       type: "website",
-      images: images[0] ? [{ url: publicImageUrl(images[0].path), alt: listing.title }] : undefined,
+      url: absoluteUrl(`/ilan/${listing.slug}`),
+      images: listing.images[0]?.urls ? [{ url: absoluteUrl(listing.images[0].urls.md), alt: listing.title }] : undefined,
     },
   };
 }
 
-/**
- * Whether the seller shares a WhatsApp number (yes/no only, migration 0015).
- * Without that function (not migrated yet) the button shows as before.
- */
-async function sellerAcceptsWhatsapp(listingId: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("listing_accepts_whatsapp", { p_listing: listingId });
-  return error ? true : Boolean(data);
-}
-
-const statusNotice: Record<string, string> = {
+const STATUS_NOTICE: Record<string, string> = {
   pending: "Bu ilan incelemede. Onaylandığında herkes görebilecek.",
   rejected: "Bu ilan yayınlanamadı. Düzenleyip tekrar incelemeye gönderebilirsin.",
   sold: "Bu ilanı satıldı olarak işaretledin; aramalarda görünmüyor.",
@@ -76,204 +62,321 @@ const statusNotice: Record<string, string> = {
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const listing = await getListing(slug);
-  if (!listing) notFound();
+  const page = await getListing(slug);
+  if (!page) notFound();
+  if (page.redirectSlug && page.redirectSlug !== slug) permanentRedirect(`/ilan/${page.redirectSlug}`);
 
-  const viewer = await getViewer();
-  const isOwner = viewer?.user.id === listing.seller_id;
-  const isActive = listing.status === "active";
-  // Non-owners only reach non-active listings as admins; show them the 404 view anyway.
-  if (!isActive && !isOwner && viewer?.profile.role !== "admin") notFound();
-
-  const category = one(listing.category) as { name: string; slug: string } | null;
-  const images = [...(listing.images ?? [])]
-    .sort((a, b) => a.position - b.position)
-    .map((i) => publicImageUrl(i.path));
-
-  const [seller, sameCategory, acceptsWhatsapp] = await Promise.all([
-    getSellerSummary(listing.seller_id),
-    searchListings({ category: category?.slug, excludeId: listing.id, pageSize: 4 }),
-    sellerAcceptsWhatsapp(listing.id),
+  const { listing, seller, viewer } = page;
+  const [{ t, f, locale }, me, taxonomy, related] = await Promise.all([
+    getI18n(),
+    getMe(),
+    getTaxonomy(),
+    apiServer<{ similar: ListingCard[]; sellerOthers: ListingCard[] }>(`/listings/${listing.id}/related`).catch(() => ({ similar: [], sellerOthers: [] })),
   ]);
-  // Nothing else in this category yet: suggest the newest listings instead.
-  const similar = sameCategory.items.length
-    ? sameCategory
-    : await searchListings({ excludeId: listing.id, pageSize: 4 });
-
-  if (isActive && !isOwner) {
-    // Request APIs are unavailable inside after() in Server Components, so the
-    // client is created up front.
-    const supabase = await createClient();
-    after(async () => {
-      await supabase.rpc("increment_listing_view", { p_listing: listing.id });
-    });
-  }
-
-  const location = listing.district ? `${listing.city}, ${listing.district}` : listing.city;
+  const active = listing.status === "active";
+  const region = taxonomy.regions.find((r) => r.name === listing.city);
+  const specs = locale === "en" ? listing.specsEn : listing.specs;
+  const condition = listing.condition as Condition;
+  const card: ListingCard = { ...listing };
 
   const product = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: listing.title,
     description: listing.description || listing.title,
-    sku: `KB${listing.ref_no}`,
-    image: images.filter((src) => src.startsWith("http")),
-    category: category?.name,
+    sku: `KB${listing.refNo}`,
+    image: listing.images.flatMap((i) => (i.urls ? [absoluteUrl(i.urls.lg)] : [])),
+    category: listing.categoryPath.map((c) => c.name).join(" > "),
+    ...(listing.specs.flatMap((g) => g.rows).find((r) => r.key === "brand")
+      ? { brand: { "@type": "Brand", name: listing.specs.flatMap((g) => g.rows).find((r) => r.key === "brand")!.value } }
+      : {}),
     offers: {
       "@type": "Offer",
       url: absoluteUrl(`/ilan/${listing.slug}`),
-      price: Number(listing.price),
+      price: listing.price,
       priceCurrency: listing.currency === "€" ? "EUR" : "TRY",
-      itemCondition:
-        listing.condition === "Sıfır" ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
-      availability: isActive ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+      itemCondition: listing.condition === "Sıfır" ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
+      availability: active ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
       areaServed: { "@type": "City", name: listing.city },
-      seller: seller ? { "@type": "Person", name: seller.displayName, url: absoluteUrl(`/satici/${seller.id}`) } : undefined,
+      seller: { "@type": seller.isStore ? "Organization" : "Person", name: seller.name, url: absoluteUrl(`/satici/${seller.id}`) },
     },
   };
 
+  const contactProps = {
+    listingId: listing.id,
+    slug: listing.slug,
+    title: listing.title,
+    price: listing.price,
+    currency: listing.currency,
+    active,
+    signedIn: Boolean(me),
+    isOwner: viewer.isOwner,
+    conversationId: viewer.conversationId,
+    acceptsWhatsapp: listing.acceptsWhatsapp,
+  };
+
   return (
-    <I18n.div className="mx-auto max-w-[1328px] px-4 pb-8 sm:px-6">
+    <div className="mx-auto max-w-[1320px] px-4 pb-28 pt-4 sm:px-6 sm:pt-6 lg:pb-16">
       <JsonLd data={product} />
+      <ViewBeacon card={card} count={active && !viewer.isOwner} />
       <Breadcrumbs
         items={[
-          ...(category ? [{ label: category.name, href: `/kategori/${category.slug}` }] : []),
-          listing.title,
+          ...listing.categoryPath.map((c) => ({ label: categoryLabel(c, locale), href: `/kategori/${c.slug}` })),
+          { label: listing.title },
         ]}
       />
 
-      {!isActive ? (
-        <I18n.div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl bg-brand-soft px-4 py-3 text-xs">
-          <Icon name="info" className="h-4 w-4 flex-shrink-0 text-accent" />
-          <I18n.span className="flex-1">{statusNotice[listing.status]}</I18n.span>
-          {isOwner ? (
-            <LinkButton href={`/hesabim/ilanlar/${listing.id}`} variant="outline" full={false} className="min-h-9 text-xs">
-              İlanı yönet
-            </LinkButton>
-          ) : null}
-        </I18n.div>
+      {viewer.isOwner && !active ? (
+        <Notice tone={listing.status === "rejected" ? "danger" : "warning"} className="mt-4">
+          <p className="font-semibold">{t(STATUS_NOTICE[listing.status] ?? "")}</p>
+          {listing.rejectReason ? <p className="mt-1">{t("Gerekçe:")} <span translate="no">{listing.rejectReason}</span></p> : null}
+        </Notice>
       ) : null}
 
-      {/* Phones: photos, then title/price/seller, then the details. Desktop:
-          photos and details on the left, the card beside them. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] lg:gap-x-11 lg:gap-y-0">
-        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-          <DetailGallery images={images} alt={listing.title} />
-        </div>
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
+        <div className="min-w-0">
+          <Gallery
+            photos={listing.images}
+            title={listing.title}
+            badge={
+              listing.featured ? (
+                <Badge kind="sand" icon={<Icon name="spark" className="h-3 w-3" />}>
+                  {t("Vitrin")}
+                </Badge>
+              ) : null
+            }
+          />
 
-        <I18n.aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <I18n.div className="flex flex-col gap-5 rounded-2xl border border-border p-6">
-            <div className="flex items-center justify-between">
-              <Badge kind="accent">{listing.condition}</Badge>
-              <FavoriteButton listingId={listing.id} />
-            </div>
-            <I18n.h1 className="text-2xl font-semibold leading-tight tracking-tight sm:text-[31px]">
-              <I18n.Raw>{listing.title}</I18n.Raw>, yeni evini arıyor.
-            </I18n.h1>
-            <I18n.div className="text-3xl font-semibold tracking-tight sm:text-[36px]"><I18n.Formatted kind="formatPrice" args={[listing.price, listing.currency]} /></I18n.div>
-            <I18n.div className="flex flex-wrap items-center justify-between gap-2.5">
-              <I18n.span className="flex items-center gap-1 text-[11px] text-muted">
-                <Icon name="pin" className="h-3.5 w-3.5" />
-                {location}
-              </I18n.span>
-              {listing.negotiable ? <Badge kind="accent">Pazarlığa açık</Badge> : null}
-            </I18n.div>
-            <div className="h-px bg-border" />
-            {seller ? <SellerCard seller={seller} /> : null}
-            <I18n.div className="flex flex-col gap-2.5">
-              {isOwner ? (
-                <LinkButton href={`/hesabim/ilanlar/${listing.id}`} icon={<Icon name="edit" className="h-4 w-4" />}>
-                  İlanını yönet
-                </LinkButton>
-              ) : (
-                <>
-                  <MessageSellerButton listingId={listing.id} loggedIn={Boolean(viewer)} />
-                  {acceptsWhatsapp ? (
-                    <WhatsAppButton listingId={listing.id} listingTitle={listing.title} loggedIn={Boolean(viewer)} />
-                  ) : (
-                    <I18n.p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted">
-                      <Icon name="lock" className="h-3.5 w-3.5" />
-                      Satıcı yalnızca uygulama içinden mesajlaşıyor.
-                    </I18n.p>
-                  )}
-                </>
-              )}
-            </I18n.div>
-            <I18n.p className="text-center text-xs text-muted">Ürün için ödeme uygulama dışında yapılır.</I18n.p>
-          </I18n.div>
-
-          <div className="mt-4 flex gap-3.5 rounded-xl bg-bg p-5">
-            <Icon name="shield" className="h-5 w-5 flex-shrink-0 text-accent" />
-            <div>
-              <I18n.b className="text-[12px]">İyi bir alışveriş, güvenle başlar.</I18n.b>
-              <I18n.p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-                Ürünü görmeden kapora gönderme. Kalabalık bir yerde buluş.
-              </I18n.p>
-            </div>
+          {/* Title block on phones; on large screens it lives in the sidebar. */}
+          <div className="mt-5 lg:hidden">
+            <TitleBlock page={page} />
           </div>
 
-          {!isOwner ? (
-            <div className="mt-3">
-              <ReportListingButton listingId={listing.id} loggedIn={Boolean(viewer)} />
-            </div>
-          ) : null}
+          {specs.length ? (
+            <section className="mt-8" aria-labelledby="specs">
+              <h2 id="specs" className="text-lg font-bold">
+                {t("Özellikler")}
+              </h2>
+              <div className="mt-3 overflow-hidden rounded-card border border-border">
+                <dl className="grid sm:grid-cols-2">
+                  <SpecRow label={t("Durum")} value={locale === "en" ? CONDITION_INFO[condition]?.en ?? condition : condition} />
+                  <SpecRow label={t("Kategori")} value={listing.categoryPath.map((c) => categoryLabel(c, locale)).join(" › ")} />
+                  {specs.flatMap((g) => g.rows).map((r) => (
+                    <SpecRow key={r.key} label={r.label} value={r.value} />
+                  ))}
+                </dl>
+              </div>
+            </section>
+          ) : (
+            <section className="mt-8">
+              <h2 className="text-lg font-bold">{t("Özellikler")}</h2>
+              <dl className="mt-3 grid overflow-hidden rounded-card border border-border sm:grid-cols-2">
+                <SpecRow label={t("Durum")} value={locale === "en" ? CONDITION_INFO[condition]?.en ?? condition : condition} />
+                <SpecRow label={t("Kategori")} value={listing.categoryPath.map((c) => categoryLabel(c, locale)).join(" › ")} />
+              </dl>
+            </section>
+          )}
 
-          {isActive ? <AdSlot placement="listing" className="mt-6" /> : null}
-        </I18n.aside>
-
-        <div className="min-w-0 lg:col-start-1 lg:row-start-2">
-          <section className="lg:mt-9">
-            <I18n.h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Biraz da hikâyesi.</I18n.h2>
-            <I18n.p className="mt-4 whitespace-pre-line text-[13px] leading-loose text-muted sm:text-sm">
-              {listing.description ? <I18n.Raw>{listing.description}</I18n.Raw> : "Satıcı bu ilan için açıklama eklememiş. Merak ettiklerini mesajla sorabilirsin."}
-            </I18n.p>
-            <I18n.dl className="my-6 grid grid-cols-1 gap-x-7 gap-y-0 sm:grid-cols-2">
-              {[
-                ["Kategori", category?.name ?? "—"],
-                ["Ürün durumu", listing.condition],
-                ["İlan numarası", `#KB${listing.ref_no}`],
-                ["İlan tarihi", formatLongDate(listing.published_at ?? listing.created_at)],
-                ["Görüntülenme", String(listing.view_count)],
-                ["Pazarlık", listing.negotiable ? "Pazarlığa açık" : "Sabit fiyat"],
-                ...detailRows(listing.details as ListingDetails | null),
-              ].map(([term, desc]) => (
-                <div key={term} className="border-b border-border py-3.5">
-                  <I18n.dt className="text-[11px] text-muted">{term}</I18n.dt>
-                  <I18n.dd className="mt-1 text-[13px]">{desc}</I18n.dd>
-                </div>
-              ))}
-            </I18n.dl>
+          <section className="mt-8" aria-labelledby="desc">
+            <h2 id="desc" className="text-lg font-bold">
+              {t("Açıklama")}
+            </h2>
+            {listing.description ? (
+              <Description text={listing.description} />
+            ) : (
+              <p className="mt-2 text-[15px] text-muted">{t("Satıcı açıklama eklememiş. Merak ettiklerini mesajla sorabilirsin.")}</p>
+            )}
           </section>
 
-          <section className="mt-8">
-            <I18n.h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{location}</I18n.h2>
-            <I18n.p className="mb-5 mt-2 text-[13px] text-muted">Yaklaşık konum. Buluşma yerini satıcıyla konuş.</I18n.p>
-            <MapPreview label={listing.city} />
+          <section className="mt-8 grid gap-4 sm:grid-cols-[1fr_1.2fr]" aria-labelledby="where">
+            <div>
+              <h2 id="where" className="text-lg font-bold">
+                {t("Konum ve teslimat")}
+              </h2>
+              <p className="mt-2 flex items-center gap-2 text-[15px]">
+                <Icon name="pin" className="h-4 w-4 text-muted" />
+                {listing.city}
+                {listing.district ? <span className="text-muted">· {listing.district}</span> : null}
+              </p>
+              <p className="mt-1 text-[13px] text-muted">
+                {region?.side === "south" ? t("Güney Kıbrıs") : t("Kuzey Kıbrıs")} · {t("Tam adres paylaşılmaz; buluşma yerini mesajla kararlaştırın.")}
+              </p>
+            </div>
+            {region ? (
+              <div className="rounded-card border border-border bg-surface-2 p-3">
+                <RegionMap lat={region.lat} lng={region.lng} label={t(`${listing.city} bölgesi haritada`)} />
+              </div>
+            ) : null}
+          </section>
+
+          <section className="mt-8 rounded-card bg-bg p-5" aria-labelledby="safety">
+            <h2 id="safety" className="flex items-center gap-2 font-bold">
+              <Icon name="shield" className="h-5 w-5 text-success" />
+              {t("Güvenli alışveriş için")}
+            </h2>
+            <ul className="mt-3 grid gap-2 text-[14px] text-muted sm:grid-cols-2">
+              {[
+                "Ürünü görmeden para gönderme, kapora ödeme.",
+                "Gündüz ve kalabalık bir yerde buluş.",
+                "Elektronikleri açıp çalıştırarak kontrol et.",
+                "Konuşmayı uygulama içinde tut; kanıt olarak kalır.",
+              ].map((tip) => (
+                <li key={tip} className="flex gap-2">
+                  <Icon name="check" className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
+                  {t(tip)}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3 text-[13px] text-muted">
+              <span className="tabular">
+                {t("İlan no")}: KB{listing.refNo} · {t(`${f("formatNumber", listing.viewCount)} görüntülenme`)}
+              </span>
+              {!viewer.isOwner ? <ReportDialog target={{ kind: "listing", id: listing.id }} signedIn={Boolean(me)} /> : null}
+            </div>
           </section>
         </div>
+
+        <aside className="min-w-0">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-[132px]">
+            <div className="hidden rounded-card border border-border p-5 lg:block">
+              <TitleBlock page={page} />
+              <div className="mt-5">
+                <ContactActions {...contactProps} />
+              </div>
+            </div>
+            <div className="lg:hidden">
+              <ContactActions {...contactProps} />
+            </div>
+
+            {viewer.isOwner ? (
+              <div className="rounded-card border border-accent/30 bg-accent-soft p-5">
+                <p className="font-semibold">{t("Bu ilan senin")}</p>
+                <p className="mt-1 text-[13px] text-muted">
+                  {listing.favoriteCount != null ? t(`${listing.favoriteCount} kişi favorilerine ekledi · ${listing.viewCount} görüntülenme`) : null}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <LinkButton href={`/hesabim/ilanlar/${listing.id}`} size="sm" icon={<Icon name="edit" className="h-4 w-4" />}>
+                    {t("Düzenle")}
+                  </LinkButton>
+                  <LinkButton href="/mesajlar" size="sm" variant="outline">
+                    {t("Mesajlar")}
+                  </LinkButton>
+                </div>
+              </div>
+            ) : null}
+
+            <section className="rounded-card border border-border p-5" aria-labelledby="seller">
+              <h2 id="seller" className="sr-only">
+                {t("Satıcı")}
+              </h2>
+              <Link href={`/satici/${seller.id}`} className="flex items-center gap-3">
+                <Avatar name={seller.name} src={seller.avatar} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 truncate font-semibold">
+                    <span className="truncate" translate="no">{seller.name}</span>
+                    {seller.isStore && seller.storeVerified ? <Icon name="verified" className="h-4 w-4 flex-shrink-0 text-accent" aria-label={t("Onaylı mağaza")} /> : null}
+                  </p>
+                  <p className="text-[13px] text-muted">
+                    {seller.isStore ? t("Mağaza") : t("Bireysel satıcı")}
+                    {seller.memberSince ? ` · ${f("memberSince", seller.memberSince)}` : ""}
+                  </p>
+                  <p className="mt-1 flex items-center gap-1.5 text-[13px]">
+                    {seller.ratingCount ? (
+                      <>
+                        <Stars value={seller.ratingAvg} />
+                        <span className="font-semibold tabular">{f("decimal", seller.ratingAvg)}</span>
+                        <span className="text-muted">({seller.ratingCount})</span>
+                      </>
+                    ) : (
+                      <span className="text-muted">{t("Henüz değerlendirme yok")}</span>
+                    )}
+                  </p>
+                </div>
+              </Link>
+              <dl className="mt-4 grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-button bg-bg px-2 py-2.5">
+                  <dt className="text-[12px] text-muted">{t("Yayındaki ilan")}</dt>
+                  <dd className="font-bold tabular">{seller.activeListings}</dd>
+                </div>
+                <div className="rounded-button bg-bg px-2 py-2.5">
+                  <dt className="text-[12px] text-muted">{t("Satılan")}</dt>
+                  <dd className="font-bold tabular">{seller.soldListings}</dd>
+                </div>
+              </dl>
+              <LinkButton href={`/satici/${seller.id}`} variant="outline" full className="mt-3">
+                {t("Satıcının profili")}
+              </LinkButton>
+            </section>
+
+            <AdSlot placement="listing" />
+          </div>
+        </aside>
       </div>
 
-      {similar.items.length ? (
-        <section className="mt-16">
-          <div className="mb-6 flex items-end justify-between gap-5">
-            <div>
-              <I18n.h2 className="text-xl font-semibold tracking-tight sm:text-[27px]">Bunlar da ilgini çekebilir</I18n.h2>
-              <I18n.p className="mt-1 text-[13px] text-muted">Yeni bir hikâye arayan başka eşyalar.</I18n.p>
-            </div>
+      {related.sellerOthers.length ? (
+        <section className="mt-14">
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <h2 className="text-xl font-bold tracking-tight">{t("Satıcının diğer ilanları")}</h2>
+            <Link href={`/satici/${seller.id}`} className="text-[14px] font-semibold text-accent hover:underline">
+              {t("Tümü")}
+            </Link>
           </div>
-          <ListingGrid items={similar.items} />
+          <ListingGrid items={related.sellerOthers.slice(0, 5)} />
         </section>
       ) : null}
 
-      {!isOwner ? (
-        <div className="sticky bottom-0 z-30 mt-6 flex items-center gap-5 border-t border-border bg-surface py-3 lg:hidden">
-          <span className="flex-1">
-            <I18n.small className="block text-[9px] text-muted">İlan fiyatı</I18n.small>
-            <I18n.strong className="text-xl tracking-tight"><I18n.Formatted kind="formatPrice" args={[listing.price, listing.currency]} /></I18n.strong>
-          </span>
-          <MessageSellerButton listingId={listing.id} loggedIn={Boolean(viewer)} compact />
-        </div>
+      {related.similar.length ? (
+        <section className="mt-14">
+          <h2 className="mb-4 text-xl font-bold tracking-tight">{t("Benzer ilanlar")}</h2>
+          <ListingGrid items={related.similar.slice(0, 5)} />
+        </section>
       ) : null}
-    </I18n.div>
+
+      <div className="mt-14">
+        <RecentlyViewed excludeId={listing.id} />
+      </div>
+
+      <MobileActionBar {...contactProps} />
+    </div>
+  );
+}
+
+function SpecRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border px-4 py-3 text-[14px] last:border-b-0 sm:[&:nth-last-child(2):nth-child(odd)]:border-b-0 sm:odd:border-r">
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-right font-medium" translate="no">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+async function TitleBlock({ page }: { page: ListingPage }) {
+  const { t, f, locale } = await getI18n();
+  const { listing } = page;
+  const condition = listing.condition as Condition;
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge kind="neutral">{locale === "en" ? CONDITION_INFO[condition]?.en ?? condition : condition}</Badge>
+        {listing.negotiable ? <Badge kind="accent">{t("Pazarlığa açık")}</Badge> : null}
+        {listing.status === "sold" ? <Badge kind="danger">{t("Satıldı")}</Badge> : null}
+      </div>
+      <h1 className="mt-2.5 text-[22px] font-bold leading-tight tracking-tight sm:text-[26px]">
+        <span translate="no">{listing.title}</span>
+      </h1>
+      <p className="mt-2 text-[30px] font-bold tracking-tight tabular">{f("formatPrice", listing.price, listing.currency)}</p>
+      <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
+        <span className="flex items-center gap-1">
+          <Icon name="pin" className="h-3.5 w-3.5" />
+          {listing.district ? `${listing.city}, ${listing.district}` : listing.city}
+        </span>
+        <span className="flex items-center gap-1">
+          <Icon name="clock" className="h-3.5 w-3.5" />
+          {f("formatLongDate", listing.publishedAt ?? listing.createdAt)}
+        </span>
+      </p>
+    </div>
   );
 }

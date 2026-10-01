@@ -1,61 +1,38 @@
-
-import * as I18n from "@/components/i18n/Localized";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { LinkButton } from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/queries";
-import { AdminUserForm } from "./AdminUserForm";
+import { AdminUserForm } from "@/components/admin/AdminUserForm";
+import { apiServerOrNull } from "@/lib/api/server";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Yönetim · Kullanıcı düzenleme", robots: { index: false } };
+export const metadata = { title: "Kullanıcıyı düzenle" };
 
-export default async function AdminEditUserPage({ params }: { params: Promise<{ id: string }> }) {
+type P = Record<string, string | boolean | null>;
+
+export default async function AdminEditUser({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return (
-    <AdminShell>
-      <Editor id={id} />
-    </AdminShell>
-  );
-}
-
-async function Editor({ id }: { id: string }) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const viewer = await requireAdmin();
-  const supabase = await createClient();
-  const [{ data: profile }, { data: contact }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", id).maybeSingle(),
-    supabase.from("profile_private").select("phone").eq("id", id).maybeSingle(),
-  ]);
-  if (!profile) notFound();
-
+  const [data, { t }] = await Promise.all([apiServerOrNull<{ profile: P }>(`/admin/users/${id}`), getI18n()]);
+  if (!data) notFound();
+  const p = data.profile;
+  const s = (v: unknown) => (typeof v === "string" ? v : "");
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">Kullanıcıyı düzenle</I18n.h1>
-        <LinkButton href={`/yonetim/kullanicilar/${id}`} variant="outline" full={false} className="min-h-10 text-xs">
-          Kullanıcıya dön
-        </LinkButton>
-      </div>
+      <Link href={`/yonetim/kullanicilar/${id}`} className="text-[13px] text-muted hover:text-text">
+        ← {t("Kullanıcı")}
+      </Link>
+      <h1 className="text-2xl font-bold tracking-tight">{t("Kullanıcıyı düzenle")}</h1>
       <AdminUserForm
-        userId={id}
-        isSelf={id === viewer.user.id}
-        canDelete={profile.role !== "admin"}
+        id={id}
         initial={{
-          name: profile.display_name,
-          region: profile.region ?? "",
-          bio: profile.bio ?? "",
-          phone: contact?.phone ?? "",
-          phoneVerified: profile.phone_verified,
-          role: profile.role,
-          accountType: profile.account_type === "store" ? "store" : "personal",
-          store: {
-            storeName: profile.store_name ?? "",
-            address: profile.store_address ?? "",
-            phone: profile.store_phone ?? "",
-            website: profile.store_website ?? "",
-            hours: profile.store_hours ?? "",
-          },
-          storeVerified: Boolean(profile.store_verified),
+          name: s(p.displayName),
+          region: s(p.region),
+          bio: s(p.bio),
+          phone: s(p.phone),
+          phoneVerified: Boolean(p.phoneVerified),
+          role: p.role === "admin" ? "admin" : "user",
+          accountType: p.accountType === "store" ? "store" : "personal",
+          store: { storeName: s(p.storeName), address: s(p.storeAddress), phone: s(p.storePhone), website: s(p.storeWebsite), hours: s(p.storeHours) },
+          storeVerified: Boolean(p.storeVerified),
         }}
       />
     </>

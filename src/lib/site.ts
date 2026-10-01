@@ -4,9 +4,8 @@ import { assertPublicEnv } from "./envCheck.ts";
 // Each variable is referenced by name so Next.js inlines it into client bundles.
 assertPublicEnv(
   {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   },
   process.env.NODE_ENV === "production",
 );
@@ -23,16 +22,14 @@ export const SITE = {
   locale: "tr_TR",
 } as const;
 
+/** Realtime socket: same origin by default; a separate origin only in development. */
+export const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "";
+
 export function absoluteUrl(path = "/") {
   return `${SITE.url}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/**
- * Sign-in methods that need outside setup stay hidden until switched on:
- * - phone OTP needs an SMS provider (or a Send SMS hook) in Supabase,
- * - Google needs an OAuth client in Google Cloud and the Google provider enabled in Supabase.
- */
+/** Google sign-in stays hidden until the OAuth client is configured on the API. */
 export const AUTH_METHODS = {
-  phone: process.env.NEXT_PUBLIC_AUTH_PHONE === "1",
   google: process.env.NEXT_PUBLIC_AUTH_GOOGLE === "1",
 } as const;

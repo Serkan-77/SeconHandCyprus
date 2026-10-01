@@ -1,65 +1,49 @@
-
-import * as I18n from "@/components/i18n/Localized";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { LinkButton } from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/server";
-import { publicImageUrl } from "@/lib/supabase/env";
-import { getCategories } from "@/lib/queries";
-import { AdminEditForm } from "./AdminEditForm";
+import { AdminListingForm } from "@/components/admin/AdminListingForm";
+import { apiServer, apiServerOrNull, getTaxonomy } from "@/lib/api/server";
+import type { Category } from "@/lib/api/types";
+import type { ListingCard } from "@/lib/api/types";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Yönetim · İlan düzenleme", robots: { index: false } };
+export const metadata = { title: "İlanı düzenle" };
 
-export default async function AdminEditListingPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminEditListing({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return (
-    <AdminShell>
-      <Editor id={id} />
-    </AdminShell>
-  );
-}
-
-async function Editor({ id }: { id: string }) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const supabase = await createClient();
-  const [{ data: listing }, categories] = await Promise.all([
-    supabase.from("listings").select("*, images:listing_images(id, path, position)").eq("id", id).maybeSingle(),
-    getCategories(),
+  const [data, taxonomy, { t }] = await Promise.all([
+    apiServerOrNull<{ listing: ListingCard & { description: string; attributes: Record<string, unknown> } }>(`/admin/listings/${id}`),
+    getTaxonomy(),
+    getI18n(),
   ]);
-  if (!listing) notFound();
-  const images = [...(listing.images ?? [])]
-    .sort((a, b) => a.position - b.position)
-    .map((i) => ({ id: i.id as string, url: publicImageUrl(i.path) }));
-
+  if (!data) notFound();
+  const l = data.listing;
+  // Admins also see hidden categories.
+  const all = await apiServer<{ categories: Category[] }>("/admin/categories");
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <I18n.h1 className="text-2xl font-semibold tracking-tight sm:text-[27px]">İlan düzenleme</I18n.h1>
-        <LinkButton href={`/yonetim/ilanlar/${id}`} variant="outline" full={false} className="min-h-10 text-xs">
-          İncelemeye dön
-        </LinkButton>
-      </div>
-      <I18n.p className="text-xs text-muted">
-        Yönetici olarak ilanın her alanını, durumunu ve fotoğraflarını değiştirebilir ya da ilanı silebilirsin. Yönetici
-        düzenlemesi ilanı yeniden incelemeye düşürmez.
-      </I18n.p>
-      <AdminEditForm
-        listing={{
-          id: listing.id,
-          title: listing.title,
-          categoryId: listing.category_id,
-          price: String(Number(listing.price)),
-          currency: listing.currency,
-          condition: listing.condition,
-          city: listing.city,
-          district: listing.district ?? "",
-          description: listing.description,
-          negotiable: listing.negotiable,
-          status: listing.status,
-          details: listing.details ?? {},
+      <Link href={`/yonetim/ilanlar/${id}`} className="text-[13px] text-muted hover:text-text">
+        ← {t("İlan incelemesi")}
+      </Link>
+      <h1 className="text-2xl font-bold tracking-tight">{t("İlanı düzenle")}</h1>
+      <p className="-mt-4 text-[14px] text-muted">{t("Yönetici düzenlemeleri ilanı yeniden incelemeye göndermez.")}</p>
+      <AdminListingForm
+        categories={all.categories}
+        attributes={taxonomy.attributes}
+        initial={{
+          id: l.id,
+          title: l.title,
+          categoryId: l.category?.id ?? all.categories[0]?.id ?? 1,
+          price: l.price,
+          currency: l.currency,
+          condition: l.condition,
+          city: l.city,
+          district: l.district,
+          description: l.description,
+          negotiable: l.negotiable,
+          status: l.status,
+          attributes: l.attributes,
         }}
-        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-        images={images}
       />
     </>
   );

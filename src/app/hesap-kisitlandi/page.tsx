@@ -1,23 +1,54 @@
-
-import * as I18n from "@/components/i18n/Localized";
-import { LinkButton } from "@/components/ui/Button";
+import type { Metadata } from "next";
 import { Icon } from "@/components/icons";
+import { LinkButton } from "@/components/ui/Button";
+import { apiServer, getMe } from "@/lib/api/server";
+import { getI18n } from "@/lib/i18n/server";
 
-export default function AccountSuspendedPage() {
+export const metadata: Metadata = { title: "Hesap kısıtlaması", robots: { index: false } };
+
+type Sanction = { kind: string; reason: string; expiresAt: string | null; createdAt: string };
+
+export default async function RestrictedPage() {
+  const [{ t, f }, me] = await Promise.all([getI18n(), getMe()]);
+  const { items } = me ? await apiServer<{ items: Sanction[] }>("/me/sanctions").catch(() => ({ items: [] as Sanction[] })) : { items: [] as Sanction[] };
+  const active = me && (me.status === "restricted" || me.status === "suspended") && (!me.statusUntil || new Date(me.statusUntil) > new Date());
+  const latest = items.find((s) => s.kind === "restrict" || s.kind === "suspend");
+
   return (
-    <div className="mx-auto flex max-w-[460px] flex-col items-center gap-5 px-4 py-24 text-center">
-      <span className="grid h-24 w-24 -rotate-6 items-center justify-center rounded-[28px] bg-brand-soft text-brand">
-        <Icon name="shield" className="h-10 w-10 rotate-6" />
+    <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center">
+      <span className="grid h-16 w-16 place-items-center rounded-full bg-warning-soft text-warning">
+        <Icon name="shield" className="h-8 w-8" />
       </span>
-      <I18n.h1 className="text-2xl font-semibold">Hesabın geçici olarak kısıtlandı.</I18n.h1>
-      <I18n.p className="max-w-xs text-sm text-muted">
-        Kullanım koşullarımıza aykırı bir işlem tespit edildiği için hesabın kısıtlandı. İlan
-        verme, mesajlaşma ve favorileme geçici olarak devre dışı.
-      </I18n.p>
-      <div className="flex w-full max-w-xs flex-col gap-3">
-        <LinkButton href="/destek">İtiraz et / destek al</LinkButton>
-        <LinkButton href="/kosullar" variant="outline">
-          Kullanım koşullarını gör
+      <h1 className="text-2xl font-bold">{t(active ? "Hesabın kısıtlandı" : "Hesabında kısıtlama yok")}</h1>
+      {active ? (
+        <>
+          <p className="text-[15px] leading-relaxed text-muted">
+            {t("Kullanım koşullarımıza aykırı bir işlem tespit edildiği için ilan verme, mesajlaşma ve favorileme geçici olarak kapalı. İlanların bu süre boyunca herkese gizlenir.")}
+          </p>
+          <dl className="w-full rounded-card border border-border text-left text-[14px]">
+            {latest ? (
+              <div className="border-b border-border px-4 py-3">
+                <dt className="text-muted">{t("Gerekçe")}</dt>
+                <dd className="font-medium" translate="no">
+                  {latest.reason}
+                </dd>
+              </div>
+            ) : null}
+            <div className="px-4 py-3">
+              <dt className="text-muted">{t("Bitiş")}</dt>
+              <dd className="font-medium">{me?.statusUntil ? f("formatLongDate", me.statusUntil) : t("Süresiz (inceleme sonrası kaldırılabilir)")}</dd>
+            </div>
+          </dl>
+        </>
+      ) : (
+        <p className="text-[15px] text-muted">{t("Her şey yolunda görünüyor.")}</p>
+      )}
+      <div className="mt-2 flex w-full max-w-xs flex-col gap-2">
+        <LinkButton href="/destek" full>
+          {t("İtiraz et / destek al")}
+        </LinkButton>
+        <LinkButton href="/kosullar" variant="outline" full>
+          {t("Kullanım koşulları")}
         </LinkButton>
       </div>
     </div>

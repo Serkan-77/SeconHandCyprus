@@ -4,7 +4,7 @@
 // query here can never return a listing its caller may not see.
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { SYSTEM, withActor, type Tx } from "../db/pool.ts";
+import { ANON, SYSTEM, withActor, type Tx } from "../db/pool.ts";
 import { forbidden, notFound, validation } from "../lib/errors.ts";
 import { requireViewer } from "../http/context.ts";
 import { imageUrls } from "../storage/images.ts";
@@ -182,6 +182,16 @@ export async function listingRoutes(app: FastifyInstance) {
     return { ...result, page: page.page, pageSize: page.pageSize };
   });
 
+  // Public URLs for the sitemap (what anonymous visitors can see).
+  app.get("/sitemap", async (_req, reply) => {
+    const rows = await withActor(db, ANON, (sql) => sql<{ slug: string; updatedAt: Date; sellerId: string }[]>`
+      select slug, updated_at, seller_id from listings
+      where status = 'active' and not public.is_sanctioned(seller_id)
+      order by updated_at desc limit 45000`);
+    reply.header("cache-control", "public, max-age=900");
+    return { listings: rows };
+  });
+
   // ---------------------------------------------------------------- listing page
   app.get("/listings/:ref", async (req) => {
     const ref = String((req.params as { ref: string }).ref);
@@ -216,7 +226,7 @@ export async function listingRoutes(app: FastifyInstance) {
           select id, path, position, width, height from listing_images where listing_id = ${row.id} order by position, created_at`,
         sql<Record<string, unknown>[]>`
           select p.id, p.display_name, p.avatar_url, p.region, p.created_at, p.account_type, p.store_name, p.store_verified,
-                 p.phone_verified, s.rating_avg, s.rating_count, s.active_listings, s.sold_listings
+                 s.rating_avg, s.rating_count, s.active_listings, s.sold_listings
           from profiles p left join seller_stats s on s.seller_id = p.id where p.id = ${row.sellerId}`,
         sql<{ acceptsWhatsapp: boolean; isFavorite: boolean; conversationId: string | null; favoriteCount: number }[]>`
           select public.listing_accepts_whatsapp(${row.id}) as accepts_whatsapp,
@@ -249,7 +259,6 @@ export async function listingRoutes(app: FastifyInstance) {
           memberSince: s.createdAt ?? null,
           isStore: s.accountType === "store",
           storeVerified: Boolean(s.storeVerified),
-          phoneReviewed: Boolean(s.phoneVerified),
           ratingAvg: Number(s.ratingAvg ?? 0),
           ratingCount: Number(s.ratingCount ?? 0),
           activeListings: Number(s.activeListings ?? 0),

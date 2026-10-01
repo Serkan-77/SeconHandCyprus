@@ -1,107 +1,86 @@
-
-import * as I18n from "@/components/i18n/Localized";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { SellerHeader } from "@/components/SellerHeader";
-import { Avatar } from "@/components/ui/Avatar";
-import { Icon } from "@/components/icons";
-import { createClient } from "@/lib/supabase/server";
-import { getSellerSummary, one } from "@/lib/queries";
-import { publicImageUrl } from "@/lib/supabase/env";
-import { initials } from "@/lib/format";
+import { Pagination } from "@/components/ui/Pagination";
+import { Stars } from "@/components/ui/Stars";
+import { apiServerOrNull } from "@/lib/api/server";
+import type { PublicProfile, Rating } from "@/lib/api/types";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Satıcı değerlendirmeleri" };
+type Ratings = { items: Rating[]; total: number; average: number; distribution: Record<string, number>; page: number; pageSize: number };
 
-export default async function SellerReviewsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export const metadata: Metadata = { robots: { index: false, follow: true } };
+
+export default async function SellerReviews({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ sayfa?: string }> }) {
+  const [{ id }, { sayfa }, { t, f }] = await Promise.all([params, searchParams, getI18n()]);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const seller = await getSellerSummary(id);
-  if (!seller) notFound();
-
-  const supabase = await createClient();
-  const { data: reviews } = await supabase
-    .from("ratings")
-    .select("id, score, comment, created_at, rater:profiles!ratings_rater_id_fkey(id, display_name, avatar_url), listing:listings(title, slug)")
-    .eq("ratee_id", id)
-    .order("created_at", { ascending: false });
-
-  const distribution = [5, 4, 3, 2, 1].map((n) => ({
-    n,
-    count: (reviews ?? []).filter((r) => r.score === n).length,
-  }));
+  const page = Math.max(1, Number(sayfa) || 1);
+  const [profile, ratings] = await Promise.all([
+    apiServerOrNull<{ profile: PublicProfile }>(`/users/${id}`),
+    apiServerOrNull<Ratings>(`/users/${id}/ratings?page=${page}&pageSize=20`),
+  ]);
+  if (!profile || !ratings) notFound();
+  const p = profile.profile;
+  const pages = Math.max(1, Math.ceil(ratings.total / 20));
 
   return (
-    <I18n.div className="mx-auto max-w-[760px] px-4 pb-16 sm:px-6">
-      <Breadcrumbs items={[{ label: seller.displayName, href: `/satici/${id}` }, "Değerlendirmeler"]} />
-      <SellerHeader seller={seller} active="yorumlar" />
-
-      {reviews && reviews.length > 0 ? (
-        <>
-          <div className="mb-6 grid grid-cols-1 gap-5 rounded-xl border border-border p-5 sm:grid-cols-[140px_1fr]">
-            <div className="text-center sm:text-left">
-              <I18n.strong className="block text-4xl tracking-tight">
-                <I18n.Formatted kind="decimal" args={[seller.ratingAvg]} />
-              </I18n.strong>
-              <I18n.span className="text-accent">{"★".repeat(Math.round(seller.ratingAvg))}</I18n.span>
-              <I18n.p className="text-[11px] text-muted">{seller.ratingCount} değerlendirme</I18n.p>
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-4 sm:px-6 sm:pt-6">
+      <Breadcrumbs items={[{ label: p.name, href: `/satici/${p.id}` }, { label: t("Değerlendirmeler") }]} />
+      <h1 className="mt-3 text-2xl font-bold tracking-tight">{t("Değerlendirmeler")}</h1>
+      <section className="mt-5 grid gap-5 rounded-card border border-border p-5 sm:grid-cols-[auto_1fr] sm:items-center">
+        <div className="text-center sm:pr-6">
+          <p className="text-4xl font-bold tabular">{ratings.total ? f("decimal", ratings.average) : "—"}</p>
+          <Stars value={ratings.average} size="md" className="mt-1" />
+          <p className="mt-1 text-[13px] text-muted">{t(`${ratings.total} değerlendirme`)}</p>
+        </div>
+        <ul className="flex flex-col gap-1.5">
+          {[5, 4, 3, 2, 1].map((s) => {
+            const n = ratings.distribution[s] ?? 0;
+            return (
+              <li key={s} className="flex items-center gap-2 text-[13px]">
+                <span className="w-3 tabular">{s}</span>
+                <span className="text-sand">★</span>
+                <span className="h-2 flex-1 overflow-hidden rounded-full bg-brand-soft">
+                  <span className="block h-full rounded-full bg-sand" style={{ width: `${ratings.total ? (n / ratings.total) * 100 : 0}%` }} />
+                </span>
+                <span className="w-8 text-right text-muted tabular">{n}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+      <ul className="mt-6 flex flex-col gap-3">
+        {ratings.items.map((r) => (
+          <li key={r.id} className="rounded-card border border-border p-4">
+            <div className="flex items-center justify-between gap-2">
+              <Stars value={r.score} />
+              <span className="text-[12px] text-subtle">{f("formatDate", r.createdAt)}</span>
             </div>
-            <I18n.div className="flex flex-col gap-1.5">
-              {distribution.map(({ n, count }) => (
-                <div key={n} className="flex items-center gap-2 text-[11px] text-muted">
-                  <I18n.span className="w-5">{n}★</I18n.span>
-                  <span className="h-2 flex-1 overflow-hidden rounded-full bg-bg">
-                    <span
-                      className="block h-full rounded-full bg-accent"
-                      style={{ width: `${(count / reviews.length) * 100}%` }}
-                    />
-                  </span>
-                  <I18n.span className="w-5 text-right">{count}</I18n.span>
-                </div>
-              ))}
-            </I18n.div>
-          </div>
-          <I18n.div className="flex flex-col gap-5">
-            {reviews.map((review) => {
-              const rater = one(review.rater) as { display_name: string; avatar_url: string | null } | null;
-              const listing = one(review.listing) as { title: string; slug: string } | null;
-              return (
-                <div key={review.id} className="flex gap-3.5 rounded-xl border border-border p-5">
-                  <Avatar
-                    initials={initials(rater?.display_name)}
-                    src={rater?.avatar_url ? publicImageUrl(rater.avatar_url, "avatars") : null}
-                  />
-                  <I18n.div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <I18n.b className="text-sm">{rater?.display_name ? <I18n.Raw>{rater?.display_name}</I18n.Raw> : "Silinmiş kullanıcı"}</I18n.b>
-                      <I18n.span className="text-accent" aria-label={`${review.score} yıldız`}>
-                        {"★".repeat(review.score)}
-                        <I18n.span className="text-border">{"★".repeat(5 - review.score)}</I18n.span>
-                      </I18n.span>
-                    </div>
-                    <I18n.span className="text-[10px] text-muted">
-                      <I18n.Formatted kind="monthYear" args={[review.created_at]} />
-                      {listing ? (
-                        <>
-                          {" · "}
-                          <I18n.Link href={`/ilan/${listing.slug}`} className="text-accent">
-                            <I18n.Raw>{listing.title}</I18n.Raw>
-                          </I18n.Link>
-                        </>
-                      ) : null}
-                    </I18n.span>
-                    {review.comment ? <I18n.p className="mt-2 text-[13px] text-muted"><I18n.Raw>{review.comment}</I18n.Raw></I18n.p> : null}
-                  </I18n.div>
-                </div>
-              );
-            })}
-          </I18n.div>
-        </>
-      ) : (
-        <I18n.div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted">
-          <Icon name="star" className="h-8 w-8" />
-          <I18n.Raw>{seller.displayName}</I18n.Raw> henüz değerlendirme almadı.
-        </I18n.div>
-      )}
-    </I18n.div>
+            {r.comment ? (
+              <p className="mt-2 text-[15px] leading-relaxed" translate="no">
+                {r.comment}
+              </p>
+            ) : null}
+            <p className="mt-2 text-[13px] text-muted">
+              <span translate="no">{r.raterName ?? t("Silinmiş kullanıcı")}</span>
+              {r.listingTitle ? (
+                <>
+                  {" · "}
+                  {r.listingSlug ? (
+                    <Link href={`/ilan/${r.listingSlug}`} className="hover:underline" translate="no">
+                      {r.listingTitle}
+                    </Link>
+                  ) : (
+                    <span translate="no">{r.listingTitle}</span>
+                  )}
+                </>
+              ) : null}
+            </p>
+          </li>
+        ))}
+      </ul>
+      <Pagination page={page} pages={pages} href={(n) => (n === 1 ? `/satici/${id}/yorumlar` : `/satici/${id}/yorumlar?sayfa=${n}`)} className="mt-8" />
+    </div>
   );
 }
