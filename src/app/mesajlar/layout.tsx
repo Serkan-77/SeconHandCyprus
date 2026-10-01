@@ -11,8 +11,12 @@ export default async function MessagesLayout({ children }: { children: React.Rea
   if (!me) redirect("/giris?returnTo=/mesajlar");
   const { conversations } = await apiServer<{ conversations: ConversationSummary[] }>("/conversations").catch(() => ({ conversations: [] }));
   return (
-    <MessagesShell initial={conversations} me={me.id}>
-      {children}
-    </MessagesShell>
+    <>
+      {/* The messages workspace fills the screen; no site footer under it. */}
+      <style>{"footer[data-site-footer]{display:none!important}"}</style>
+      <MessagesShell initial={conversations} me={me.id}>
+        {children}
+      </MessagesShell>
+    </>
   );
 }

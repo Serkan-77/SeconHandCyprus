@@ -81,11 +81,12 @@ export function MessagesShell({ initial, me, children }: { initial: Conversation
 
   return (
     <ConversationsContext.Provider value={value}>
-      <div className="mx-auto grid max-w-[1320px] lg:h-[calc(100dvh-108px)] lg:grid-cols-[360px_1fr] lg:gap-0 lg:px-6 lg:py-4">
-        <aside className={cn("min-h-0 lg:overflow-hidden lg:rounded-l-card lg:border lg:border-border", openId && "hidden lg:block")}>
+      {/* A workspace that fills the screen under the header: rail | conversation (| context, inside the thread). */}
+      <div className="grid lg:h-[calc(100dvh-134px)] lg:grid-cols-[380px_minmax(0,1fr)]">
+        <aside className={cn("min-h-0 lg:overflow-hidden lg:border-r lg:border-border", openId && "hidden lg:block")}>
           <ConversationList conversations={conversations} openId={openId} />
         </aside>
-        <section className={cn("min-h-0 lg:overflow-hidden lg:rounded-r-card lg:border lg:border-l-0 lg:border-border", !openId && "hidden lg:block")}>{children}</section>
+        <section className={cn("min-h-0 lg:overflow-hidden", !openId && "hidden lg:block")}>{children}</section>
       </div>
     </ConversationsContext.Provider>
   );
@@ -110,8 +111,15 @@ function ConversationList({ conversations, openId }: { conversations: Conversati
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border px-4 pb-3 pt-4">
-        <h1 className="text-xl font-bold tracking-tight">{t("Mesajlar")}</h1>
+      <div className="px-4 pb-0 pt-5 sm:px-5">
+        <h1 className="flex items-baseline gap-2 text-[26px] font-bold tracking-[-0.02em]">
+          {t("Mesajlar")}
+          {conversations.some((c) => c.unread) ? (
+            <span className="text-[14px] font-semibold text-accent tabular">
+              {conversations.reduce((n, c) => n + c.unread, 0)} {t("okunmamış")}
+            </span>
+          ) : null}
+        </h1>
         <div className="relative mt-3">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
@@ -120,17 +128,17 @@ function ConversationList({ conversations, openId }: { conversations: Conversati
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("Kişi ya da ilan ara")}
             aria-label={t("Sohbetlerde ara")}
-            className="h-10 w-full rounded-full border border-border-strong bg-surface pl-9 pr-3 text-[14px] focus:border-accent focus:outline-none"
+            className="h-11 w-full rounded-xl border border-border-strong bg-surface pl-9 pr-3 text-[14px] focus:border-brand focus:outline-none"
           />
         </div>
-        <div className="no-scrollbar mt-3 flex gap-1.5 overflow-x-auto" role="tablist">
+        <div className="no-scrollbar mt-3 flex gap-5 overflow-x-auto border-b border-border" role="tablist">
           {tabs.map((x) => (
             <button
               key={x.key}
               role="tab"
               aria-selected={tab === x.key}
               onClick={() => setTab(x.key)}
-              className={cn("h-8 flex-shrink-0 rounded-pill px-3 text-[13px] font-medium", tab === x.key ? "bg-brand text-on-brand" : "bg-brand-soft text-muted hover:text-text")}
+              className={cn("-mb-px h-10 flex-shrink-0 border-b-2 text-[14px] font-semibold", tab === x.key ? "border-brand text-text" : "border-transparent text-muted hover:text-text")}
             >
               {t(x.label)}
             </button>
@@ -144,28 +152,27 @@ function ConversationList({ conversations, openId }: { conversations: Conversati
               <Link
                 href={`/mesajlar/${c.id}`}
                 aria-current={c.id === openId ? "page" : undefined}
-                className={cn("flex gap-3 border-b border-border px-4 py-3 transition hover:bg-bg", c.id === openId && "bg-accent-soft hover:bg-accent-soft")}
+                className={cn("relative flex gap-3.5 px-4 py-3.5 transition hover:bg-brand-soft sm:px-5", c.id === openId && "bg-brand-soft")}
               >
-                <span className="relative flex-shrink-0">
-                  <Avatar name={c.other?.name ?? "?"} src={c.other?.avatar} size="md" />
-                  {c.listing?.image ? (
-                    <span className="absolute -bottom-1 -right-1 h-6 w-6 overflow-hidden rounded-md ring-2 ring-surface">
-                      <MediaImage urls={c.listing.image} alt="" max="sm" sizes="24px" />
-                    </span>
-                  ) : null}
+                {c.id === openId ? <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-brand" aria-hidden /> : null}
+                <span className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-brand-soft">
+                  {c.listing?.image ? <MediaImage urls={c.listing.image} alt="" max="sm" sizes="56px" /> : <Icon name="image" className="m-auto mt-4 h-6 w-6 text-subtle" />}
+                  <span className="absolute -bottom-0.5 -right-0.5 rounded-full ring-2 ring-surface">
+                    <Avatar name={c.other?.name ?? "?"} src={c.other?.avatar} size="xs" />
+                  </span>
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-2">
-                    <span className={cn("truncate text-[14px]", c.unread ? "font-bold" : "font-semibold")} translate="no">
+                    <span className={cn("truncate text-[15px]", c.unread ? "font-bold" : "font-semibold")} translate="no">
                       {c.other?.name ?? t("Silinmiş kullanıcı")}
                     </span>
-                    <span className="flex-shrink-0 text-[12px] text-subtle">{formatLocalized("chatTime", [c.lastMessageAt], locale)}</span>
+                    <span className={cn("flex-shrink-0 text-[12px]", c.unread ? "font-semibold text-accent" : "text-subtle")}>{formatLocalized("chatTime", [c.lastMessageAt], locale)}</span>
                   </span>
-                  <span className="block truncate text-[12px] text-muted" translate="no">
-                    {c.listing?.title ?? t("İlan kaldırıldı")}
+                  <span className="block truncate text-[12.5px] text-muted" translate="no">
+                    {c.role === "buyer" ? t("Alırken") : t("Satarken")} · {c.listing?.title ?? t("İlan kaldırıldı")}
                   </span>
                   <span className="mt-0.5 flex items-center gap-2">
-                    <span className={cn("min-w-0 flex-1 truncate text-[13px]", c.unread ? "font-medium text-text" : "text-muted")}>
+                    <span className={cn("min-w-0 flex-1 truncate text-[13.5px]", c.unread ? "font-semibold text-text" : "text-muted")}>
                       {c.lastMessage ? (
                         <>
                           {c.lastMessage.mine ? <span className="text-subtle">{t("Sen:")} </span> : null}
@@ -176,6 +183,7 @@ function ConversationList({ conversations, openId }: { conversations: Conversati
                       )}
                     </span>
                     {c.unread ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-bold text-on-accent tabular">{c.unread}</span> : null}
+                    {c.meeting.confirmedAt ? <Icon name="handshake" className="h-4 w-4 flex-shrink-0 text-success" aria-label={t("Buluşma onaylandı")} /> : null}
                   </span>
                 </span>
               </Link>

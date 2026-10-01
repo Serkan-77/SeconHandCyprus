@@ -200,17 +200,18 @@ export function ChatThread({
   let lastDay = "";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-surface lg:relative lg:inset-auto lg:z-auto lg:h-full">
+    <div className="fixed inset-0 z-50 flex bg-surface lg:relative lg:inset-auto lg:z-auto lg:h-full">
+      <div className="relative flex min-w-0 flex-1 flex-col">
       {/* Header */}
-      <header className="flex items-center gap-2 border-b border-border px-2 py-2 pt-[calc(0.5rem+env(safe-area-inset-top))] lg:px-4 lg:pt-2">
+      <header className="flex h-[68px] flex-shrink-0 items-center gap-2 border-b border-border px-2 pt-[env(safe-area-inset-top)] lg:px-5">
         <button type="button" onClick={() => router.push("/mesajlar")} aria-label={t("Sohbetlere dön")} className="grid h-11 w-11 place-items-center rounded-full hover:bg-brand-soft lg:hidden">
           <Icon name="back" className="h-5 w-5" />
         </button>
         {convo.other ? (
           <Link href={`/satici/${convo.other.id}`} className="flex min-w-0 flex-1 items-center gap-2.5">
-            <Avatar name={otherName} src={convo.other.avatar} size="sm" />
+            <Avatar name={otherName} src={convo.other.avatar} size="md" />
             <span className="min-w-0">
-              <span className="block truncate text-[15px] font-semibold" translate="no">
+              <span className="block truncate text-[16px] font-bold" translate="no">
                 {otherName}
               </span>
               <span className="block text-[12px] text-muted">{t(convo.role === "buyer" ? "Satıcı" : "Alıcı")}</span>
@@ -226,7 +227,7 @@ export function ChatThread({
 
       {/* Listing context */}
       {convo.listing ? (
-        <Link href={`/ilan/${convo.listing.slug}`} className="flex items-center gap-3 border-b border-border bg-bg px-4 py-2.5 hover:bg-brand-soft">
+        <Link href={`/ilan/${convo.listing.slug}`} className="flex items-center gap-3 border-b border-border px-4 py-2.5 hover:bg-brand-soft xl:hidden">
           <span className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-md bg-brand-soft">
             <MediaImage urls={convo.listing.image} alt="" max="sm" sizes="44px" />
           </span>
@@ -243,12 +244,12 @@ export function ChatThread({
           )}
         </Link>
       ) : (
-        <p className="border-b border-border bg-bg px-4 py-2.5 text-[13px] text-muted">{t("Bu sohbetin ilanı kaldırılmış.")}</p>
+        <p className="border-b border-border px-4 py-2.5 text-[13px] text-muted xl:hidden">{t("Bu sohbetin ilanı kaldırılmış.")}</p>
       )}
 
       {/* Meeting */}
       {bothTalked || stage !== "none" ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-4 py-2 text-[13px]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-4 py-2 text-[13px] xl:hidden">
           <Icon name="handshake" className="h-4 w-4 flex-shrink-0 text-muted" />
           <span className="min-w-0 flex-1 text-muted">{stage === "none" ? t("Buluşup alışverişi tamamladınız mı?") : t(MEETING_TEXT[stage])}</span>
           {canConfirm && convo.other ? (
@@ -266,7 +267,7 @@ export function ChatThread({
       ) : null}
 
       {/* Messages */}
-      <div ref={scroller} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-5" aria-live="polite" aria-relevant="additions">
+      <div ref={scroller} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-5 sm:px-6 lg:px-10" aria-live="polite" aria-relevant="additions">
         {hasMore ? (
           <div className="mb-3 flex justify-center">
             <button type="button" onClick={loadOlder} disabled={loadingOlder} className="rounded-pill bg-brand-soft px-3 py-1.5 text-[12px] font-medium text-muted">
@@ -274,7 +275,7 @@ export function ChatThread({
             </button>
           </div>
         ) : (
-          <div className="mx-auto mb-4 max-w-md rounded-card bg-bg px-4 py-3 text-center text-[12px] leading-relaxed text-muted">
+          <div className="mx-auto mb-5 max-w-md px-4 py-2 text-center text-[12px] leading-relaxed text-muted xl:hidden">
             <Icon name="shield" className="mx-auto mb-1 h-4 w-4 text-success" />
             {t("Güvenliğin için: ürünü görmeden ödeme yapma, kapora gönderme ve konuşmayı uygulama içinde tut.")}
           </div>
@@ -311,8 +312,8 @@ export function ChatThread({
                 <li className={cn("flex", mine ? "justify-end" : "justify-start", lastInGroup && "mb-2")}>
                   <div
                     className={cn(
-                      "max-w-[82%] rounded-[18px] px-3.5 py-2 text-[15px] leading-snug sm:max-w-[70%]",
-                      mine ? "bg-accent text-on-accent" : "bg-brand-soft text-text",
+                      "max-w-[82%] rounded-[20px] px-4 py-2.5 text-[15px] leading-snug sm:max-w-[64%]",
+                      mine ? "bg-brand text-on-brand" : "bg-brand-soft text-text",
                       mine ? (lastInGroup ? "rounded-br-md" : "") : lastInGroup ? "rounded-bl-md" : "",
                       m.pending === "sending" && "opacity-70",
                       m.pending === "failed" && "bg-danger-soft text-text ring-1 ring-danger/40",
@@ -321,7 +322,7 @@ export function ChatThread({
                     <p className="whitespace-pre-wrap break-words" translate="no">
                       {m.body}
                     </p>
-                    <p className={cn("mt-0.5 flex items-center justify-end gap-1 text-[11px]", mine && !m.pending ? "text-on-accent/75" : "text-muted")}>
+                    <p className={cn("mt-0.5 flex items-center justify-end gap-1 text-[11px]", mine && !m.pending ? "text-on-brand/65" : "text-muted")}>
                       {m.pending === "failed" ? (
                         <button type="button" onClick={() => void send(m.body, m.id)} className="font-semibold text-danger underline">
                           {t("Gönderilemedi · Tekrar dene")}
@@ -357,7 +358,7 @@ export function ChatThread({
       ) : null}
 
       {/* Composer */}
-      <div className="border-t border-border px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] sm:px-4">
+      <div className="border-t border-border px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10">
         {convo.canSend ? (
           <form
             onSubmit={(e) => {
@@ -388,13 +389,13 @@ export function ChatThread({
               rows={1}
               maxLength={LIMITS.messageMax}
               placeholder={t("Mesajını yaz…")}
-              className="max-h-[140px] min-h-11 flex-1 resize-none rounded-[22px] border border-border-strong bg-surface px-4 py-2.5 text-[15px] leading-snug focus:border-accent focus:outline-none"
+              className="max-h-[140px] min-h-12 flex-1 resize-none rounded-2xl border border-border-strong bg-surface px-4 py-3 text-[15px] leading-snug focus:border-brand focus:outline-none"
             />
             <button
               type="submit"
               disabled={!text.trim()}
               aria-label={t("Gönder")}
-              className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-accent text-on-accent transition disabled:bg-brand-soft disabled:text-subtle"
+              className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl bg-brand text-on-brand transition disabled:bg-brand-soft disabled:text-subtle"
             >
               <Icon name="send" className="h-5 w-5" />
             </button>
@@ -409,6 +410,88 @@ export function ChatThread({
           </p>
         )}
       </div>
+
+      </div>
+
+      {/* Context panel (wide screens): what this conversation is about */}
+      <aside className="hidden w-[340px] flex-shrink-0 flex-col overflow-y-auto border-l border-border xl:flex" aria-label={t("Sohbet bilgisi")}>
+        {convo.listing ? (
+          <Link href={`/ilan/${convo.listing.slug}`} className="group block p-5">
+            <span className="relative block aspect-[4/3] overflow-hidden rounded-2xl bg-brand-soft">
+              <MediaImage urls={convo.listing.image} alt="" max="md" sizes="300px" className="transition duration-500 group-hover:scale-[1.03]" />
+              {convo.listing.status !== "active" ? (
+                <span className="absolute inset-0 grid place-items-center bg-black/50 text-[12px] font-bold uppercase tracking-[0.12em] text-white">
+                  {t(convo.listing.status === "sold" ? "Satıldı" : "Yayında değil")}
+                </span>
+              ) : null}
+            </span>
+            <span className="mt-3 block text-[22px] font-bold tracking-tight tabular">{formatLocalized("formatPrice", [convo.listing.price, convo.listing.currency], locale)}</span>
+            <span className="mt-0.5 line-clamp-2 block text-[14.5px] group-hover:underline" translate="no">
+              {convo.listing.title}
+            </span>
+          </Link>
+        ) : (
+          <p className="p-5 text-[14px] text-muted">{t("Bu sohbetin ilanı kaldırılmış.")}</p>
+        )}
+
+        <section className="border-t border-border p-5">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">{t(convo.role === "buyer" ? "Satıcı" : "Alıcı")}</p>
+          {convo.other ? (
+            <Link href={`/satici/${convo.other.id}`} className="mt-3 flex items-center gap-3">
+              <Avatar name={otherName} src={convo.other.avatar} size="md" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold" translate="no">
+                  {otherName}
+                </span>
+                <span className="text-[13px] text-accent">{t("Profili görüntüle")}</span>
+              </span>
+            </Link>
+          ) : (
+            <p className="mt-2 text-[14px] text-muted">{otherName}</p>
+          )}
+        </section>
+
+        <section className="border-t border-border p-5">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">{t("Buluşma")}</p>
+          <ol className="mt-3 space-y-2 text-[14px]">
+            {[
+              { done: convo.meeting.mine, label: "Sen onayladın" },
+              { done: convo.meeting.theirs, label: convo.role === "buyer" ? "Satıcı onayladı" : "Alıcı onayladı" },
+              { done: convo.rated, label: "Değerlendirme" },
+            ].map((s) => (
+              <li key={s.label} className={cn("flex items-center gap-2.5", s.done ? "text-text" : "text-muted")}>
+                <span className={cn("grid h-5 w-5 place-items-center rounded-full", s.done ? "bg-success text-white" : "border border-border-strong")}>
+                  {s.done ? <Icon name="check" className="h-3 w-3" /> : null}
+                </span>
+                {t(s.label)}
+              </li>
+            ))}
+          </ol>
+          <div className="mt-4 flex flex-col gap-2">
+            {canConfirm && convo.other ? (
+              <button type="button" onClick={() => setModal("meeting")} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-brand text-[14px] font-semibold text-on-brand">
+                <Icon name="handshake" className="h-4 w-4" />
+                {t("Buluşmayı onayla")}
+              </button>
+            ) : null}
+            {canRate && !convo.rated && convo.other ? (
+              <button type="button" onClick={() => setModal("rating")} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-brand text-[14px] font-semibold text-on-brand">
+                <Icon name="star" className="h-4 w-4" />
+                {t("Değerlendir")}
+              </button>
+            ) : null}
+            {stage === "none" && !canConfirm ? <p className="text-[13px] text-muted">{t("Buluşup alışverişi tamamladığınızda buradan onaylayın.")}</p> : null}
+          </div>
+        </section>
+
+        <section className="mt-auto border-t border-border p-5 text-[13px] text-muted">
+          <p className="flex items-center gap-2 font-semibold text-text">
+            <Icon name="shield" className="h-4 w-4 text-success" />
+            {t("Güvenli alışveriş")}
+          </p>
+          <p className="mt-1.5 leading-relaxed">{t("Ürünü görmeden ödeme yapma, kapora gönderme ve konuşmayı uygulama içinde tut.")}</p>
+        </section>
+      </aside>
 
       {/* Options */}
       <Modal title="Sohbet seçenekleri" open={modal === "options"} onClose={() => setModal(null)} size="sm">

@@ -47,7 +47,7 @@ export async function Footer() {
   const { t } = await getI18n();
   // One compact dark band: brand line + the link groups side by side, then the legal line.
   return (
-    <footer className="dark hidden bg-bg text-text lg:block">
+    <footer data-site-footer className="dark hidden bg-bg text-text lg:block">
       <div className={cn(SHELL, "flex gap-16 py-10")}>
         <div className="w-[300px] flex-shrink-0">
           <Link href="/" className="inline-flex items-center" aria-label={t("Ana sayfa")}>
