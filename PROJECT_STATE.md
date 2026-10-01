@@ -35,12 +35,9 @@ cutover confirmation.
 - [x] Phase C — api/ skeleton, shared/ package, dev Postgres (docker-compose.dev.yml)
 - [x] Phase D — db/migrations 0001–0005 (baseline, auth, realtime, taxonomy, grants); apply cleanly
 - [x] Phase E — auth API (19 tests passing)
-- [ ] Phase F — authorization test suites (listings, messaging, admin, uploads, DB-level, realtime)
-- [ ] Phase G — remaining API polish found by tests
-- [ ] Phase H — image pipeline tests (EXIF strip, MIME spoofing, traversal)
-- [ ] Phase I — realtime tests
-- [ ] Phase J–Q — web app: replace Supabase client with API client; new pages/flows
-- [ ] Phase R — design system + responsive
+- [x] Phase F–I — API security suites: 82 tests pass (auth, listings, messaging, admin, uploads, realtime)
+- [x] Phase J–Q — web app rebuilt on the API (home, search/filters, listing page, sell wizard, edit, chat, account, seller/store, auth, admin + taxonomy manager)
+- [x] Phase R — design system (tokens, UI kit); responsive QA in a real browser NOT yet done
 - [ ] Phase S/T — a11y/perf/SEO/security hardening (CSP for new origins)
 - [ ] Phase U — test expansion, E2E (Playwright) on the new stack
 - [ ] Phase V — Dockerfiles, compose, Caddy snippet
@@ -50,13 +47,21 @@ cutover confirmation.
 
 ## Current task
 
-Phase F: authorization/security test suites for the API.
+Local end-to-end run of the new stack (API + Next dev + seeded DB) and browser QA.
 
 ## Next exact action
 
-Write `api/test/listings.test.ts`, `messaging.test.ts`, `admin.test.ts`,
-`uploads.test.ts`, `db-invariants.test.ts`, `realtime.test.ts`; run
-`cd api && npm test`; fix failures in the app (never weaken tests).
+1. `docker compose -f docker-compose.dev.yml up -d` (Docker Desktop must be running).
+2. Recreate dev DB `kibrisikincielcim` (0001 changed since first dev apply): drop/create as
+   postgres, `create extension pg_trgm, citext`, `alter schema public owner to kie_owner`
+   (same steps as api/test/helpers.ts resetDatabase), then `npm --prefix api run migrate`
+   and `npm --prefix api run seed` (api/.env already has dev settings + SEED_*; NOT committed).
+3. Run `npm run dev:api` and `npm run dev`; QA pages at 360/768/1280/1440 px, fix issues.
+4. Then: Dockerfiles + compose + Caddy (Phase V), backups (W), Supabase export/import
+   tooling (X), docs (README/ARCHITECTURE/SECURITY/DEPLOYMENT/BACKUP_RESTORE/MIGRATION), cutover checkpoint (Y).
+
+Note: the old Supabase .env.local was saved as `.env.local.supabase-backup` (gitignored);
+`.env.local` now points the web app at the local API.
 
 ## Important commands
 
@@ -76,11 +81,14 @@ Not applied anywhere but local dev/test.
 
 | Suite | Result |
 |-------|--------|
-| api/test/auth.test.ts | 19/19 pass |
+| api (auth, listings, messaging, admin, uploads, realtime) | 82/82 pass |
+| web unit tests (npm test) | 61/61 pass |
+| web typecheck, lint, `next build` | pass |
 
 ## Known issues / notes
 
-- Web app still uses Supabase; untouched so far on this branch.
+- Not yet verified in a real browser; no E2E (Playwright) suite for the new stack yet.
+- `scripts/production-smoke.mjs` still targets Supabase; must be rewritten.
 - Phone OTP login (off in production) is not carried over; documented.
 - Google OAuth: planned in API behind GOOGLE_CLIENT_ID/SECRET (not yet built).
 

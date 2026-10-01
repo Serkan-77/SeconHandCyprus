@@ -12,7 +12,8 @@
     "start": "node dist/server.js",
     "migrate": "tsx --env-file-if-exists=.env src/db/migrate.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 \"test/**/*.test.ts\""
+    "test": "node --import tsx --test --test-concurrency=1 \"test/**/*.test.ts\"",
+    "seed": "tsx --env-file-if-exists=.env scripts/seed.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.2",
