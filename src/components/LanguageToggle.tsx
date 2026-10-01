@@ -26,7 +26,7 @@ export function LanguageToggle({ className }: { className?: string }) {
       data-testid="language-toggle"
       className={
         className ??
-        "inline-flex h-10 min-w-10 shrink-0 items-center justify-center gap-1.5 rounded-button px-2.5 text-xs font-semibold text-text transition hover:bg-brand-soft"
+        "inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-button px-2.5 text-xs font-semibold text-text transition hover:bg-brand-soft"
       }
     >
       <Icon name="globe" className="h-4 w-4" />

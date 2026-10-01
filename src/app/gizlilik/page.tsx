@@ -80,8 +80,8 @@ const sections: LegalSection[] = [
             <I18n.b>Moderasyon ekibi:</I18n.b> şikayetleri ve ilanları incelerken gerekli bilgilere erişir.
           </I18n.li>
           <I18n.li>
-            <I18n.b>Hizmet sağlayıcılar:</I18n.b> veritabanı, kimlik doğrulama ve dosya depolama Supabase altyapısında; e-postalar
-            e-posta gönderim hizmetleri aracılığıyla; reklamlar Google tarafından sunulur.
+            <I18n.b>Hizmet sağlayıcılar:</I18n.b> veritabanı, kimlik doğrulama ve fotoğraflar kiraladığımız sanal sunucuda,
+            kendi yönettiğimiz yazılımla tutulur; e-postalar e-posta gönderim hizmetleri aracılığıyla; reklamlar Google tarafından sunulur.
           </I18n.li>
         </ul>
         <I18n.p>Verilerini satmayız. Yasal bir talep olmadıkça üçüncü kişilerle paylaşmayız.</I18n.p>

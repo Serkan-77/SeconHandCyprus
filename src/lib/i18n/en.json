@@ -109,7 +109,6 @@
   "Moderasyon ekibi:": "Moderation team:",
   "şikayetleri ve ilanları incelerken gerekli bilgilere erişir.": "can access the information needed to review reports and listings.",
   "Hizmet sağlayıcılar:": "Service providers:",
-  "veritabanı, kimlik doğrulama ve dosya depolama Supabase altyapısında; e-postalar e-posta gönderim hizmetleri aracılığıyla; reklamlar Google tarafından sunulur.": "database, authentication and file storage are provided by Supabase; emails by email delivery services; ads by Google.",
   "Verilerini satmayız. Yasal bir talep olmadıkça üçüncü kişilerle paylaşmayız.": "We do not sell your data. We do not share it with third parties unless legally required.",
   "Site, giderlerini karşılamak için Google AdSense reklamları gösterir. Google ve iş ortakları, bu sitedeki ve diğer sitelerdeki ziyaretlerine dayanarak reklam sunmak için çerezler kullanabilir. Google'ın reklam çerezlerini kullanması, Google ve iş ortaklarının sana bu ve diğer sitelere yaptığın ziyaretlere göre reklam göstermesini sağlar.": "The site displays Google AdSense ads to cover its costs. Google and its partners may use cookies to serve ads based on your visits to this and other websites. Google's advertising cookies allow Google and its partners to show you ads based on those visits.",
   "Kişiselleştirilmiş reklamları": "Turn off personalized ads via",
@@ -538,7 +537,6 @@
   "satılık": "for sale",
   "İçeriğe atla": "Skip to content",
   "Veritabanı bağlantısı yapılandırılmadı:": "Database connection is not configured:",
-  "içine Supabase anahtarlarını ekle.": "add your Supabase keys to this file.",
   "Hesabın kısıtlı. İlan verme ve mesajlaşma geçici olarak kapalı.": "Your account is restricted. Posting and messaging are temporarily disabled.",
   "Ayrıntılar": "Details",
   "Kıbrıs'taki mağaza ve işletmelerin ikinci el ve sıfır ürünleri tek yerde.": "Second-hand and new products from stores and businesses in Cyprus, all in one place.",
@@ -1258,9 +1256,6 @@
   "Hesap askıya alındı": "Account suspended",
   "Kısıtlama kaldırıldı": "Restriction lifted",
   "Bunu zaten şikayet ettin; ekibimiz inceliyor.": "You have already reported this; our team is reviewing it.",
-  "NEXT_PUBLIC_SUPABASE_URL tanımlı değil": "NEXT_PUBLIC_SUPABASE_URL is not defined",
-  "NEXT_PUBLIC_SUPABASE_URL geçerli bir https adresi değil": "NEXT_PUBLIC_SUPABASE_URL is not a valid HTTPS address",
-  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY tanımlı değil": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is not defined",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY gizli (secret/service_role) bir anahtar gibi görünüyor": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY appears to be a secret/service_role key",
   "NEXT_PUBLIC_SITE_URL tanımlı değil": "NEXT_PUBLIC_SITE_URL is not defined",
   "NEXT_PUBLIC_SITE_URL geçerli bir http(s) adresi değil": "NEXT_PUBLIC_SITE_URL is not a valid HTTP(S) address",
@@ -1968,5 +1963,6 @@
   "Kategori yolu": "Category path",
   "Son kontrol": "Final check",
   "Devam": "Continue",
-  "Sayfalar": "Pages"
+  "Sayfalar": "Pages",
+  "veritabanı, kimlik doğrulama ve fotoğraflar kiraladığımız sanal sunucuda, kendi yönettiğimiz yazılımla tutulur; e-postalar e-posta gönderim hizmetleri aracılığıyla; reklamlar Google tarafından sunulur.": "database, authentication and photos are kept on a virtual server we rent, running software we operate ourselves; emails are sent through email delivery services; ads are served by Google."
 }
