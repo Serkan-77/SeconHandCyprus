@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Icon, type IconName } from "@/components/icons";
-import { Avatar } from "@/components/ui/Avatar";
-import { LinkButton } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/FormError";
-import { Stars } from "@/components/ui/Stars";
 import { apiServer, getMe } from "@/lib/api/server";
-import type { Notification } from "@/lib/api/types";
+import type { MyListing, Notification } from "@/lib/api/types";
+import { ListingRail } from "@/components/ListingCard";
+import { SectionHead } from "@/components/SectionHead";
+import { cn } from "@/lib/cn";
 import { getI18n } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Hesabım" };
@@ -15,8 +15,11 @@ export const metadata: Metadata = { title: "Hesabım" };
 export default async function AccountHome({ searchParams }: { searchParams: Promise<{ sifre?: string }> }) {
   const [me, { t, f }, { sifre }] = await Promise.all([getMe(), getI18n(), searchParams]);
   if (!me) redirect("/giris?returnTo=/hesabim");
-  const notifications = await apiServer<{ items: Notification[] }>("/me/notifications?pageSize=5").catch(() => ({ items: [] }));
-  const name = me.accountType === "store" && me.store.name ? me.store.name : me.displayName;
+  const [notifications, myListings] = await Promise.all([
+    apiServer<{ items: Notification[] }>("/me/notifications?pageSize=5").catch(() => ({ items: [] })),
+    apiServer<{ listings: MyListing[] }>("/me/listings?status=active").catch(() => ({ listings: [] as MyListing[] })),
+  ]);
+  const mine = myListings.listings.slice(0, 12);
 
   const todo: { done: boolean; label: string; href: string }[] = [
     { done: Boolean(me.avatar), label: "Profil fotoğrafı ekle", href: "/hesabim/ayarlar#profil" },
@@ -34,40 +37,8 @@ export default async function AccountHome({ searchParams }: { searchParams: Prom
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10">
       {sifre === "yenilendi" ? <Notice tone="success" icon="check">{t("Şifren değiştirildi. Diğer cihazlardaki oturumların kapatıldı.")}</Notice> : null}
-
-      <section className="flex flex-col gap-4 rounded-card border border-border p-5 sm:flex-row sm:items-center">
-        <Avatar name={name} src={me.avatar} size="lg" />
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold tracking-tight" translate="no">
-            {name}
-          </h1>
-          <p className="mt-0.5 text-[14px] text-muted">
-            {f("memberSince", me.createdAt)}
-            {me.region ? ` · ${me.region}` : ""}
-          </p>
-          <p className="mt-1 flex items-center gap-1.5 text-[13px]">
-            {me.rating.count ? (
-              <>
-                <Stars value={me.rating.avg} />
-                <span className="font-semibold">{f("decimal", me.rating.avg)}</span>
-                <span className="text-muted">({me.rating.count})</span>
-              </>
-            ) : (
-              <span className="text-muted">{t("Henüz değerlendirme yok")}</span>
-            )}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <LinkButton href={`/satici/${me.id}`} variant="outline" size="sm">
-            {t("Profilimi gör")}
-          </LinkButton>
-          <LinkButton href="/ilan-ver" size="sm" icon={<Icon name="plus" className="h-4 w-4" />}>
-            {t("İlan ver")}
-          </LinkButton>
-        </div>
-      </section>
 
       {me.counts.rejected ? (
         <Notice tone="danger">
@@ -78,15 +49,27 @@ export default async function AccountHome({ searchParams }: { searchParams: Prom
         </Notice>
       ) : null}
 
-      <section aria-label={t("İlan özetin")} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map((s) => (
-          <Link key={s.label} href={s.href} className="rounded-card border border-border p-4 transition hover:border-border-strong hover:shadow-sm">
-            <Icon name={s.icon} className="h-5 w-5 text-muted" />
-            <p className="mt-3 text-2xl font-bold tabular">{s.value}</p>
-            <p className="text-[13px] text-muted">{t(s.label)}</p>
+      <section aria-label={t("İlan özetin")} className="grid grid-cols-2 border-y border-border sm:grid-cols-4">
+        {stats.map((s, i) => (
+          <Link key={s.label} href={s.href} className={cn("group flex items-end justify-between gap-3 py-5 pr-4", i > 0 && "sm:border-l sm:border-border sm:pl-6", i % 2 === 1 && "pl-4", i > 1 && "border-t border-border sm:border-t-0")}>
+            <span>
+              <span className="block text-[36px] font-bold leading-none tracking-[-0.03em] tabular">{s.value}</span>
+              <span className="mt-1.5 flex items-center gap-1.5 text-[14px] text-muted group-hover:text-text">
+                <Icon name={s.icon} className="h-4 w-4" />
+                {t(s.label)}
+              </span>
+            </span>
+            <Icon name="chevron" className="h-5 w-5 text-subtle group-hover:text-text" />
           </Link>
         ))}
       </section>
+
+      {mine.length ? (
+        <section aria-labelledby="mine-heading">
+          <SectionHead id="mine-heading" title={t("Yayındaki ilanların")} href="/hesabim/ilanlar" linkLabel={t("Tümünü yönet")} />
+          <ListingRail items={mine} />
+        </section>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
         {completed < todo.length ? (
