@@ -77,6 +77,7 @@ konsoluna yazılır (`MAIL_TRANSPORT=log`).
 | `npm run test:all` | ikisi birden |
 | `npm run responsive` | Playwright: 33 sayfa × 5 genişlik taşma kontrolü (çalışan dev sunucusu) |
 | `npm run test:i18n` | Playwright: dil değiştirme, form koruma, tema, sayfalar |
+| `npm run e2e` | Playwright: ilan ver → onay → mesaj → anlık yanıt → buluşma → değerlendirme (yerel, `E2E_PASSWORD` = seed şifresi; veri yazar) |
 | `npm run smoke` | **salt okuma** canlı site kontrolü; production'da güvenli |
 | `bash migration/rehearsal/rehearse.sh` | Supabase içe aktarma provası, uçtan uca |
 
