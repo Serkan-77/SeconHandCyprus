@@ -36,9 +36,15 @@ export function newKey(kind: UploadKind, now = new Date()) {
   return `${kind === "listing" ? "l" : "a"}/${now.getUTCFullYear()}/${month}/${randomUUID()}`;
 }
 
-export async function processImage(input: Buffer, kind: UploadKind) {
+/**
+ * `legacy` is for photos imported from the old system: they were accepted
+ * under looser rules, so size and shape limits are relaxed. Decoding is just
+ * as strict and the output is re-encoded the same way.
+ */
+export async function processImage(input: Buffer, kind: UploadKind, opts: { legacy?: boolean } = {}) {
   if (input.length === 0) throw new ImageRejected("Dosya boş.");
-  if (input.length > LIMITS.uploadMaxBytes) throw new ImageRejected("Fotoğraf çok büyük (en fazla 12 MB).");
+  const maxBytes = opts.legacy ? 30 * 1024 * 1024 : LIMITS.uploadMaxBytes;
+  if (input.length > maxBytes) throw new ImageRejected("Fotoğraf çok büyük (en fazla 12 MB).");
   let meta: Metadata;
   try {
     meta = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, failOn: "error" }).metadata();
@@ -57,10 +63,10 @@ export async function processImage(input: Buffer, kind: UploadKind) {
   const rotated = (meta.orientation ?? 1) >= 5;
   const width = rotated ? meta.height : meta.width;
   const height = rotated ? meta.width : meta.height;
-  if (Math.min(width, height) < MIN_EDGE[kind]) {
+  if (Math.min(width, height) < (opts.legacy ? 16 : MIN_EDGE[kind])) {
     throw new ImageRejected("Fotoğraf çok küçük. Daha büyük bir fotoğraf seç.");
   }
-  if (Math.max(width, height) / Math.min(width, height) > 6) {
+  if (!opts.legacy && Math.max(width, height) / Math.min(width, height) > 6) {
     throw new ImageRejected("Fotoğrafın en-boy oranı desteklenmiyor.");
   }
 

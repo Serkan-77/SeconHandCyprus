@@ -56,3 +56,6 @@ responsive-shots/
 /deploy/secrets/
 *.sql.gz
 *.dump
+
+# Migration rehearsal output
+/.rehearsal

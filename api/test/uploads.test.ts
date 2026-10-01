@@ -4,6 +4,7 @@ import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
 import { anon, newUser, resetDatabase, startApp, testJpeg, type TestApp } from "./helpers.ts";
+import { ImageRejected, processImage } from "../src/storage/images.ts";
 
 let t: TestApp;
 before(async () => {
@@ -80,6 +81,16 @@ describe("refused files", () => {
 
   test("anonymous uploads are refused", async () => {
     assert.equal((await anon(t.app).upload(await testJpeg())).statusCode, 401);
+  });
+
+  test("legacy mode (Supabase import only) relaxes size, never decoding", async () => {
+    const small = await testJpeg(100, 100);
+    await assert.rejects(processImage(small, "listing"), ImageRejected);
+    const out = await processImage(small, "listing", { legacy: true });
+    assert.deepEqual(out.variants.map((v) => v.name), ["sm.webp", "md.webp", "lg.webp"]);
+    await assert.rejects(processImage(Buffer.from("<svg onload=alert(1)>"), "listing", { legacy: true }), ImageRejected);
+    const bomb = await sharp({ create: { width: 10000, height: 10000, channels: 3, background: "#000000" } }).png({ compressionLevel: 9 }).toBuffer();
+    await assert.rejects(processImage(bomb, "listing", { legacy: true }), ImageRejected);
   });
 });
 

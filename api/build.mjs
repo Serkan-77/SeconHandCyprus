@@ -6,7 +6,13 @@ import { cp, rm } from "node:fs/promises";
 
 await rm("dist", { recursive: true, force: true });
 await build({
-  entryPoints: { server: "src/server.ts", migrate: "src/db/migrate.ts" },
+  entryPoints: {
+    server: "src/server.ts",
+    migrate: "src/db/migrate.ts",
+    // One-off Supabase import tooling (MIGRATION.md); not used at run time.
+    "supabase-import": "scripts/supabase-import.ts",
+    "supabase-verify": "scripts/supabase-verify.ts",
+  },
   outdir: "dist",
   bundle: true,
   platform: "node",
