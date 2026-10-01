@@ -30,8 +30,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   };
   return (
     <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-4 sm:px-6 sm:pt-6">
-      <div className="grid gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <aside>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
+        <aside className="min-w-0">
           <p className="mb-3 hidden text-[12px] font-bold uppercase tracking-wider text-subtle lg:block">{t("Yönetim")}</p>
           <div className="lg:sticky lg:top-[132px]">
             <AdminNav counts={counts} />

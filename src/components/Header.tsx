@@ -287,7 +287,7 @@ export function Header({
             aria-expanded={megaOpen}
             aria-controls="mega-categories"
             onClick={() => setMegaOpen((v) => !v)}
-            className={cn("mr-2 flex h-9 items-center gap-2 rounded-button px-3 text-[13px] font-semibold", megaOpen ? "bg-brand text-on-brand" : "hover:bg-brand-soft")}
+            className={cn("mr-1 flex h-9 flex-shrink-0 items-center gap-2 rounded-button px-3 text-[13px] font-semibold", megaOpen ? "bg-brand text-on-brand" : "hover:bg-brand-soft")}
           >
             <Icon name="grid" className="h-4 w-4" />
             {t("Tüm kategoriler")}
@@ -295,7 +295,7 @@ export function Header({
           </button>
           <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {categories.map((c) => (
-              <Link key={c.id} href={`/kategori/${c.slug}`} className="flex h-9 flex-shrink-0 items-center whitespace-nowrap rounded-button px-3 text-[13px] text-muted hover:bg-brand-soft hover:text-text">
+              <Link key={c.id} href={`/kategori/${c.slug}`} className="flex h-9 flex-shrink-0 items-center whitespace-nowrap rounded-button px-2.5 text-[13px] text-muted hover:bg-brand-soft hover:text-text">
                 {label(c)}
               </Link>
             ))}

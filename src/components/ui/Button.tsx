@@ -2,7 +2,7 @@ import * as I18n from "@/components/i18n/Localized";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "accent" | "secondary" | "outline" | "ghost" | "danger" | "inverse";
+type Variant = "primary" | "accent" | "secondary" | "outline" | "ghost" | "danger" | "danger-ghost" | "inverse";
 type Size = "sm" | "md" | "lg";
 
 const variantClass: Record<Variant, string> = {
@@ -12,6 +12,7 @@ const variantClass: Record<Variant, string> = {
   outline: "border border-border-strong bg-surface text-text hover:bg-brand-soft disabled:opacity-60",
   ghost: "bg-transparent text-text hover:bg-brand-soft disabled:opacity-60",
   danger: "bg-danger text-white hover:opacity-90 disabled:opacity-50 dark:text-[#1a0a0a]",
+  "danger-ghost": "bg-transparent text-danger hover:bg-danger-soft disabled:opacity-60",
   // For surfaces whose colour already flips independently of the theme.
   inverse: "border border-current/30 bg-transparent text-current hover:bg-current/10",
 };

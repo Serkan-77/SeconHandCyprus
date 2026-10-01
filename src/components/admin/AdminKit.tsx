@@ -73,7 +73,7 @@ export function AdminAction({
   path: string;
   body?: unknown;
   confirm?: string;
-  variant?: "primary" | "accent" | "outline" | "ghost" | "danger" | "secondary";
+  variant?: "primary" | "accent" | "outline" | "ghost" | "danger" | "danger-ghost" | "secondary";
   icon?: IconName;
   done?: string;
   redirectTo?: string;

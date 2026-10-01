@@ -13,7 +13,8 @@
     "test:api": "npm --prefix api test",
     "test:all": "npm test && npm run test:api",
     "test:i18n": "node scripts/i18n-check.mjs",
-    "smoke": "node scripts/production-smoke.mjs"
+    "smoke": "node scripts/production-smoke.mjs",
+    "responsive": "node scripts/responsive-check.mjs"
   },
   "dependencies": {
     "next": "16.3.6",

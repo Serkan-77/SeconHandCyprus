@@ -308,6 +308,19 @@ export function TaxonomyManager({ categories, attributes }: { categories: AdminC
     for (const list of m.values()) list.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "tr"));
     return m;
   }, [categories]);
+  // Listings sit on leaf categories; parents show the total of their subtree.
+  const totals = useMemo(() => {
+    const t = new Map<number, number>();
+    const sum = (id: number): number => {
+      if (t.has(id)) return t.get(id)!;
+      const own = categories.find((c) => c.id === id)?.listingCount ?? 0;
+      const v = own + (byParent.get(id) ?? []).reduce((a, c) => a + sum(c.id), 0);
+      t.set(id, v);
+      return v;
+    };
+    categories.forEach((c) => sum(c.id));
+    return t;
+  }, [categories, byParent]);
   const current = categories.find((c) => c.id === selected) ?? null;
   const chain = useMemo(() => {
     const out: AdminCategory[] = [];
@@ -342,7 +355,7 @@ export function TaxonomyManager({ categories, attributes }: { categories: AdminC
                 <button type="button" onClick={() => setSelected(c.id)} className="flex min-h-9 flex-1 items-center gap-2 text-left text-[14px]">
                   <Icon name={c.icon as IconName} className="h-4 w-4 opacity-70" />
                   <span className={cn("flex-1 truncate", !c.isActive && "line-through opacity-60")}>{c.name}</span>
-                  <span className="text-[12px] opacity-60 tabular">{c.listingCount}</span>
+                  <span className="text-[12px] opacity-60 tabular">{totals.get(c.id) ?? 0}</span>
                 </button>
               </div>
               {expanded && kids.length ? <Tree parent={c.id} depth={depth + 1} /> : null}
@@ -377,7 +390,7 @@ export function TaxonomyManager({ categories, attributes }: { categories: AdminC
                 <p className="text-[13px] text-muted">{chain.map((c) => c.name).join(" › ")}</p>
                 <h2 className="text-xl font-bold">{current.name}</h2>
                 <p className="text-[13px] text-muted">
-                  /kategori/{current.slug} · {t(`${current.listingCount} ilan`)} {current.isActive ? "" : `· ${t("gizli")}`}
+                  /kategori/{current.slug} · {t(`${totals.get(current.id) ?? 0} ilan`)} {current.isActive ? "" : `· ${t("gizli")}`}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -389,8 +402,7 @@ export function TaxonomyManager({ categories, attributes }: { categories: AdminC
                 </Button>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="text-danger"
+                  variant="danger-ghost"
                   onClick={async () => {
                     try {
                       await api.del(`/admin/categories/${current.id}`);
@@ -436,8 +448,7 @@ export function TaxonomyManager({ categories, attributes }: { categories: AdminC
                   </Button>
                   <Button
                     size="sm"
-                    variant="ghost"
-                    className="text-danger"
+                    variant="danger-ghost"
                     onClick={async () => {
                       try {
                         await api.del(`/admin/attributes/${a.id}`);

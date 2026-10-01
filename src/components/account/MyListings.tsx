@@ -149,7 +149,7 @@ export function MyListings({ listings, tab }: { listings: MyListing[]; tab: stri
                     {t("Mesajlar")}
                   </LinkButton>
                 ) : null}
-                <Button size="sm" variant="ghost" className="ml-auto text-danger" onClick={() => setConfirmDelete(l)} icon={<Icon name="trash" className="h-4 w-4" />}>
+                <Button size="sm" variant="danger-ghost" className="ml-auto" onClick={() => setConfirmDelete(l)} icon={<Icon name="trash" className="h-4 w-4" />}>
                   {t("Sil")}
                 </Button>
               </div>
