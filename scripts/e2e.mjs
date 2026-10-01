@@ -122,19 +122,20 @@ try {
 
   step("both confirm the meeting");
   for (const page of [buyer, seller]) {
-    await page.getByRole("button", { name: "Buluşmayı onayla" }).first().click();
+    await page.getByRole("button", { name: "Buluşmayı onayla" }).filter({ visible: true }).first().click();
     await page.getByRole("button", { name: "Evet, buluştuk" }).click();
     await page.getByRole("button", { name: "Evet, buluştuk" }).waitFor({ state: "hidden" });
   }
 
-  await seen(buyer, "Buluşma iki taraf tarafından onaylandı.", 10_000); // live, no reload
+  // Both confirmations arrive live (no reload): rating becomes available.
+  await buyer.getByRole("button", { name: "Değerlendir", exact: true }).filter({ visible: true }).first().waitFor({ timeout: 10_000 });
 
   step("buyer rates the seller");
-  await buyer.getByRole("button", { name: "Değerlendir", exact: true }).first().click();
+  await buyer.getByRole("button", { name: "Değerlendir", exact: true }).filter({ visible: true }).first().click();
   await buyer.getByRole("radio", { name: "5 yıldız" }).click();
   await buyer.getByPlaceholder("Buluşma nasıl geçti? Ürün anlatıldığı gibi miydi?").fill("Kitaplar anlatıldığı gibiydi.");
   await buyer.getByRole("button", { name: "Değerlendirmeyi gönder" }).click();
-  await buyer.getByText("Değerlendirdin").first().waitFor();
+  await buyer.getByRole("heading", { name: "Teşekkürler!" }).waitFor();
 
   if (errors.length) throw new Error(`browser errors:\n  ${errors.join("\n  ")}`);
   console.log("\nPASS: list → approve → find → message → live reply → meeting → rating");
