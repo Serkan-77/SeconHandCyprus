@@ -23,6 +23,8 @@ aynı API ileride native mobil uygulamaya da hizmet eder.
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | bileşenler, kararlar, veri modeli, istek akışı |
 | [docs/SECURITY.md](docs/SECURITY.md) | güvenlik modeli ve onu doğrulayan testler |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | VDS kurulumu, Caddy, güncelleme, loglar |
+| [docs/PRODUCTION_RUNBOOK.md](docs/PRODUCTION_RUNBOOK.md) | canlı sistem: dağıtım, doğrulama, geri alma, arıza |
+| [CLAUDE.md](CLAUDE.md) | mimari, kod haritası, değişiklik kuralları (geliştirici/AI hafızası) |
 | [docs/BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md) | yedekler, haftalık geri yükleme tatbikatı, felaket kurtarma |
 | [docs/MIGRATION.md](docs/MIGRATION.md) | Supabase'ten veri taşıma, canlıya geçiş, geri dönüş planı |
 | [docs/i18n.md](docs/i18n.md) | arayüz metinleri ve İngilizce katalog |
