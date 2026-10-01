@@ -15,6 +15,7 @@
   --bg: #fafafa; /* the occasional off-white section band */
   --surface: #ffffff;
   --surface-2: #fafafa;
+  --band: #f4f4f6; /* soft section band */
   --text: #0a0a0a;
   --muted: #52525b;
   --subtle: #71717a;
@@ -46,6 +47,7 @@
   --bg: #0b0d10;
   --surface: #15181d;
   --surface-2: #1b1f25;
+  --band: #111419;
   --text: #f3f5f8;
   --muted: #a3acb9;
   --subtle: #7d8795;
@@ -212,6 +214,37 @@ textarea:focus-visible {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* A soft section band: the off-white fades in from the white above and
+   back out below, so sections are separated by a transition, not a line. */
+.band-soft {
+  background: linear-gradient(
+    to bottom,
+    var(--surface) 0,
+    var(--band) 120px,
+    var(--band) calc(100% - 120px),
+    var(--surface) 100%
+  );
+}
+
+/* Sections drift up as they enter the screen (CSS scroll-driven animation;
+   browsers without it simply show the section). */
+/* Motion only: content is never transparent, so crawlers, screenshots and
+   print always see it fully. */
+@keyframes rise {
+  from {
+    transform: translateY(36px);
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
 }
 
 /* Numbers in prices and counters line up. */

@@ -91,7 +91,7 @@ export function ListingCard({
 
   if (layout === "feature") {
     return (
-      <article className={cn("group relative isolate overflow-hidden rounded-[18px] bg-brand-soft", className)}>
+      <article className={cn("group relative isolate overflow-hidden rounded-[24px] bg-brand-soft shadow-sm", className)}>
         <MediaImage
           urls={listing.image}
           alt={listing.title}
@@ -147,7 +147,7 @@ export function ListingCard({
 
   return (
     <article className={cn("group relative flex min-w-0 flex-col", className)}>
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-brand-soft">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-brand-soft shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition duration-300 group-hover:shadow-[0_14px_32px_-12px_rgb(0_0_0/0.28)]">
         <MediaImage
           urls={listing.image}
           alt={listing.title}

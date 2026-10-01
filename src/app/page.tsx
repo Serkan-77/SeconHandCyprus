@@ -79,7 +79,7 @@ export default async function HomePage() {
   const onlyShowcase = featured.items.length >= 5;
 
   return (
-    <div className="pb-16">
+    <div>
       <JsonLd data={siteSchema} />
 
       {/* Phones: categories as an icon rail directly under the search. */}
@@ -98,35 +98,38 @@ export default async function HomePage() {
       <section className={cn(SHELL, "pt-4 lg:pt-6")}>
         <div className="grid gap-6 lg:grid-cols-[264px_minmax(0,1fr)] xl:gap-8">
           <aside className="hidden lg:block" aria-label={t("Kategoriler")}>
-            <p className="mb-2 px-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">{t("Kategoriler")}</p>
-            <ul>
-              {tree.map((c) => {
-                const n = counts.get(c.id) ?? 0;
-                return (
-                  <li key={c.id}>
-                    <Link href={`/kategori/${c.slug}`} className="group flex h-11 items-center gap-3 rounded-xl px-3 text-[14.5px] hover:bg-brand hover:text-on-brand">
-                      <Icon name={c.icon as IconName} className="h-[19px] w-[19px]" />
-                      <span className="flex-1 truncate font-medium">{categoryLabel(c, locale)}</span>
-                      <span className={cn("text-[12.5px] tabular", n ? "text-muted group-hover:text-on-brand/70" : "text-subtle/60 group-hover:text-on-brand/50")}>{n}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-            <Link href="/kategori" className="mt-1 flex h-11 items-center gap-3 rounded-xl px-3 text-[14px] font-semibold text-accent hover:bg-accent-soft">
-              <Icon name="grid" className="h-[19px] w-[19px]" />
-              {t("Tüm kategoriler")}
-            </Link>
+            <div className="flex h-full flex-col rounded-[24px] bg-[#0a0a0a] p-3 text-white ring-1 ring-white/5">
+              <p className="px-3 pb-2 pt-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-white/50">{t("Kategoriler")}</p>
+              <ul className="flex-1">
+                {tree.map((c) => {
+                  const n = counts.get(c.id) ?? 0;
+                  return (
+                    <li key={c.id}>
+                      <Link href={`/kategori/${c.slug}`} className="group flex h-[42px] items-center gap-3 rounded-xl px-3 text-[14.5px] transition hover:bg-white hover:text-[#0a0a0a]">
+                        <Icon name={c.icon as IconName} className="h-[18px] w-[18px] opacity-80 group-hover:opacity-100" />
+                        <span className="flex-1 truncate font-medium">{categoryLabel(c, locale)}</span>
+                        <span className={cn("min-w-6 rounded-full px-1.5 text-center text-[12px] tabular", n ? "bg-white/10 text-white group-hover:bg-[#0a0a0a]/10 group-hover:text-[#0a0a0a]" : "text-white/35 group-hover:text-[#0a0a0a]/50")}>{n}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+              <Link href="/kategori" className="mt-2 flex h-11 items-center justify-between rounded-xl bg-white/10 px-4 text-[14px] font-semibold transition hover:bg-white hover:text-[#0a0a0a]">
+                {t("Tüm kategoriler")}
+                <Icon name="arrow" className="h-4 w-4" />
+              </Link>
+            </div>
           </aside>
 
           <div className="min-w-0">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
               <div>
-                <h1 className="text-[26px] font-bold leading-tight tracking-[-0.025em] sm:text-[32px]">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-accent">{t("Kıbrıs'ın ikinci el pazarı")}</p>
+                <h1 className="mt-1 text-[26px] font-bold leading-tight tracking-[-0.025em] sm:text-[32px]">
                   {t(onlyShowcase ? "Vitrin" : "Öne çıkanlar")}
                 </h1>
                 <p className="mt-1 text-[14px] text-muted">
-                  {t("Kıbrıs'ın ikinci el pazarı")} · <span className="font-semibold text-text tabular">{all.total}</span> {t("ilan yayında")}
+                  <span className="font-semibold text-text tabular">{all.total}</span> {t("ilan yayında")} · {t("Ekibimizin öne çıkardıkları")}
                 </p>
               </div>
               <Link href="/ilanlar?vitrin=1" className="flex-shrink-0 border-b-2 border-brand pb-0.5 text-[14px] font-semibold hover:border-accent hover:text-accent">
@@ -137,7 +140,7 @@ export default async function HomePage() {
             {mosaic.length ? (
               <>
                 {/* Desktop mosaic: one large tile and four smaller ones. */}
-                <div className="hidden h-[min(560px,calc(100vh-240px))] min-h-[440px] grid-cols-4 grid-rows-2 gap-3 md:grid">
+                <div className="hidden h-[min(580px,calc(100vh-230px))] min-h-[460px] grid-cols-4 grid-rows-2 gap-3.5 md:grid">
                   {mosaic.map((item, i) => (
                     <ListingCard
                       key={item.id}
@@ -164,10 +167,13 @@ export default async function HomePage() {
 
       {/* Newest listings: the dense product grid. */}
       {latest.items.length ? (
-        <section className={cn(SHELL, "mt-14")} aria-labelledby="latest-heading">
-          <SectionHead id="latest-heading" title={t("Yeni eklenenler")} meta={t("Bugünden geriye")} href="/ilanlar?sirala=yeni" linkLabel={t("Tümünü gör")} />
-          <ListingGrid items={latest.items} fill />
-        </section>
+        <div className="band-soft mt-10 py-[88px]">
+          <section className={cn(SHELL, "reveal")} aria-labelledby="latest-heading">
+            <Eyebrow>{t("Az önce eklendi")}</Eyebrow>
+            <SectionHead id="latest-heading" title={t("Yeni eklenenler")} meta={t("Bugünden geriye")} href="/ilanlar?sirala=yeni" linkLabel={t("Tümünü gör")} />
+            <ListingGrid items={latest.items} fill />
+          </section>
+        </div>
       ) : null}
 
       {nearby && nearby.items.length ? (
@@ -179,7 +185,8 @@ export default async function HomePage() {
 
       {/* Category collections: real photos of what is listed in each popular category. */}
       {collections.length ? (
-        <section className={cn(SHELL, "mt-16")} aria-labelledby="collections-heading">
+        <section className={cn(SHELL, "reveal mt-6")} aria-labelledby="collections-heading">
+          <Eyebrow>{t("Keşfet")}</Eyebrow>
           <SectionHead id="collections-heading" title={t("Popüler kategoriler")} href="/kategori" linkLabel={t("Tüm kategoriler")} />
           <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 xl:grid-cols-4">
             {collections.map(({ category, result }) => (
@@ -224,7 +231,7 @@ function Collection({ category, items, total, locale, t }: { category: CategoryN
   const cells = [...items.slice(0, 4), ...Array.from({ length: Math.max(0, 4 - items.length) }, () => null)];
   return (
     <article className="group">
-      <Link href={`/kategori/${category.slug}`} className="block overflow-hidden rounded-[18px]">
+      <Link href={`/kategori/${category.slug}`} className="block overflow-hidden rounded-[24px] shadow-sm ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
         <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-1 bg-surface">
           {cells.map((item, i) =>
             item?.image ? (
@@ -269,8 +276,8 @@ function RegionsBand({ regions, totals, current, t }: { regions: Region[]; total
   const max = Math.max(1, ...regions.map((r) => totals.get(r.name) ?? 0));
   const side = (s: Region["side"]) => regions.filter((r) => r.side === s);
   return (
-    <section className={cn(SHELL, "mt-16")} aria-labelledby="regions-heading">
-      <div className="dark overflow-hidden rounded-[24px] bg-bg text-text">
+    <section className={cn(SHELL, "reveal mt-20")} aria-labelledby="regions-heading">
+      <div className="dark overflow-hidden rounded-[32px] bg-bg text-text">
         <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-14">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-accent">{t("Bölgeler")}</p>
@@ -323,11 +330,12 @@ function RegionsBand({ regions, totals, current, t }: { regions: Region[]; total
 
 function StoresRow({ stores, t }: { stores: PublicProfile[]; t: Translate }) {
   return (
-    <section className={cn(SHELL, "mt-16")} aria-labelledby="stores-heading">
+    <section className={cn(SHELL, "reveal mt-20")} aria-labelledby="stores-heading">
+      <Eyebrow>{t("İşletmeler")}</Eyebrow>
       <SectionHead id="stores-heading" title={t("Mağazalar")} meta={t("İşletmelerden ikinci el")} href="/magazalar" linkLabel={t("Tüm mağazalar")} />
       <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 xl:mx-0 xl:grid xl:grid-cols-4 xl:px-0">
         {stores.map((s) => (
-          <Link key={s.id} href={`/satici/${s.id}`} className="flex w-[280px] flex-shrink-0 items-center gap-4 rounded-[18px] border border-border p-4 transition hover:border-brand xl:w-auto">
+          <Link key={s.id} href={`/satici/${s.id}`} className="flex w-[280px] flex-shrink-0 items-center gap-4 rounded-[24px] bg-surface p-4 shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:shadow-md xl:w-auto">
             <Avatar name={s.store?.name ?? s.name} src={s.avatar} size="lg" />
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 truncate text-[16px] font-bold">
@@ -341,7 +349,7 @@ function StoresRow({ stores, t }: { stores: PublicProfile[]; t: Translate }) {
             </div>
           </Link>
         ))}
-        <Link href="/hesabim/magaza" className="flex w-[280px] flex-shrink-0 flex-col justify-center rounded-[18px] border-2 border-dashed border-border-strong p-4 hover:border-brand xl:w-auto">
+        <Link href="/hesabim/magaza" className="flex w-[280px] flex-shrink-0 flex-col justify-center rounded-[24px] border-2 border-dashed border-border-strong p-4 transition hover:border-brand xl:w-auto">
           <p className="text-[16px] font-bold">{t("Mağazanı aç")}</p>
           <p className="mt-0.5 text-[13px] text-muted">{t("İşletmen için ücretsiz mağaza sayfası.")}</p>
         </Link>
@@ -355,8 +363,9 @@ function SellAndSafety({ t }: { t: Translate }) {
   const steps = ["Fotoğrafını çek, ilan ver", "Uygulama içinden konuş", "Buluş ve değerlendir"];
   const rules = ["Ürünü görmeden ödeme yapma.", "Kalabalık bir yerde buluş.", "Kapora ya da kargo ücreti isteyenlere dikkat et."];
   return (
-    <section className={cn(SHELL, "mt-16")}>
-      <div className="grid overflow-hidden rounded-[24px] border border-border lg:grid-cols-[1.4fr_1fr]">
+    <div className="band-soft mt-16 py-[88px]">
+    <section className={cn(SHELL, "reveal")}>
+      <div className="grid overflow-hidden rounded-[32px] bg-surface shadow-sm ring-1 ring-black/5 lg:grid-cols-[1.4fr_1fr]">
         <div className="p-6 sm:p-10">
           <h2 className="max-w-[22ch] text-[26px] font-bold leading-tight tracking-[-0.02em] sm:text-[34px]">{t("Evindeki fazlalıklar burada alıcısını bulur.")}</h2>
           <ol className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -372,7 +381,7 @@ function SellAndSafety({ t }: { t: Translate }) {
             {t("Ücretsiz ilan ver")}
           </Link>
         </div>
-        <div className="border-t border-border bg-surface-2 p-6 sm:p-10 lg:border-l lg:border-t-0">
+        <div className="border-t border-border p-6 sm:p-10 lg:border-l lg:border-t-0">
           <p className="flex items-center gap-2 text-[15px] font-bold">
             <Icon name="shield" className="h-5 w-5 text-success" />
             {t("Güvenli alışverişin üç kuralı")}
@@ -391,5 +400,10 @@ function SellAndSafety({ t }: { t: Translate }) {
         </div>
       </div>
     </section>
+    </div>
   );
+}
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.16em] text-accent">{children}</p>;
 }
