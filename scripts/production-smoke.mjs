@@ -1,22 +1,19 @@
 // Read-only smoke test for a deployed site: SAFE TO RUN AGAINST PRODUCTION.
 //
-//   npm run smoke                       (uses the environment variables already set)
-//   node --env-file=.env.production.local scripts/production-smoke.mjs
-//   SMOKE_BASE_URL=https://example.com npm run smoke
+//   npm run smoke                                   (uses NEXT_PUBLIC_SITE_URL)
+//   SMOKE_BASE_URL=https://www.kibrisikincielcim.com npm run smoke
+//   SMOKE_BASE_URL=http://127.0.0.1:3100 npm run smoke   (on the server, behind Caddy)
 //
-// What it does: plain GET requests to public pages and files, plus anonymous
-// reads through the Supabase publishable key. It never signs in, never writes
-// or deletes rows, never uploads files, never creates notifications and does
-// not touch rate limits (no sign-in attempts, no WhatsApp lookups). The two
-// RPC probes (create_listing, delete_my_account) are called without a session:
-// both refuse before doing anything, so they cannot write even when broken.
+// What it does: plain GET requests to public pages, files, the public API
+// and one uploaded image, plus requests that must be refused without a
+// session. It never signs in, never writes, never uploads, and does not touch
+// rate-limited actions (no sign-in attempts, no WhatsApp lookups). The write
+// probes carry no session and no CSRF header, so they are refused before any
+// handler runs, even if something were broken.
 //
-// Needs: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-// NEXT_PUBLIC_SITE_URL (the site to test; SMOKE_BASE_URL overrides it, e.g.
-// a local `next start` of a production build). No secret key is used.
+// Needs: NEXT_PUBLIC_SITE_URL (or SMOKE_BASE_URL). No secrets are used.
 // Exit code: 0 all passed, 1 a check failed.
 
-import { createClient } from "@supabase/supabase-js";
 import { publicEnvProblems } from "../src/lib/envCheck.ts";
 
 const env = process.env;
@@ -55,7 +52,7 @@ const jsonLdBlocks = (html) =>
   [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
 
 // ------------------------------------------------------------------ environment
-await check("Ortam: public değişkenler geçerli (Supabase URL/anahtar, SITE_URL)", () => {
+await check("Ortam: public değişkenler geçerli (SITE_URL, WS_URL, gizli anahtar yok)", () => {
   const problems = publicEnvProblems(env);
   if (problems.length) fail(problems.join("; "));
   if (!LOCAL && !SITE.startsWith("https://")) fail("NEXT_PUBLIC_SITE_URL https olmalı");
@@ -91,7 +88,7 @@ await check("Güvenlik başlıkları (nosniff, X-Frame-Options, Referrer-Policy,
   if (missing.length) fail(missing.join(", "));
   return HTTPS ? "HSTS var" : "http: HSTS beklenmez";
 });
-await check("CSP: nonce + strict-dynamic, unsafe-inline/eval yok, frame-ancestors none, Supabase izinli", () => {
+await check("CSP: nonce + strict-dynamic, unsafe-inline/eval yok, frame-ancestors none, Supabase yok", () => {
   const csp = home?.res.headers.get("content-security-policy") ?? fail("CSP başlığı yok");
   const dir = Object.fromEntries(csp.split(";").map((d) => d.trim().split(/\s+/)).filter((p) => p[0]).map(([k, ...v]) => [k, v]));
   const script = dir["script-src"] ?? fail("script-src yok");
@@ -100,8 +97,7 @@ await check("CSP: nonce + strict-dynamic, unsafe-inline/eval yok, frame-ancestor
   if (script.includes("'unsafe-inline'") || script.includes("'unsafe-eval'")) fail("script-src unsafe-inline/eval içeriyor");
   if (!(dir["frame-ancestors"] ?? []).includes("'none'")) fail("frame-ancestors 'none' değil");
   if (!(dir["object-src"] ?? []).includes("'none'")) fail("object-src 'none' değil");
-  const supabase = new URL(env.NEXT_PUBLIC_SUPABASE_URL).origin;
-  if (!(dir["connect-src"] ?? []).includes(supabase)) fail("connect-src Supabase'i içermiyor");
+  if (/supabase\.co/.test(csp)) fail("CSP hâlâ Supabase içeriyor");
   if (!ADS_ON && /googlesyndication|doubleclick/.test(csp)) fail("reklam kapalıyken CSP reklam alan adları içeriyor");
   return "style-src 'unsafe-inline' bilinen (P2)";
 });
@@ -152,51 +148,83 @@ await check("manifest.webmanifest geçerli JSON", async () => {
 
 // ------------------------------------------------------------------ anonymous access to private areas
 for (const [path, target] of [
-  ["/hesabim", "/giris-gerekli"],
-  ["/mesajlar", "/giris-gerekli"],
-  ["/ilan-ver", "/giris-gerekli"],
+  ["/hesabim", "/giris"],
+  ["/mesajlar", "/giris"],
+  ["/ilan-ver", "/giris"],
+  ["/hesabim/favoriler", "/giris"],
   ["/yonetim", "/yonetim/giris"],
 ]) {
   await check(`Anonim ${path} → ${target} yönlendirmesi`, async () => {
     const res = await get(path);
-    const location = res.headers.get("location") ?? "";
-    if (res.status < 300 || res.status >= 400 || new URL(location, BASE).pathname !== target) fail(`HTTP ${res.status} → ${location || "-"}`);
+    const location = new URL(res.headers.get("location") ?? "", BASE);
+    if (res.status < 300 || res.status >= 400 || location.pathname !== target) fail(`HTTP ${res.status} → ${location.pathname}`);
+    if (target === "/giris" && location.searchParams.get("returnTo") !== path) fail(`returnTo ${location.searchParams.get("returnTo")}`);
+    if (location.origin !== new URL(BASE).origin) fail(`başka origine yönlendirme: ${location.origin}`);
   });
 }
-
-// ------------------------------------------------------------------ Supabase (anonymous, read-only)
-const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
+await check("Açık yönlendirme yok (returnTo dış adres)", async () => {
+  const res = await get("/giris?returnTo=https%3A%2F%2Fevil.example%2F");
+  if (res.status >= 300 && res.status < 400 && /evil\.example/.test(res.headers.get("location") ?? "")) fail("dış adrese yönlendirdi");
 });
+
+// ------------------------------------------------------------------ API (anonymous, read-only)
+const api = (path, init) => get(`/api/v1${path}`, init);
 let sample = null;
-await check("Supabase: kategoriler ve yayındaki ilanlar okunabiliyor", async () => {
-  const { data: categories, error } = await db.from("categories").select("slug").limit(50);
-  if (error) fail(`kategoriler: ${error.message}`);
-  if (!categories.length) fail("kategori yok (0001 uygulanmamış olabilir)");
-  const { data: listings, error: e2 } = await db.from("listings").select("slug, status").eq("status", "active").limit(1);
-  if (e2) fail(`ilanlar: ${e2.message}`);
-  sample = listings[0] ?? null;
+await check("Sayfalar Supabase'e bağlanmıyor", () => {
+  if (/supabase\.co/.test(home?.html ?? "")) fail("ana sayfa supabase.co adresi içeriyor");
+});
+await check("API: kategori ağacı ve yayındaki ilanlar okunabiliyor", async () => {
+  const tax = await api("/taxonomy");
+  if (tax.status !== 200) fail(`taxonomy HTTP ${tax.status}`);
+  const { categories = [] } = await tax.json();
+  if (!categories.length) fail("kategori yok (migration uygulanmamış olabilir)");
+  const res = await api("/listings?sayfa=1");
+  if (res.status !== 200) fail(`listings HTTP ${res.status}`);
+  const body = await res.json();
+  sample = (body.listings ?? body.items ?? [])[0] ?? null;
   return `${categories.length} kategori, ${sample ? "örnek ilan var" : "henüz yayında ilan yok"}`;
 });
-await check("Supabase: anonim kullanıcı yayında olmayan ilanları ve özel tabloları göremez", async () => {
-  const leaks = [];
-  const { data: hidden } = await db.from("listings").select("id").neq("status", "active").limit(1);
-  if (hidden?.length) leaks.push("yayında olmayan ilan");
-  for (const table of ["profile_private", "support_tickets", "notifications", "reports", "sanctions", "verification_requests", "messages", "conversations", "rate_limit_events"]) {
-    const { data } = await db.from(table).select("*").limit(1);
-    if (data?.length) leaks.push(table);
-  }
-  if (leaks.length) fail(`okunabildi: ${leaks.join(", ")}`);
+await check("Görsel: /media üzerinden WebP, nosniff, uzun önbellek", async () => {
+  const url = sample?.image?.md;
+  if (!url) return "atlandı: görselli ilan yok";
+  const res = await fetch(new URL(url, BASE), { headers: { "user-agent": "kie-production-smoke/1.0" } });
+  if (res.status !== 200) fail(`HTTP ${res.status}`);
+  if (res.headers.get("content-type") !== "image/webp") fail(`content-type ${res.headers.get("content-type")}`);
+  if (res.headers.get("x-content-type-options") !== "nosniff") fail("nosniff yok");
+  if (!/immutable/.test(res.headers.get("cache-control") ?? "")) fail("immutable önbellek yok");
 });
-await check("Supabase: oturumsuz yazma RPC'leri reddediliyor (create_listing, delete_my_account)", async () => {
-  const create = await db.rpc("create_listing", {
-    p_key: "00000000-0000-4000-8000-000000000000", p_category: "x", p_title: "smoke", p_description: "", p_price: 1,
-    p_currency: "TL", p_city: "Girne", p_district: "", p_condition: "Sıfır", p_negotiable: false, p_photos: ["x/y.jpg"],
-  });
-  if (!create.error) fail("create_listing oturumsuz çalıştı");
-  const del = await db.rpc("delete_my_account");
-  if (!del.error) fail("delete_my_account oturumsuz çalıştı");
-  return `${create.error.code ?? "-"}, ${del.error.code ?? "-"}`;
+await check("Görsel: upload dizini dışına çıkılamıyor", async () => {
+  for (const path of ["/media/../.env", "/media/%2e%2e/%2e%2e/etc/passwd", "/media/l/2026/01/x/sm.webp"]) {
+    const res = await get(path);
+    if (res.status === 200) fail(`${path} → 200`);
+  }
+});
+await check("API: oturumsuz özel uçlar 401", async () => {
+  const open = [];
+  for (const path of ["/me", "/me/favorites", "/conversations", "/admin/dashboard", "/me/notifications"]) {
+    const res = await api(path);
+    if (res.status !== 401) open.push(`${path} → ${res.status}`);
+  }
+  if (open.length) fail(open.join(", "));
+});
+await check("API: oturumsuz / CSRF başlıksız yazmalar reddediliyor", async () => {
+  const codes = [];
+  for (const [path, body] of [["/listings", { title: "smoke" }], ["/me/delete", {}], ["/conversations", {}]]) {
+    const res = await api(path, { method: "POST", headers: { "content-type": "application/json", origin: "https://evil.example" }, body: JSON.stringify(body) });
+    if (res.status < 400 || res.status >= 500) fail(`${path} → ${res.status}`);
+    codes.push(res.status);
+  }
+  return codes.join(", ");
+});
+await check("İç sağlık uçları dışarıya kapalı (Caddy)", async () => {
+  if (LOCAL) return "atlandı: yerel adres";
+  const res = await get("/health/ready");
+  if (res.status !== 404) fail(`HTTP ${res.status}`);
+});
+await check("API yanıtları: Server/X-Powered-By sızmıyor", async () => {
+  const res = await api("/taxonomy");
+  if (res.headers.get("x-powered-by")) fail("X-Powered-By var");
+  if (/fastify|node/i.test(res.headers.get("server") ?? "")) fail(`Server: ${res.headers.get("server")}`);
 });
 await check("İlan detay sayfası ve JSON-LD (Product)", async () => {
   if (!sample) return "atlandı: yayında ilan yok";
