@@ -11,8 +11,9 @@ import { cn } from "@/lib/cn";
 type Photo = { id: string; urls: ImageUrls | null };
 
 /**
- * Listing photos: a main image with arrows (keyboard and swipe), thumbnails,
- * and a full-screen viewer with zoom. Works without hover.
+ * Listing photos. Desktop: a mosaic (one large photo and up to four more)
+ * opening a full-screen viewer. Phones: an edge-to-edge swipeable photo with
+ * a counter. The viewer has keyboard, swipe and zoom; nothing needs hover.
  */
 export function Gallery({ photos, title, badge }: { photos: Photo[]; title: string; badge?: React.ReactNode }) {
   const { t } = useLocale();
@@ -31,11 +32,51 @@ export function Gallery({ photos, title, badge }: { photos: Photo[]; title: stri
   }
 
   const current = photos[index];
+  const open = (i: number) => {
+    setIndex(i);
+    setViewer(true);
+  };
+  const tiles = photos.slice(0, 5);
 
   return (
     <div>
+      {/* Desktop mosaic */}
       <div
-        className="group relative aspect-[4/3] overflow-hidden rounded-card bg-[#0f1216] sm:aspect-[16/11]"
+        className={cn(
+          "relative hidden h-[min(560px,62vh)] min-h-[400px] gap-2 overflow-hidden rounded-[20px] md:grid",
+          tiles.length === 1 ? "grid-cols-1" : tiles.length === 2 ? "grid-cols-2" : "grid-cols-4 grid-rows-2",
+        )}
+      >
+        {tiles.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => open(i)}
+            aria-label={t(`Fotoğraf ${i + 1} / ${count}`)}
+            className={cn(
+              "group relative overflow-hidden bg-brand-soft",
+              tiles.length >= 3 && i === 0 && "col-span-2 row-span-2",
+              tiles.length === 3 && i > 0 && "col-span-2",
+              tiles.length === 4 && i === 3 && "col-span-2",
+            )}
+          >
+            <MediaImage urls={p.urls} alt={i === 0 ? title : ""} priority={i === 0} sizes={i === 0 ? "(min-width: 1280px) 50vw, 60vw" : "25vw"} className="absolute inset-0 transition duration-500 group-hover:scale-[1.03]" />
+          </button>
+        ))}
+        {badge ? <div className="pointer-events-none absolute left-4 top-4">{badge}</div> : null}
+        <button
+          type="button"
+          onClick={() => open(0)}
+          className="absolute bottom-4 right-4 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-[14px] font-semibold text-[#0a0a0a] shadow-md hover:bg-white/90"
+        >
+          <Icon name="grid" className="h-4 w-4" />
+          {t(`Tüm fotoğraflar (${count})`)}
+        </button>
+      </div>
+
+      {/* Phones: edge-to-edge swipe */}
+      <div
+        className="group relative -mx-4 aspect-square overflow-hidden bg-[#0a0a0a] sm:-mx-6 md:hidden"
         onTouchStart={(e) => (touch.current = e.touches[0].clientX)}
         onTouchEnd={(e) => {
           if (touch.current == null) return;
@@ -82,7 +123,7 @@ export function Gallery({ photos, title, badge }: { photos: Photo[]; title: stri
       </div>
 
       {count > 1 ? (
-        <div className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto" role="tablist" aria-label={t("Fotoğraflar")}>
+        <div className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto md:hidden" role="tablist" aria-label={t("Fotoğraflar")}>
           {photos.map((p, i) => (
             <button
               key={p.id}
