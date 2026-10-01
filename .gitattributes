@@ -3,3 +3,7 @@
 Dockerfile text eol=lf
 Caddyfile text eol=lf
 *.conf text eol=lf
+deploy/** text eol=lf
+*.Dockerfile text eol=lf
+*.yml text eol=lf
+*.mjs text eol=lf
