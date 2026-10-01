@@ -11,90 +11,83 @@ dynamic attributes, search/filters, listing flow, detail page, chat, admin,
 design system). Production (Vercel + Supabase) stays live until an explicit
 cutover confirmation.
 
-## Architecture decisions (details in ARCHITECTURE.md)
+## Status: **code complete, verified locally; waiting on external inputs for the server**
 
-| # | Decision | Why |
-|---|----------|-----|
-| 1 | Fastify modular monolith in `api/` | Low RAM on a 6 GB VDS; mobile + web share one API |
-| 2 | `postgres.js`, hand-written parameterized SQL, no ORM | Security model lives in triggers/RLS/constraints; ORM would hide it |
-| 3 | RLS + guard triggers ported 1:1; API sets `app.user_id` / `app.role` per transaction | DB stays a second line of defense behind API checks |
-| 4 | Roles: `kie_owner` (migrations), `kie_app` (runtime, RLS applies, no DDL) | Least privilege |
-| 5 | Auth: Argon2id; JWT access (15 min) + rotating opaque refresh (hash stored), reuse ⇒ session revoked; 20 s grace for concurrent tabs | Web (HttpOnly cookies) and mobile (Bearer) |
-| 6 | Supabase bcrypt hashes imported and verified once, then rehashed | Users keep passwords after migration |
-| 7 | CSRF: `X-KIE-CSRF: 1` required on cookie-authenticated unsafe requests + Origin allow-list | No CORS is ever granted |
-| 8 | Realtime: WebSocket, push-only, per-user fan-out from `LISTEN app_events` (DB computes recipients) | Clients cannot subscribe to others' rooms |
-| 9 | Images: sharp decode → WebP sm/md/lg, EXIF stripped, originals not kept; local disk behind `ObjectStore` | Disk-bounded, safe, S3-ready |
-| 10 | Categories: tree; attribute definitions relational (inheritable, overridable, hideable); values JSONB (GIN) | Scales without nullable-column sprawl |
-| 11 | Regions stay the 8 existing Cyprus regions, now a reference table | Evidence: current model |
-| 12 | No Redis/queues/search engine: pg_trgm + folded search column | Evidence-based, fits the box |
+Nothing has been deployed to the VDS. DNS, Supabase and Vercel are untouched.
 
 ## Checklist
 
-- [x] Phase A — audit (code, 15 migrations, security scripts, pages)
-- [x] Phase B — target architecture
-- [x] Phase C — api/ skeleton, shared/ package, dev Postgres (docker-compose.dev.yml)
-- [x] Phase D — db/migrations 0001–0005 (baseline, auth, realtime, taxonomy, grants); apply cleanly
-- [x] Phase E — auth API (19 tests passing)
-- [x] Phase F–I — API security suites: 82 tests pass (auth, listings, messaging, admin, uploads, realtime)
-- [x] Phase J–Q — web app rebuilt on the API (home, search/filters, listing page, sell wizard, edit, chat, account, seller/store, auth, admin + taxonomy manager)
-- [x] Phase R — design system (tokens, UI kit); responsive QA in a real browser NOT yet done
-- [ ] Phase S/T — a11y/perf/SEO/security hardening (CSP for new origins)
-- [ ] Phase U — test expansion, E2E (Playwright) on the new stack
-- [ ] Phase V — Dockerfiles, compose, Caddy snippet
-- [ ] Phase W — backups/restore/observability
-- [ ] Phase X — Supabase → Postgres migration tooling + rehearsal
-- [ ] Phase Y — readiness report + cutover checkpoint
+- [x] A — audit (code, 15 Supabase migrations, security scripts, pages)
+- [x] B — target architecture (docs/ARCHITECTURE.md)
+- [x] C–D — api/ skeleton, shared/, db/migrations 0001–0006
+- [x] E–I — API: auth, listings, uploads, messaging, realtime, admin; security suites
+- [x] J–Q — web rebuilt on the API (home, search, listing page, sell wizard, chat, account, stores, admin + taxonomy manager)
+- [x] R — design system; responsive QA in a real browser (33 pages × 5 widths)
+- [x] S/T — CSP without Supabase, privacy text, LCP logo, i18n check, Google sign-in restored
+- [x] U — E2E critical path (`npm run e2e`), production smoke rewritten (`npm run smoke`)
+- [x] V — Dockerfiles, compose, Caddy snippet; prod stack run locally (restart/persistence checked)
+- [x] W — backup, weekly restore drill, disaster restore, health checks + systemd timers
+- [x] X — Supabase import + verify + end-to-end rehearsal (also inside the production image)
+- [x] Docs — README, ARCHITECTURE, SECURITY, DEPLOYMENT, BACKUP_RESTORE, MIGRATION
+- [ ] Y — server deployment, real-data rehearsal, cutover (needs the inputs below)
 
-## Current task
+## Next exact action (on the VDS, once SSH access is available)
 
-Local end-to-end run of the new stack (API + Next dev + seeded DB) and browser QA.
+Follow docs/DEPLOYMENT.md §1–5 with a temporary hostname (e.g.
+`yeni.kibrisikincielcim.com`), then docs/MIGRATION.md §4 (real-data
+rehearsal), then stop at the cutover checkpoint (MIGRATION.md §5) for an
+explicit go.
 
-## Next exact action
+## Inputs needed from the owner (blockers)
 
-1. `docker compose -f docker-compose.dev.yml up -d` (Docker Desktop must be running).
-2. Recreate dev DB `kibrisikincielcim` (0001 changed since first dev apply): drop/create as
-   postgres, `create extension pg_trgm, citext`, `alter schema public owner to kie_owner`
-   (same steps as api/test/helpers.ts resetDatabase), then `npm --prefix api run migrate`
-   and `npm --prefix api run seed` (api/.env already has dev settings + SEED_*; NOT committed).
-3. Run `npm run dev:api` and `npm run dev`; QA pages at 360/768/1280/1440 px, fix issues.
-4. Then: Dockerfiles + compose + Caddy (Phase V), backups (W), Supabase export/import
-   tooling (X), docs (README/ARCHITECTURE/SECURITY/DEPLOYMENT/BACKUP_RESTORE/MIGRATION), cutover checkpoint (Y).
+| # | Input | Used for |
+|---|---|---|
+| 1 | SSH user + key for the VDS (91.151.89.238) | everything on the server |
+| 2 | SMTP host/port/user/password + sender address; SPF/DKIM/DMARC DNS records | verification and password-reset e-mail (required) |
+| 3 | DNS: an A record for a temporary hostname → VDS | staging verification before cutover |
+| 4 | Supabase **Session pooler** connection string (read-only use) and the project ref | data import |
+| 5 | Is Google sign-in on in production? If yes: OAuth client id/secret (existing client is fine) + add redirect URI | Google sign-in |
+| 6 | Off-site backup target (e.g. an S3/B2 bucket + rclone config) | backups survive losing the server |
+| 7 | Go/no-go for the write freeze and for the DNS switch | cutover (explicit confirmation required) |
 
-Note: the old Supabase .env.local was saved as `.env.local.supabase-backup` (gitignored);
-`.env.local` now points the web app at the local API.
+## Test results (2026-10-01)
+
+| Suite | Result |
+|---|---|
+| API (`npm run test:api`): auth, google, listings, messaging, admin, uploads, realtime | 94/94 |
+| Web unit (`npm test`) | 61/61 |
+| Web typecheck, lint, production build (Docker) | pass |
+| E2E critical path (`npm run e2e`, dev stack) | pass (twice) |
+| Responsive (`npm run responsive`) | no overflow / runtime errors |
+| Language check (`npm run test:i18n`) | pass |
+| Production smoke on the production image | 36/36 |
+| Import rehearsal (`migration/rehearsal/rehearse.sh`) | pass: verify OK + 23/23 application checks |
+| Backup → restore drill → disaster restore (local) | pass; tampered dump refused |
 
 ## Important commands
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d        # dev Postgres on 127.0.0.1:55432
-cd api && npm test                                     # API tests (fresh kie_test DB each file)
-cd api && npx tsc --noEmit -p .                        # API typecheck
-DATABASE_OWNER_URL=postgres://kie_owner:dev-owner-password@127.0.0.1:55432/kibrisikincielcim npm --prefix api run migrate
+npm run dev:api & npm run dev                          # API :4000, web :3000
+npm run test:all                                       # web unit + API suites
+E2E_PASSWORD=<SEED_PASSWORD> npm run e2e               # browser critical path (dev data)
+bash migration/rehearsal/rehearse.sh                   # Supabase import rehearsal
+docker compose -f deploy/docker-compose.yml --env-file deploy/.env.localtest up -d --build   # local prod stack
 ```
 
-## Migrations completed (new stack, dev only)
+## Migrations (new stack)
 
-0001_baseline, 0002_auth, 0003_realtime, 0004_taxonomy_attributes, 0005_grants.
-Not applied anywhere but local dev/test.
+0001_baseline, 0002_auth, 0003_realtime, 0004_taxonomy_attributes,
+0005_grants, 0006_owner_listing_stats. Applied only locally (dev, test,
+local prod stack). Next new migration: 0007.
 
-## Tests
+## Known gaps / decisions
 
-| Suite | Result |
-|-------|--------|
-| api (auth, listings, messaging, admin, uploads, realtime) | 82/82 pass |
-| web unit tests (npm test) | 61/61 pass |
-| web typecheck, lint, `next build` | pass |
-
-## Known issues / notes
-
-- Not yet verified in a real browser; no E2E (Playwright) suite for the new stack yet.
-- `scripts/production-smoke.mjs` still targets Supabase; must be rewritten.
-- Phone OTP login (off in production) is not carried over; documented.
-- Google OAuth: planned in API behind GOOGLE_CLIENT_ID/SECRET (not yet built).
-
-## Production blockers (external)
-
-- SMTP credentials for transactional mail (verification/reset).
-- SSH access details for the VDS (host 91.151.89.238 is in known_hosts; user unknown).
-- Supabase production DB connection string / service key for the data export.
-- DNS cutover (explicit confirmation required).
+- Phone OTP sign-in (off in production) is not carried over.
+- No automatic reverse sync after cutover; rollback after DNS switch loses
+  writes made on the new system (MIGRATION.md §6).
+- Users sign in once more after the move (sessions are not migrated); same passwords.
+- Mobile app: API ready (Bearer tokens, `{"client":"mobile"}`); native Google
+  sign-in endpoint (ID token from the SDK) not built yet.
+- `deploy/.env.localtest`, `api/.env`, `.env.local`, `.env.local.supabase-backup`
+  are local only (gitignored).
