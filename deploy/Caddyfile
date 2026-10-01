@@ -1,0 +1,77 @@
+# Host Caddy configuration for Kıbrıs İkinci Elcim. Import it from the main
+# Caddyfile (e.g. `import /srv/kibrisikincielcim/app/deploy/Caddyfile`).
+# Do not enable it for the real domains until the cutover is approved; use
+# the staging block below for verification.
+#
+# Routing (same origin, so session cookies and CSRF rules stay simple):
+#   /api/*   → API container (incl. the WebSocket at /api/v1/ws)
+#   /media/* → uploaded images straight from disk
+#   /health* → API health (not public: restricted to localhost)
+#   else     → Next.js
+
+(kie_site) {
+	encode zstd gzip
+
+	header {
+		# HSTS only on HTTPS production; the app also sends it.
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		-Server
+	}
+
+	@health path /health /health/*
+	handle @health {
+		respond 404
+	}
+
+	handle_path /media/* {
+		root * /srv/kibrisikincielcim/uploads
+		@variant path_regexp variant ^/[la]/[0-9]{4}/[0-9]{2}/[0-9a-f-]{36}/(sm|md|lg)\.webp$
+		handle @variant {
+			header Cache-Control "public, max-age=31536000, immutable"
+			header Content-Type "image/webp"
+			header X-Content-Type-Options "nosniff"
+			header Content-Security-Policy "default-src 'none'; sandbox"
+			file_server
+		}
+		respond 404
+	}
+
+	handle /api/* {
+		request_body {
+			max_size 14MB
+		}
+		reverse_proxy 127.0.0.1:4100 {
+			header_up X-Request-Id {http.request.uuid}
+		}
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3100 {
+			header_up X-Request-Id {http.request.uuid}
+		}
+	}
+
+	log {
+		output file /var/log/caddy/kibrisikincielcim.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+		format json
+	}
+}
+
+# --- Production (enable at cutover) -----------------------------------------
+# www.kibrisikincielcim.com {
+# 	import kie_site
+# }
+# kibrisikincielcim.com {
+# 	redir https://www.kibrisikincielcim.com{uri} permanent
+# }
+
+# --- Staging (before DNS cutover) -------------------------------------------
+# A temporary hostname that already points at the VDS, e.g.
+# yeni.kibrisikincielcim.com (add the A record first). SITE_URL in the .env
+# must match it while testing.
+# yeni.kibrisikincielcim.com {
+# 	import kie_site
+# }

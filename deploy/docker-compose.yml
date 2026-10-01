@@ -1,0 +1,139 @@
+# Production stack for Kıbrıs İkinci Elcim on the VDS.
+#
+#   cd /srv/kibrisikincielcim/app && docker compose -f deploy/docker-compose.yml --env-file /srv/kibrisikincielcim/.env up -d --build
+#
+# Caddy runs on the host and is the only public listener (80/443). The web
+# and API containers publish to 127.0.0.1 only; PostgreSQL publishes nothing
+# and lives on an internal network with no route out.
+# Total memory budget ≈ 2.3 GB of the 6 GB box (another project shares it).
+
+name: kibrisikincielcim
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+services:
+  db:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set POSTGRES_SUPERUSER_PASSWORD}
+      KIE_OWNER_PASSWORD: ${KIE_OWNER_PASSWORD:?set KIE_OWNER_PASSWORD}
+      KIE_APP_PASSWORD: ${KIE_APP_PASSWORD:?set KIE_APP_PASSWORD}
+      KIE_DB: kibrisikincielcim
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=60
+      - -c
+      - log_min_duration_statement=500
+      - -c
+      - log_connections=off
+    volumes:
+      - ${KIE_DATA_DIR:-/srv/kibrisikincielcim/data}/postgres:/var/lib/postgresql/data
+      - ../db/init:/docker-entrypoint-initdb.d:ro
+      - ${KIE_BACKUP_DIR:-/srv/kibrisikincielcim/backups}:/backups
+    networks: [db]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kibrisikincielcim"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    shm_size: 128m
+    deploy:
+      resources:
+        limits: { memory: 1g }
+    logging: *logging
+
+  migrate:
+    build: { context: .., dockerfile: deploy/api.Dockerfile }
+    image: kibrisikincielcim-api:latest
+    command: ["node", "dist/migrate.js"]
+    environment:
+      DATABASE_OWNER_URL: postgres://kie_owner:${KIE_OWNER_PASSWORD}@db:5432/kibrisikincielcim
+    networks: [db]
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+    logging: *logging
+
+  api:
+    image: kibrisikincielcim-api:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://kie_app:${KIE_APP_PASSWORD}@db:5432/kibrisikincielcim
+      DATABASE_POOL_MAX: "15"
+      SITE_URL: ${SITE_URL:?set SITE_URL}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN}
+      TRUST_PROXY_HOPS: "1"
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      UPLOAD_DIR: /data/uploads
+      MEDIA_URL: /media
+      SERVE_MEDIA: "1"
+      MAIL_TRANSPORT: smtp
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SECURE: ${SMTP_SECURE:-0}
+      MAIL_FROM: ${MAIL_FROM:-Kıbrıs İkinci Elcim <no-reply@kibrisikincielcim.com>}
+      LOG_LEVEL: info
+    volumes:
+      - ${KIE_UPLOAD_DIR:-/srv/kibrisikincielcim/uploads}:/data/uploads
+    ports:
+      - "127.0.0.1:${KIE_API_PORT:-4100}:4000"
+    networks: [db, app]
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    deploy:
+      resources:
+        limits: { memory: 512m }
+    logging: *logging
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL:?set SITE_URL}
+        NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-}
+        NEXT_PUBLIC_ADSENSE_CLIENT: ${NEXT_PUBLIC_ADSENSE_CLIENT:-}
+        NEXT_PUBLIC_ADSENSE_SLOT_HOME: ${NEXT_PUBLIC_ADSENSE_SLOT_HOME:-}
+        NEXT_PUBLIC_ADSENSE_SLOT_RESULTS: ${NEXT_PUBLIC_ADSENSE_SLOT_RESULTS:-}
+        NEXT_PUBLIC_ADSENSE_SLOT_LISTING: ${NEXT_PUBLIC_ADSENSE_SLOT_LISTING:-}
+        NEXT_PUBLIC_ADSENSE_CMP_READY: ${NEXT_PUBLIC_ADSENSE_CMP_READY:-0}
+    image: kibrisikincielcim-web:latest
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:4000
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN}
+      NEXT_PUBLIC_SITE_URL: ${SITE_URL}
+    ports:
+      - "127.0.0.1:${KIE_WEB_PORT:-3100}:3000"
+    networks: [app]
+    depends_on:
+      api: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 768m }
+    logging: *logging
+
+networks:
+  # No route out and nothing published: only the API and migrations reach it.
+  db:
+    internal: true
+  app:
+    name: kibrisikincielcim-network
+    external: true

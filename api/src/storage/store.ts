@@ -40,10 +40,11 @@ export class LocalStore implements ObjectStore {
 
   async putVariants(key: string, variants: { name: string; data: Buffer }[]) {
     const dir = this.dir(key);
-    await mkdir(dir, { recursive: true, mode: 0o750 });
+    await mkdir(dir, { recursive: true, mode: 0o755 });
     for (const v of variants) {
       if (!VARIANT_PATTERN.test(v.name)) throw new Error("invalid variant name");
-      await writeFile(path.join(dir, v.name), v.data, { mode: 0o640, flag: "wx" });
+      // Public images: readable by the web server (Caddy serves /media directly).
+      await writeFile(path.join(dir, v.name), v.data, { mode: 0o644, flag: "wx" });
     }
   }
 
