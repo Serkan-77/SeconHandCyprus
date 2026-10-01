@@ -29,6 +29,10 @@ Nothing has been deployed to the VDS. DNS, Supabase and Vercel are untouched.
 - [x] W — backup, weekly restore drill, disaster restore, health checks + systemd timers
 - [x] X — Supabase import + verify + end-to-end rehearsal (also inside the production image)
 - [x] Docs — README, ARCHITECTURE, SECURITY, DEPLOYMENT, BACKUP_RESTORE, MIGRATION
+- [x] Structural frontend redesign (2026-10-01, commits ea2ee2a..8891593): homepage, header, card, footer,
+      search/category, listing detail, sell flow, chat workspace, account shell, auth, seller/store,
+      stores, category directory; light theme default (white/black/blue). Before/after screenshots:
+      https://claude.ai/artifact/LZUvYdGJzAok5yicVodLoA (private)
 - [ ] Y — server deployment, real-data rehearsal, cutover (needs the inputs below)
 
 ## Next exact action (on the VDS, once SSH access is available)
@@ -55,7 +59,7 @@ explicit go.
 | Suite | Result |
 |---|---|
 | API (`npm run test:api`): auth, google, listings, messaging, admin, uploads, realtime | 94/94 |
-| Web unit (`npm test`) | 61/61 |
+| Web unit (`npm test`) | 61/61 (after redesign) |
 | Web typecheck, lint, production build (Docker) | pass |
 | E2E critical path (`npm run e2e`, dev stack) | pass (twice) |
 | Responsive (`npm run responsive`) | no overflow / runtime errors |
